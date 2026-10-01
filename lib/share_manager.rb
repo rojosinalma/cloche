@@ -81,6 +81,11 @@ module ShareManager
 
   def recent = Share.exclude(ended_at: nil).where(Sequel[:ended_at] > retention_cutoff)
 
+  def session_history(session_id, limit:)
+    recent.where(session_id: session_id).reverse_order(:ended_at).limit(limit)
+          .map { |s| result(s).slice(:id, :title, :paths, :url, :reason, :ended_at, :duration, :files) }
+  end
+
   def purge_expired!
     ids = Share.exclude(ended_at: nil).where(Sequel[:ended_at] < retention_cutoff).select_map(:id)
     return 0 if ids.empty?
