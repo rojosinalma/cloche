@@ -19,12 +19,35 @@ module Callback
 
     dir = share.session_directory.to_s
     dir = session_directory(share.session_id) if dir.empty?
-    path = "/api/session/#{ERB::Util.url_encode(share.session_id)}/prompt"
-    response = post(path, dir, message(ShareManager.result(share)))
+    mode = Setting.fetch("callback_mode", "instruction")
+    method, path, body = request_for(mode, share)
+    response = send_json(method, path, dir, body)
     level = response.is_a?(Net::HTTPSuccess) ? :info : :warn
-    $log.public_send(level, "[callback] POST #{path} -> #{response.code}")
+    $log.public_send(level, "[callback] #{mode} #{method.to_s.upcase} #{path} -> #{response.code}")
   rescue StandardError => e
-    $log.error "[callback] POST #{path} failed: #{e.class}: #{e.message}\n#{Array(e.backtrace).join("\n")}"
+    $log.error "[callback] #{path} failed: #{e.class}: #{e.message}\n#{Array(e.backtrace).join("\n")}"
+  end
+
+  def request_for(mode, share)
+    sid = ERB::Util.url_encode(share.session_id)
+    case mode
+    when "prompt"
+      [:post, "/api/session/#{sid}/prompt", { text: message(ShareManager.result(share)), delivery: "queue" }]
+    when "synthetic"
+      [:post, "/api/session/#{sid}/synthetic",
+       { text: message(ShareManager.result(share)), description: "cloche share ended", delivery: "queue" }]
+    else
+      [:put, "/api/experimental/session/#{sid}/instructions/entries/#{Setting.fetch('callback_entry_key', 'cloche')}",
+       { value: instruction_value(share) }]
+    end
+  end
+
+  def instruction_value(share)
+    {
+      note: "Recent cloche shares from this session that have ended (newest first); `files` = what the user " \
+            "downloaded (name => times). Only relevant if you were waiting on one of them.",
+      shares: ShareManager.session_history(share.session_id, limit: Setting.fetch("callback_history", 3))
+    }
   end
 
   def session_directory(session_id)
@@ -36,13 +59,13 @@ module Callback
     JSON.parse(response.body).dig("data", "location", "directory").to_s
   end
 
-  def post(path, dir, text)
+  def send_json(method, path, dir, body)
     uri = opencode_uri(path)
     uri.query = "directory=#{CGI.escape(dir)}" unless dir.empty?
-    request = Net::HTTP::Post.new(uri)
+    request = Net::HTTP.const_get(method.to_s.capitalize).new(uri)
     request["content-type"] = "application/json"
     request["x-opencode-directory"] = dir unless dir.empty?
-    request.body = JSON.generate(text: text, delivery: "queue")
+    request.body = JSON.generate(body)
     http_call(request)
   end
 
