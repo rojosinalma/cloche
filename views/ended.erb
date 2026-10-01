@@ -1,0 +1,35 @@
+<% fmt_time = ->(t) { t.respond_to?(:strftime) ? t.strftime('%Y-%m-%d %H:%M') : t.to_s } -%>
+<% tally = result[:files] || {} -%>
+<% count = result[:downloads].to_i -%>
+  <nav class="navbar sticky-top navbar-padded">
+    <span class="brand fs-5"><i class="bi bi-cloud-arrow-down me-2"></i><%= result[:title] || share.title %></span>
+  </nav>
+
+  <main class="main-content">
+    <div class="notice-panel">
+      <i class="bi bi-stop-circle notice-ended"></i>
+      <h5 class="notice-title mb-1">This share has ended</h5>
+      <p class="text-secondary mb-4"><%= result[:reason] %><% if result[:duration] %> · after <%= result[:duration] %><% end %></p>
+
+      <div class="card mb-3"><div class="card-body">
+        <dl class="notice-facts">
+          <dt>Started</dt><dd><%= fmt_time.(result[:started_at]) %></dd>
+          <dt>Ended</dt><dd><%= fmt_time.(result[:ended_at]) %></dd>
+          <dt>Downloads</dt><dd><%= count %> download<%= 's' unless count == 1 %></dd>
+        </dl>
+      </div></div>
+
+      <% unless tally.empty? -%>
+      <div class="section-label text-start">Downloaded</div>
+      <div class="card mb-3"><div class="card-body py-2">
+        <ul class="download-list">
+          <% tally.each do |name, n| -%>
+          <li><i class="bi bi-download kind-file"></i><span class="file-name"><%= name %></span><% if n.to_i > 1 %><span class="download-count">×<%= n %></span><% end %></li>
+          <% end -%>
+        </ul>
+      </div></div>
+      <% end -%>
+
+      <p class="text-secondary small mt-4">You can close this tab.</p>
+    </div>
+  </main>

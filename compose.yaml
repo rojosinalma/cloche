@@ -1,0 +1,26 @@
+services:
+  cloche:
+    build: .
+    container_name: cloche
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: /app/data/cloche.db
+      HOST_HOME: /home/rojo
+      RACK_ENV: development
+      PORT: "9292"
+    volumes:
+      - /home/rojo/dev/cloche:/app
+      - /home/rojo/dev:/home/rojo/dev:ro
+      - /home/rojo/.opencode/plan:/home/rojo/.opencode/plan:ro
+      - type: bind
+        source: /home/rojo/tiny
+        target: /home/rojo/tiny
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - traefik-proxy
+
+networks:
+  traefik-proxy:
+    external: true

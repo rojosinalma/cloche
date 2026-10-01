@@ -1,0 +1,102 @@
+<% items = media + files -%>
+<% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
+  <nav class="navbar sticky-top navbar-padded">
+    <a class="brand fs-5" href="<%= base %>/"><i class="bi bi-cloud-arrow-down me-2"></i><%= share.title %></a>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <% unless items.empty? -%>
+      <a class="btn btn-sm btn-primary serve-action" href="<%= zip_href %>"><i class="bi bi-file-earmark-zip me-1"></i>Download all</a>
+      <% end -%>
+      <button class="btn btn-sm btn-outline-danger serve-action" data-bs-toggle="modal" data-bs-target="#stop-modal"><i class="bi bi-stop-circle me-1"></i>Stop serving</button>
+    </div>
+  </nav>
+
+  <main class="main-content" id="content">
+    <% unless crumbs.empty? -%>
+    <div class="crumbs mb-4">
+      <a href="<%= base %>/"><i class="bi bi-house-door"></i></a>
+      <% crumbs.each_with_index do |(label, link), i| -%>
+      <span class="sep">/</span>
+      <% if i == crumbs.size - 1 %><span><%= label %></span><% else %><a href="<%= link %>"><%= label %></a><% end %>
+      <% end -%>
+    </div>
+    <% end -%>
+
+    <% if items.empty? -%>
+    <div class="empty-state"><i class="bi bi-inbox"></i>This folder is empty.</div>
+    <% else -%>
+    <p class="text-secondary small mb-4"><%= items.size %> item<%= 's' unless items.size == 1 %><% if total_size.positive? %> · <%= Listing.human_size(total_size) %><% end %></p>
+    <% end -%>
+
+    <% unless media.empty? -%>
+    <div class="section-label">Previews</div>
+    <div class="media-grid mb-4">
+      <% media.each do |m| -%>
+      <div class="media-card">
+        <div class="media-thumb">
+          <% case m.kind when :image -%>
+          <a href="<%= m.view_href %>" target="_blank" rel="noopener"><img src="<%= m.view_href %>?preview=1" alt="<%= m.name %>" loading="lazy"></a>
+          <% when :video -%>
+          <video src="<%= m.view_href %>?preview=1" controls preload="metadata"></video>
+          <% else -%>
+          <audio src="<%= m.view_href %>?preview=1" controls preload="none"></audio>
+          <% end -%>
+        </div>
+        <div class="media-meta">
+          <a class="file-name" href="<%= m.href %>" title="Download <%= m.name %>"><%= m.name %></a>
+          <span class="file-size"><%= Listing.human_size(m.size) %></span>
+          <a class="btn btn-sm btn-outline-success" href="<%= m.href %>" title="Download"><i class="bi bi-download"></i></a>
+        </div>
+      </div>
+      <% end -%>
+    </div>
+    <% end -%>
+
+    <% unless files.empty? -%>
+    <% unless media.empty? %><div class="section-label">Files</div><% end %>
+    <div class="card"><table class="table table-hover mb-0 file-table">
+      <tbody>
+      <% files.each do |f| -%>
+        <tr>
+          <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
+          <td><a class="file-name d-block" href="<%= f.href %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
+          <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
+          <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="col-shrink">
+            <% if f.kind == :dir -%>
+            <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
+            <% else -%>
+            <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
+            <% end -%>
+          </td>
+        </tr>
+      <% end -%>
+      </tbody>
+    </table></div>
+    <% end -%>
+  </main>
+
+  <div class="modal fade" id="stop-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-stop-circle me-2"></i>Stop serving?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">The links on this page stop working and the agent that served them is told you ended it.</div>
+    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="stop-confirm" data-stop-url="<%= base %>/stop" onclick="stopServing()">Stop serving</button></div>
+  </div></div></div>
+
+  <script>
+    async function stopServing() {
+      const btn = document.getElementById('stop-confirm');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      try {
+        const res = await fetch(btn.dataset.stopUrl, { method: 'POST', headers: { 'Accept': 'application/json' } });
+        const r = await res.json();
+        if (!r.ok) throw new Error(r.message || `HTTP ${res.status}`);
+        bootstrap.Modal.getInstance(document.getElementById('stop-modal')).hide();
+        document.querySelectorAll('.serve-action').forEach(b => b.remove());
+        document.getElementById('content').innerHTML =
+          '<div class="empty-state"><i class="bi bi-stop-circle"></i>Serving stopped. You can close this tab.</div>';
+        toast('success', r.message);
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Stop serving';
+        toast('error', `Could not stop: ${e.message}`);
+      }
+    }
+  </script>
