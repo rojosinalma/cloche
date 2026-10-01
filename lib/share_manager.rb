@@ -111,6 +111,15 @@ module ShareManager
 
   def idle_label = Listing.human_duration(idle_timeout)
 
+  def expires_at(share) = share.last_activity_at + idle_timeout
+
+  def status(share)
+    return { live: false, reason: share.end_reason } if share.ended?
+
+    { live: true, expires_at: iso(expires_at(share)), seconds_left: [(expires_at(share) - Time.now).to_i, 0].max,
+      in_flight: IdleSweeper.in_flight?(share.id) }
+  end
+
   def validated_paths(paths)
     list = Array(paths).map(&:to_s).map(&:strip).reject(&:empty?)
     raise ValidationError, "paths must be a non-empty array of absolute paths" if list.empty?
