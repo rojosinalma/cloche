@@ -191,6 +191,7 @@ class App < Roda
       api_authorized!
 
       r.post do
+        McpServer.log_request(r) if Setting.fetch("mcp_debug", false)
         transport = MCP::Server::Transports::StreamableHTTPTransport.new(
           McpServer.build, stateless: true, dns_rebinding_protection: false
         )

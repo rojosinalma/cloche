@@ -65,9 +65,19 @@ module McpServer
     text("Error: #{e.message}")
   end
 
+  def log_request(request)
+    body = request.body.read
+    request.body.rewind
+    $log.info "[mcp] raw #{body[0, 2000]}"
+  end
+
+  SESSION_META_KEYS = %w[ai.opencode/sessionID sessionID].freeze
+
   def caller_session(server_context)
     meta = server_context && (server_context[:_meta] || server_context["_meta"])
-    meta && (meta[:sessionID] || meta["sessionID"])
+    return unless meta
+
+    SESSION_META_KEYS.map { |k| meta[k] || meta[k.to_sym] }.compact.first
   rescue StandardError
     nil
   end
