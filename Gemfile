@@ -1,0 +1,13 @@
+source "https://rubygems.org"
+
+gem "dotenv"
+gem "erubi"
+gem "json"
+gem "mcp", "~> 1.2"
+gem "puma"
+gem "rack"
+gem "rack-unreloader"
+gem "roda"
+gem "sequel"
+gem "sqlite3"
+gem "tilt"
