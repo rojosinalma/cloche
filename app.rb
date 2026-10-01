@@ -25,7 +25,7 @@ class App < Roda
   plugin :json_parser, content_type_regexp: %r{\Aapplication/json\b}i, error_handler: lambda { |r|
     r.halt [400, { "content-type" => "application/json" }, [JSON.generate(ok: false, message: "Request body is not valid JSON")]]
   }
-  plugin :public
+  plugin :public, headers: { "cache-control" => "public, max-age=31536000, immutable" }
   plugin :halt
   plugin :head
   plugin :all_verbs
@@ -71,6 +71,11 @@ class App < Roda
 
     $log.warn "[auth] unauthorized #{request.request_method} #{request.path} from #{request.ip}"
     halt_json(401, "Unauthorized: missing or invalid bearer token")
+  end
+
+  def asset(path)
+    file = File.join(opts[:root] || Dir.pwd, "public", path)
+    "/#{path}?v=#{File.exist?(file) ? File.mtime(file).to_i : 0}"
   end
 
   def page(template, title:, idle_label: nil, **locals)
