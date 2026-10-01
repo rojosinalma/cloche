@@ -122,14 +122,14 @@ module ShareManager
 
   def validated_session(session)
     return [nil, nil] if session.nil? || session == ""
-    raise ValidationError, "session must be an object {id, directory}" unless session.is_a?(Hash)
+    raise ValidationError, "session must be an object {id, directory?}" unless session.is_a?(Hash)
 
     id = (session["id"] || session[:id]).to_s.strip
     dir = (session["directory"] || session[:directory]).to_s.strip
     raise ValidationError, "session.id is missing or malformed" unless id.match?(SESSION_ID_FORMAT)
-    raise ValidationError, "session.directory must be an absolute path" unless dir.start_with?("/")
+    raise ValidationError, "session.directory must be an absolute path" unless dir.empty? || dir.start_with?("/")
 
-    [id, dir]
+    [id, dir.empty? ? nil : dir]
   end
 
   def title_for(title, reals)
