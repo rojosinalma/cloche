@@ -1,0 +1,26 @@
+services:
+  cloche:
+    build: .
+    container_name: cloche
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: /app/data/cloche.db
+      HOST_HOME: /home/user
+      RACK_ENV: development
+      PORT: "9292"
+    volumes:
+      - /home/user/dev/cloche:/app
+      - /home/user/dev:/home/user/dev:ro
+      - /home/user/.opencode/plan:/home/user/.opencode/plan:ro
+      - type: bind
+        source: /home/user/data
+        target: /home/user/data
+        read_only: true
+        bind:
+          create_host_path: false
+    networks:
+      - traefik-proxy
+
+networks:
+  traefik-proxy:
+    external: true
