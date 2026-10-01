@@ -14,6 +14,9 @@ class Setting < Sequel::Model(:settings)
       "opencode_url" => "http://10.10.10.20:4096",
       "callback_pool_size" => "2",
       "callback_queue_size" => "100",
+      "callback_mode" => "instruction",
+      "callback_entry_key" => "cloche",
+      "callback_history" => "3",
       "wait_max_timeout" => "300"
     }
   end
