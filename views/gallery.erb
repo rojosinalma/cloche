@@ -34,7 +34,7 @@
       <div class="media-card">
         <div class="media-thumb">
           <% case m.kind when :image -%>
-          <a href="<%= m.view_href %>" target="_blank" rel="noopener"><img src="<%= m.view_href %>?preview=1" alt="<%= m.name %>" loading="lazy"></a>
+          <a href="<%= m.view_href %>" class="lightbox-link" data-src="<%= m.view_href %>?preview=1" data-name="<%= m.name %>" data-download="<%= m.href %>" title="Open preview"><img src="<%= m.view_href %>?preview=1" alt="<%= m.name %>" loading="lazy"></a>
           <% when :video -%>
           <video src="<%= m.view_href %>?preview=1" controls preload="metadata"></video>
           <% else -%>
@@ -75,6 +75,21 @@
     <% end -%>
   </main>
 
+  <div class="lightbox" id="lightbox" hidden>
+    <div class="lightbox-bar">
+      <span class="lightbox-name" id="lightbox-name"></span>
+      <span class="lightbox-count" id="lightbox-count"></span>
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" id="lightbox-zoom" title="Toggle fit / actual size (or click the image)"><i class="bi bi-zoom-in"></i></button>
+        <a class="btn btn-sm btn-outline-success" id="lightbox-download" href="#" title="Download"><i class="bi bi-download"></i></a>
+        <button class="btn btn-sm btn-outline-secondary" id="lightbox-close" title="Close (Esc)"><i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" title="Previous (←)"><i class="bi bi-chevron-left"></i></button>
+    <div class="lightbox-stage" id="lightbox-stage"><img id="lightbox-img" alt=""></div>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" title="Next (→)"><i class="bi bi-chevron-right"></i></button>
+  </div>
+
   <div class="modal fade" id="stop-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
     <div class="modal-header"><h6 class="modal-title"><i class="bi bi-stop-circle me-2"></i>Stop serving?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">The links on this page stop working and the agent that served them is told you ended it.</div>
@@ -82,6 +97,45 @@
   </div></div></div>
 
   <script>
+    (function lightbox() {
+      const links = [...document.querySelectorAll('.lightbox-link')];
+      if (!links.length) return;
+      const box = document.getElementById('lightbox'), img = document.getElementById('lightbox-img'),
+            stage = document.getElementById('lightbox-stage'), name = document.getElementById('lightbox-name'),
+            count = document.getElementById('lightbox-count'), dl = document.getElementById('lightbox-download'),
+            zoomBtn = document.getElementById('lightbox-zoom');
+      let index = 0;
+      const show = (i) => {
+        index = (i + links.length) % links.length;
+        const l = links[index];
+        box.classList.remove('zoomed');
+        img.src = l.dataset.src; img.alt = l.dataset.name;
+        name.textContent = l.dataset.name; dl.href = l.dataset.download;
+        count.textContent = links.length > 1 ? `${index + 1} / ${links.length}` : '';
+        box.hidden = false; document.body.classList.add('lightbox-open');
+      };
+      const close = () => { box.hidden = true; img.src = ''; document.body.classList.remove('lightbox-open'); };
+      const toggleZoom = () => {
+        const zoomed = box.classList.toggle('zoomed');
+        zoomBtn.querySelector('i').className = zoomed ? 'bi bi-zoom-out' : 'bi bi-zoom-in';
+        if (zoomed) { stage.scrollTop = (stage.scrollHeight - stage.clientHeight) / 2; stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2; }
+      };
+      links.forEach((l, i) => l.addEventListener('click', (e) => { e.preventDefault(); show(i); }));
+      img.addEventListener('click', toggleZoom);
+      zoomBtn.addEventListener('click', toggleZoom);
+      document.getElementById('lightbox-close').addEventListener('click', close);
+      document.getElementById('lightbox-prev').addEventListener('click', () => show(index - 1));
+      document.getElementById('lightbox-next').addEventListener('click', () => show(index + 1));
+      stage.addEventListener('click', (e) => { if (e.target === stage) close(); });
+      document.addEventListener('keydown', (e) => {
+        if (box.hidden) return;
+        if (e.key === 'Escape') close();
+        else if (e.key === 'ArrowLeft') show(index - 1);
+        else if (e.key === 'ArrowRight') show(index + 1);
+        else if (e.key === ' ' || e.key === 'z') { e.preventDefault(); toggleZoom(); }
+      });
+    })();
+
     async function stopServing() {
       const btn = document.getElementById('stop-confirm');
       btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';

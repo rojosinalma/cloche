@@ -75,7 +75,8 @@ class App < Roda
 
   def page(template, title:, idle_label: nil, **locals)
     view(template, locals: locals.merge(idle_label: idle_label),
-                   layout_opts: { locals: { title: title, idle_label: idle_label } })
+                   layout_opts: { locals: { title: title, idle_label: idle_label,
+                                            expires_at: locals[:expires_at], status_url: locals[:base] && "#{locals[:base]}/status" } })
   end
 
   def not_found_page!
@@ -89,6 +90,7 @@ class App < Roda
   def gallery(share, items, crumbs:, zip_href:)
     media = items.select { |i| Listing.media?(i) }
     page("gallery", title: share.title, idle_label: ShareManager.idle_label,
+                    expires_at: ShareManager.expires_at(share).to_i,
                     share: share, base: Listing.base(share), crumbs: crumbs, media: media, files: items - media,
                     total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
   end
@@ -197,6 +199,8 @@ class App < Roda
       share = Share[id] or not_found_page!
 
       r.is { r.redirect("/s/#{id}/", 301) }
+
+      r.get("status") { ShareManager.status(share) }
 
       if share.ended?
         r.post("stop") { json_ok("Already stopped") }

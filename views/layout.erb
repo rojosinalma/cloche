@@ -1,5 +1,7 @@
 <% page_title = (defined?(title) && title) || "cloche" -%>
 <% footer_idle = defined?(idle_label) && idle_label -%>
+<% footer_expires = defined?(expires_at) && expires_at -%>
+<% footer_status = defined?(status_url) && status_url -%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,7 +27,7 @@
 
   <footer class="app-footer">
     <div class="footer-right">
-      <span class="footer-version">cloche<% if footer_idle %> · stops after <%= footer_idle %> idle<% end %></span>
+      <span class="footer-version">cloche<% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><i class="bi bi-hourglass-split"></i> <span id="expiry-left">--:--</span></span><% end %></span>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="bi bi-sun-fill theme-icon-light"></i><i class="bi bi-moon-fill theme-icon-dark"></i></button>
     </div>
   </footer>
@@ -45,6 +47,45 @@
       document.getElementById('toast-container').appendChild(el);
       setTimeout(() => { el.classList.add('leaving'); setTimeout(() => el.remove(), 300); }, 2500);
     }
+    (function expiryTimer() {
+      const el = document.getElementById('expiry');
+      if (!el) return;
+      let expiresAt = Number(el.dataset.expiresAt) * 1000;
+      let ended = false;
+      const left = document.getElementById('expiry-left');
+      const fmt = (s) => {
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+        return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + String(sec).padStart(2, '0');
+      };
+      const markEnded = (reason) => {
+        if (ended) return;
+        ended = true;
+        left.textContent = 'ended';
+        document.querySelectorAll('.serve-action').forEach(b => b.remove());
+        const content = document.getElementById('content');
+        if (content) content.innerHTML = `<div class="empty-state"><i class="bi bi-hourglass-bottom"></i>This share has ended (${reason}). You can close this tab.</div>`;
+        toast('warning', `Share ended: ${reason}`);
+      };
+      const sync = async () => {
+        try {
+          const r = await (await fetch(el.dataset.statusUrl, { headers: { 'Accept': 'application/json' } })).json();
+          if (!r.live) return markEnded(r.reason || 'stopped');
+          expiresAt = new Date(r.expires_at).getTime();
+          el.classList.toggle('in-flight', !!r.in_flight);
+        } catch (e) { /* keep counting locally */ }
+      };
+      const tick = () => {
+        if (ended) return;
+        const s = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+        left.textContent = fmt(s);
+        el.classList.toggle('text-warning', s > 0 && s <= 300);
+        if (s === 0) sync();
+      };
+      tick();
+      setInterval(tick, 1000);
+      setInterval(sync, 30000);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) sync(); });
+    })();
   </script>
 </body>
 </html>
