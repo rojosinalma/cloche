@@ -11,12 +11,12 @@ module McpServer
   TOOLS = []
   SESSION_SCHEMA = {
     type: "object",
-    description: "The calling opencode session; when given, a message lands in it when the share ends",
+    description: "Override the session that gets the end-of-share message; normally omitted (detected from the MCP request)",
     properties: {
-      id: { type: "string", description: "Session id ($OPENCODE_SESSION_ID / the busy session in your cwd)" },
-      directory: { type: "string", description: "The session's working directory (absolute)" }
+      id: { type: "string", description: "opencode session id ($OPENCODE_SESSION_ID in an agent shell)" },
+      directory: { type: "string", description: "The session's working directory; looked up from opencode when omitted" }
     },
-    required: %w[id directory]
+    required: %w[id]
   }.freeze
 
   module_function
@@ -51,18 +51,25 @@ module McpServer
       description desc
       input_schema(**schema)
       define_singleton_method(:call) do |server_context: nil, **args|
-        McpServer.run_tool(name, args, handler)
+        McpServer.run_tool(name, args, handler, McpServer.caller_session(server_context))
       end
     end
     TOOLS << klass
   end
 
-  def run_tool(name, args, handler)
-    $log.info "[mcp] tool=#{name} args=#{args.to_json}"
-    handler.call(args)
+  def run_tool(name, args, handler, session_id)
+    $log.info "[mcp] tool=#{name} args=#{args.to_json} session=#{session_id}"
+    handler.call(args, session_id)
   rescue StandardError => e
     $log.error "[mcp] tool=#{name} failed: #{e.message}"
     text("Error: #{e.message}")
+  end
+
+  def caller_session(server_context)
+    meta = server_context && (server_context[:_meta] || server_context["_meta"])
+    meta && (meta[:sessionID] || meta["sessionID"])
+  rescue StandardError
+    nil
   end
 
   def build
@@ -72,10 +79,10 @@ module McpServer
       version: "1.0.0",
       instructions: "Shares files and folders from this host with the user's browser as a gallery page " \
                     "(previews, downloads, zip). Paths are absolute host paths under ~/dev, ~/tiny or " \
-                    "~/.opencode/plan. Hand the user the returned `url` (not lan_url). Pass " \
-                    "session {id: $OPENCODE_SESSION_ID, directory: <your cwd>} to create_share and a message " \
-                    "saying how the share ended and what was downloaded lands in your session; otherwise " \
-                    "use wait_share. Stop shares you no longer need with stop_share.",
+                    "~/.opencode/plan. Hand the user the returned `url` (not lan_url). create_share learns the " \
+                    "calling session from the MCP request, so when the share ends a message saying how it " \
+                    "ended and what was downloaded lands in your session automatically; no waiting needed. " \
+                    "Stop shares you no longer need with stop_share.",
       tools: TOOLS
     )
   end
@@ -88,8 +95,10 @@ module McpServer
                title: { type: "string", description: "Page heading (defaults to the basename or \"N items\")" },
                raw: { type: "boolean", description: "Serve one folder as a static site instead of a gallery" },
                session: SESSION_SCHEMA
-             }, required: %w[paths] } do |args|
-    api_text(:post, "/api/shares", args.slice(:paths, :title, :raw, :session))
+             }, required: %w[paths] } do |args, session_id|
+    body = args.slice(:paths, :title, :raw, :session)
+    body[:session] ||= { id: session_id } if session_id
+    api_text(:post, "/api/shares", body)
   end
 
   register "list_shares",
