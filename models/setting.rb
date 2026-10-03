@@ -9,7 +9,7 @@ class Setting < Sequel::Model(:settings)
       "allowed_roots" => [File.join(home, "dev"), File.join(home, "tiny"), File.join(home, ".opencode", "plan")].join(","),
       "idle_timeout" => "1800",
       "public_base_url" => "https://cloche.rojo.dev",
-      "lan_base_url" => "https://cloche.silver.local",
+      "lan_base_url" => "https://cloche.example.internal",
       "result_retention" => "86400",
       "opencode_url" => "http://192.168.1.20:4096",
       "callback_pool_size" => "2",
