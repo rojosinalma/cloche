@@ -5,26 +5,41 @@ require "securerandom"
 
 module ShareManager
   class ValidationError < StandardError; end
+  class AlreadyEnded < StandardError; end
 
   SESSION_ID_FORMAT = /\A[\w-]+\z/
   TITLE_MAX = 200
 
   module_function
 
-  def create(paths:, title: nil, raw: false, session: nil)
+  def create(paths:, title: nil, raw: false, session: nil, idle_timeout: nil)
     reals = validated_paths(paths)
     raw = truthy?(raw)
     raise ValidationError, "raw takes exactly one folder" if raw && !(reals.size == 1 && File.directory?(reals.first))
 
     session_id, session_dir = validated_session(session)
+    limit = validated_idle_timeout(idle_timeout)
     now = Time.now
     share = Share.create(
       id: SecureRandom.urlsafe_base64(24), title: title_for(title, reals), raw: raw,
       paths: JSON.generate(reals), session_id: session_id, session_directory: session_dir,
-      started_at: now, last_activity_at: now
+      idle_timeout: limit, started_at: now, last_activity_at: now
     )
     $log.info "[share] created #{share.id} \"#{share.title}\" (#{reals.size} path(s)#{', raw' if raw}" \
-              "#{", session #{session_id}" if session_id})"
+              "#{", session #{session_id}" if session_id}#{", idle #{idle_label(share)}" if limit})"
+    share
+  end
+
+  def update(share, idle_timeout:)
+    raise ValidationError, "idle_timeout is required" if idle_timeout.nil? || idle_timeout.to_s.strip.empty?
+
+    limit = validated_idle_timeout(idle_timeout)
+    now = Time.now
+    changed = Share.where(id: share.id, ended_at: nil).update(idle_timeout: limit, last_activity_at: now)
+    share.refresh
+    raise AlreadyEnded, "Share has already ended (#{share.end_reason})" if changed.zero?
+
+    $log.info "[share] #{share.id} idle timeout set to #{idle_label(share)}"
     share
   end
 
@@ -47,6 +62,7 @@ module ShareManager
       url: url(share), lan_url: lan_url(share), reason: share.end_reason,
       started_at: iso(share.started_at), ended_at: iso(share.ended_at),
       duration: Listing.human_duration(seconds), duration_seconds: seconds,
+      idle_timeout: share.effective_idle_timeout,
       downloads: files.size, files: files.tally, session: session_of(share)
     }
   end
@@ -55,7 +71,8 @@ module ShareManager
     data = {
       id: share.id, title: share.title, url: url(share), lan_url: lan_url(share), raw: share.raw,
       paths: share.paths_list, live: share.live?, started_at: iso(share.started_at),
-      last_activity_at: iso(share.last_activity_at), idle_timeout: idle_timeout,
+      last_activity_at: iso(share.last_activity_at), idle_timeout: share.effective_idle_timeout,
+      permanent: share.permanent?, expires_at: share.live? ? iso(expires_at(share)) : nil,
       downloads: share.downloads_dataset.count
     }
     data.merge!(ended_at: iso(share.ended_at), reason: share.end_reason) if share.ended?
@@ -112,17 +129,33 @@ module ShareManager
     nil
   end
 
-  def idle_timeout = Setting.fetch("idle_timeout", 1800)
+  def idle_label(share)
+    share.permanent? ? "never" : Listing.human_duration(share.effective_idle_timeout)
+  end
 
-  def idle_label = Listing.human_duration(idle_timeout)
-
-  def expires_at(share) = share.last_activity_at + idle_timeout
+  def expires_at(share)
+    share.last_activity_at + share.effective_idle_timeout unless share.permanent?
+  end
 
   def status(share)
     return { live: false, reason: share.end_reason } if share.ended?
 
-    { live: true, expires_at: iso(expires_at(share)), seconds_left: [(expires_at(share) - Time.now).to_i, 0].max,
-      in_flight: IdleSweeper.in_flight?(share.id) }
+    data = { live: true, permanent: share.permanent?, in_flight: IdleSweeper.in_flight?(share.id) }
+    return data if share.permanent?
+
+    data.merge(expires_at: iso(expires_at(share)), seconds_left: [(expires_at(share) - Time.now).to_i, 0].max)
+  end
+
+  def validated_idle_timeout(value)
+    return nil if value.nil? || value.to_s.strip.empty?
+    return 0 if %w[never none keep].include?(value.to_s.strip.downcase)
+
+    seconds = value.is_a?(Integer) ? value : Integer(value.to_s.strip, 10)
+    raise ValidationError, "idle_timeout must be a non-negative integer of seconds (0 = never)" if seconds.negative?
+
+    seconds
+  rescue ArgumentError, TypeError
+    raise ValidationError, "idle_timeout must be a non-negative integer of seconds (0 = never)"
   end
 
   def validated_paths(paths)
