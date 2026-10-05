@@ -80,7 +80,7 @@ class App < Roda
 
   def page(template, title:, idle_label: nil, **locals)
     view(template, locals: locals.merge(idle_label: idle_label),
-                   layout_opts: { locals: { title: title, idle_label: idle_label,
+                   layout_opts: { locals: { title: title, idle_label: idle_label, permanent: locals[:permanent],
                                             expires_at: locals[:expires_at], status_url: locals[:base] && "#{locals[:base]}/status" } })
   end
 
@@ -94,8 +94,8 @@ class App < Roda
 
   def gallery(share, items, crumbs:, zip_href:)
     media = items.select { |i| Listing.media?(i) }
-    page("gallery", title: share.title, idle_label: ShareManager.idle_label,
-                    expires_at: ShareManager.expires_at(share).to_i,
+    page("gallery", title: share.title, idle_label: ShareManager.idle_label(share),
+                    expires_at: ShareManager.expires_at(share)&.to_i, permanent: share.permanent?,
                     share: share, base: Listing.base(share), crumbs: crumbs, media: media, files: items - media,
                     total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
   end
@@ -157,7 +157,7 @@ class App < Roda
           r.post do
             body = r.POST
             share = ShareManager.create(paths: body["paths"], title: body["title"], raw: body["raw"],
-                                        session: body["session"])
+                                        session: body["session"], idle_timeout: body["idle_timeout"])
             response.status = 201
             json_ok("Share created", **ShareManager.summary(share))
           rescue ShareManager::ValidationError => e
@@ -171,6 +171,17 @@ class App < Roda
 
           r.is do
             r.get { json_ok("Share #{share.live? ? 'live' : 'ended'}", **ShareManager.detail(share)) }
+
+            r.patch do
+              ShareManager.update(share, idle_timeout: r.POST["idle_timeout"])
+              json_ok("Idle timeout set to #{ShareManager.idle_label(share)}", **ShareManager.summary(share))
+            rescue ShareManager::ValidationError => e
+              response.status = 422
+              json_err(e.message)
+            rescue ShareManager::AlreadyEnded => e
+              response.status = 409
+              json_err(e.message, result: ShareManager.result(share))
+            end
 
             r.delete do
               was_live = share.live?

@@ -43,7 +43,8 @@ module IdleSweeper
   end
 
   def interval
-    (idle_timeout / 5.0).clamp(1, 60)
+    limits = ShareManager.live.exclude(idle_timeout: [nil, 0]).select_map(:idle_timeout)
+    ([idle_timeout, *limits].min / 5.0).clamp(1, 60)
   rescue StandardError
     FALLBACK_INTERVAL
   end
@@ -51,16 +52,18 @@ module IdleSweeper
   def idle_timeout = Integer(Setting.fetch("idle_timeout", 1800))
 
   def sweep
-    limit = idle_timeout
-    cutoff = Time.now - limit
-    ShareManager.live.to_a.each { |share| check(share, cutoff, limit) }
+    now = Time.now
+    ShareManager.live.to_a.each { |share| check(share, now) }
     ShareManager.purge_expired!
   end
 
-  def check(share, cutoff, limit)
+  def check(share, now)
+    return if share.permanent?
+
+    limit = share.effective_idle_timeout
     if in_flight?(share.id)
       share.touch!
-    elsif share.last_activity_at < cutoff
+    elsif share.last_activity_at < now - limit
       require_relative "listing" unless defined?(::Listing)
       ShareManager.stop(share, "idle timeout (#{::Listing.human_duration(limit)})")
       $log.info "[idle] #{share.id} stopped after #{limit}s idle"

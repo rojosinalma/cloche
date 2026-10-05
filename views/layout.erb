@@ -1,6 +1,7 @@
 <% page_title = (defined?(title) && title) || "cloche" -%>
 <% footer_idle = defined?(idle_label) && idle_label -%>
 <% footer_expires = defined?(expires_at) && expires_at -%>
+<% footer_permanent = defined?(permanent) && permanent -%>
 <% footer_status = defined?(status_url) && status_url -%>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,7 +28,7 @@
 
   <footer class="app-footer">
     <div class="footer-right">
-      <span class="footer-version">cloche<% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><i class="bi bi-hourglass-split"></i> <span id="expiry-left">--:--</span></span><% end %></span>
+      <span class="footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" title="This share stays up until it is stopped"><i class="bi bi-infinity"></i> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><i class="bi bi-hourglass-split"></i> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="bi bi-sun-fill theme-icon-light"></i><i class="bi bi-moon-fill theme-icon-dark"></i></button>
     </div>
   </footer>
@@ -50,9 +51,11 @@
     (function expiryTimer() {
       const el = document.getElementById('expiry');
       if (!el) return;
-      let expiresAt = Number(el.dataset.expiresAt) * 1000;
+      let expiresAt = Number(el.dataset.expiresAt || 0) * 1000;
+      let permanent = !!el.dataset.permanent;
       let ended = false;
       const left = document.getElementById('expiry-left');
+      const icon = el.querySelector('i');
       const fmt = (s) => {
         const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
         return (h ? `${h}:${String(m).padStart(2, '0')}` : m) + ':' + String(sec).padStart(2, '0');
@@ -66,16 +69,23 @@
         if (content) content.innerHTML = `<div class="empty-state"><i class="bi bi-hourglass-bottom"></i>This share has ended (${reason}). You can close this tab.</div>`;
         toast('warning', `Share ended: ${reason}`);
       };
+      const setPermanent = (on) => {
+        permanent = on;
+        icon.className = on ? 'bi bi-infinity' : 'bi bi-hourglass-split';
+        el.title = on ? 'This share stays up until it is stopped' : 'Time left before this share ends if nobody touches it';
+        if (on) { left.textContent = 'until stopped'; el.classList.remove('text-warning'); }
+      };
       const sync = async () => {
         try {
           const r = await (await fetch(el.dataset.statusUrl, { headers: { 'Accept': 'application/json' } })).json();
           if (!r.live) return markEnded(r.reason || 'stopped');
-          expiresAt = new Date(r.expires_at).getTime();
+          if (!!r.permanent !== permanent) setPermanent(!!r.permanent);
+          if (!r.permanent) expiresAt = new Date(r.expires_at).getTime();
           el.classList.toggle('in-flight', !!r.in_flight);
         } catch (e) { /* keep counting locally */ }
       };
       const tick = () => {
-        if (ended) return;
+        if (ended || permanent) return;
         const s = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
         left.textContent = fmt(s);
         el.classList.toggle('text-warning', s > 0 && s <= 300);

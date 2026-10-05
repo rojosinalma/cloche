@@ -25,6 +25,11 @@ class Share < Sequel::Model(:shares)
 
   def ended? = !live?
 
+  # nil column = follow the global setting; 0 = never times out.
+  def effective_idle_timeout = idle_timeout.nil? ? Setting.fetch("idle_timeout", 1800) : idle_timeout
+
+  def permanent? = effective_idle_timeout.zero?
+
   def touch!
     now = Time.now
     return if last_activity_at && now - last_activity_at < TOUCH_THROTTLE
