@@ -19,6 +19,12 @@ module McpServer
     required: %w[id]
   }.freeze
 
+  IDLE_SCHEMA = {
+    type: "integer",
+    description: "Seconds of inactivity before the share ends. 0 = never, stays up until stopped. " \
+                 "Omitted = the server default (30 min). Any request or download restarts the clock."
+  }.freeze
+
   module_function
 
   def api(method, path, body = nil)
@@ -92,7 +98,8 @@ module McpServer
                     "~/.opencode/plan. Hand the user the returned `url` (not lan_url). create_share learns the " \
                     "calling session from the MCP request, so when the share ends a message saying how it " \
                     "ended and what was downloaded lands in your session automatically; no waiting needed. " \
-                    "Stop shares you no longer need with stop_share.",
+                    "Shares end after 30 min idle by default; pass idle_timeout (seconds, 0 = never) to " \
+                    "create_share or update_share to change that. Stop shares you no longer need with stop_share.",
       tools: TOOLS
     )
   end
@@ -104,11 +111,22 @@ module McpServer
                paths: { type: "array", items: { type: "string" }, description: "Absolute host paths" },
                title: { type: "string", description: "Page heading (defaults to the basename or \"N items\")" },
                raw: { type: "boolean", description: "Serve one folder as a static site instead of a gallery" },
+               idle_timeout: IDLE_SCHEMA,
                session: SESSION_SCHEMA
              }, required: %w[paths] } do |args, session_id|
-    body = args.slice(:paths, :title, :raw, :session)
+    body = args.slice(:paths, :title, :raw, :idle_timeout, :session)
     body[:session] ||= { id: session_id } if session_id
     api_text(:post, "/api/shares", body)
+  end
+
+  register "update_share",
+           "Change the idle timeout of a live share: extend it, or set 0 to keep it up until stopped. " \
+           "Restarts the idle clock from now.",
+           { properties: {
+               id: { type: "string", description: "Share id" },
+               idle_timeout: IDLE_SCHEMA
+             }, required: %w[id idle_timeout] } do |args|
+    api_text(:patch, share_path(args[:id]), { idle_timeout: args[:idle_timeout] })
   end
 
   register "list_shares",
