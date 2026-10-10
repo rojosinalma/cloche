@@ -76,7 +76,7 @@ module TextView
 
       href = Listing.href(@share, @index, child_rel)
       return "#{href}?preview=1" if image
-      return "#{href}?view=1" if Listing.kind_of(real) == :text
+      return "#{href}?view=1" if Listing.viewable?(Listing.kind_of(real))
 
       "#{href}?dl=1"
     end

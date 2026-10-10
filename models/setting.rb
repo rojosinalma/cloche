@@ -20,7 +20,8 @@ class Setting < Sequel::Model(:settings)
       "wait_max_timeout" => "300",
       "text_view_max_bytes" => (2 * 1024 * 1024).to_s,
       "text_view_max_rows" => "500",
-      "text_view_sniff_bytes" => "8192"
+      "text_view_sniff_bytes" => "8192",
+      "model_view_max_bytes" => (100 * 1024 * 1024).to_s
     }
   end
 
