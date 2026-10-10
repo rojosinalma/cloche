@@ -159,4 +159,12 @@ body.lightbox-open { overflow: hidden; }
 .model-overlay[hidden] { display: none; }
 .model-overlay > i { font-size: 2.5rem; color: var(--drac-orange); }
 .model-fallback img { max-width: 100%; max-height: calc(100% - 4rem); object-fit: contain; border-radius: 6px; border: 1px solid var(--drac-selection); background: var(--drac-bg-darker); }
+.model-colors { min-width: 0; }
+.model-colors-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--drac-comment); margin-bottom: .35rem; }
+.model-swatches { display: flex; gap: .35rem; flex-wrap: wrap; max-width: 12rem; }
+.model-swatch { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--drac-selection); background: var(--swatch, var(--drac-bg)); padding: 0; cursor: pointer;
+                display: inline-flex; align-items: center; justify-content: center; color: var(--drac-fg); font-size: .85rem; }
+.model-swatch:hover { border-color: var(--drac-fg); }
+.model-swatch.active { border-color: var(--drac-fg); box-shadow: 0 0 0 2px var(--drac-bg), 0 0 0 4px var(--drac-purple); }
+.model-swatch[hidden] { display: none; }
 
