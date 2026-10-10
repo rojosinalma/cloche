@@ -22,6 +22,22 @@
             <button class="btn btn-outline-secondary" id="model-reset" title="Reset view" disabled><i class="bi bi-arrows-fullscreen"></i></button>
             <button class="btn btn-outline-secondary active" id="model-grid" title="Toggle grid" disabled><i class="bi bi-grid-3x3"></i></button>
             <button class="btn btn-outline-secondary" id="model-wire" title="Toggle wireframe" disabled><i class="bi bi-bounding-box"></i></button>
+            <button class="btn btn-outline-secondary dropdown-toggle" id="model-colors" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Colours" disabled><i class="bi bi-palette"></i></button>
+            <div class="dropdown-menu dropdown-menu-end model-colors p-2">
+              <div class="model-colors-label">Model</div>
+              <div class="model-swatches" data-target="mesh">
+                <% %w[purple cyan green orange pink red yellow fg comment].each do |c| -%>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(--drac-<%= c %>)" title="<%= c %>"></button>
+                <% end -%>
+                <button type="button" class="model-swatch model-swatch-file" data-color="file" title="Colours from the file" hidden><i class="bi bi-file-earmark"></i></button>
+              </div>
+              <div class="model-colors-label mt-2">Background</div>
+              <div class="model-swatches" data-target="bg">
+                <% %w[bg bg-dark bg-darker selection comment fg].each do |c| -%>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(--drac-<%= c %>)" title="<%= c %>"></button>
+                <% end -%>
+              </div>
+            </div>
           </div>
           <a class="btn btn-sm btn-outline-success" href="<%= download_href %>" title="Download"><i class="bi bi-download"></i></a>
         </div>

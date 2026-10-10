@@ -12,7 +12,17 @@ const errorBox = document.getElementById('model-error');
 const fallback = document.getElementById('model-fallback');
 const notice = document.getElementById('model-notice');
 const stats = document.getElementById('model-stats');
-const buttons = { reset: document.getElementById('model-reset'), grid: document.getElementById('model-grid'), wire: document.getElementById('model-wire') };
+const buttons = { reset: document.getElementById('model-reset'), grid: document.getElementById('model-grid'), wire: document.getElementById('model-wire'), colors: document.getElementById('model-colors') };
+const swatches = Array.from(document.querySelectorAll('.model-swatch'));
+const fileSwatch = document.querySelector('.model-swatch-file');
+
+const STORAGE_KEY = 'cloche.model-colors';
+const defaults = { mesh: 'purple', bg: 'bg' };
+const stored = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; } })();
+const choice = (() => {
+  try { return { ...defaults, ...JSON.parse(stored || '{}') }; } catch (e) { return { ...defaults }; }
+})();
+const remember = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(choice)); } catch (e) { /* private mode */ } };
 
 const cssColor = (name) => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#000000');
 const fmt = (n) => (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
@@ -46,15 +56,28 @@ scene.add(model);
 let grid = null;
 let fit = null;
 const meshes = [];
+let hasFileColors = false;
+
+function markSwatches() {
+  swatches.forEach((s) => {
+    const target = s.closest('.model-swatches').dataset.target;
+    s.classList.toggle('active', choice[target] === s.dataset.color);
+  });
+}
 
 function applyTheme() {
-  scene.background = cssColor('--drac-bg');
-  const purple = cssColor('--drac-purple');
+  scene.background = cssColor(`--drac-${choice.bg}`);
   const comment = cssColor('--drac-comment');
   hemi.color.copy(cssColor('--drac-fg'));
   hemi.groundColor.copy(cssColor('--drac-bg-darker'));
-  meshes.forEach((m) => { if (m.userData.themed) m.material.color.copy(purple); });
+  const useFile = choice.mesh === 'file' && hasFileColors;
+  const tint = useFile ? null : cssColor(`--drac-${choice.mesh}`);
+  meshes.forEach((m) => {
+    if (useFile && m.userData.fileColor) m.material.color.copy(m.userData.fileColor);
+    else m.material.color.copy(tint || cssColor('--drac-purple'));
+  });
   if (grid) grid.material.color.copy(comment);
+  markSwatches();
 }
 
 function buildGrid(box) {
@@ -95,10 +118,8 @@ function resize() {
   camera.updateProjectionMatrix();
 }
 
-function standardMaterial(color, themed) {
-  const material = new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.08, side: THREE.DoubleSide });
-  material.userData.themed = themed;
-  return material;
+function standardMaterial(color) {
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.08, side: THREE.DoubleSide });
 }
 
 function adopt(object) {
@@ -108,12 +129,16 @@ function adopt(object) {
     const source = Array.isArray(node.material) ? node.material[0] : node.material;
     const isDefault = !source || source.name === THREE.Loader.DEFAULT_MATERIAL_NAME || source.name === '' || !source.color;
     const own = !isDefault && !source.color.equals(new THREE.Color(0xffffff));
-    node.material = standardMaterial(own ? source.color.clone() : purple, !own);
-    node.userData.themed = !own;
+    node.material = standardMaterial(own ? source.color.clone() : purple);
+    if (own) { node.userData.fileColor = source.color.clone(); hasFileColors = true; }
     if (!node.geometry.attributes.normal) node.geometry.computeVertexNormals();
     meshes.push(node);
   });
   model.add(object);
+  if (hasFileColors) {
+    fileSwatch.hidden = false;
+    if (!stored) choice.mesh = 'file';
+  }
 }
 
 function triangles() {
@@ -200,6 +225,11 @@ if (renderer) {
     const on = buttons.wire.classList.toggle('active');
     meshes.forEach((m) => { m.material.wireframe = on; });
   });
+  swatches.forEach((s) => s.addEventListener('click', () => {
+    choice[s.closest('.model-swatches').dataset.target] = s.dataset.color;
+    remember();
+    applyTheme();
+  }));
 
   (function animate() {
     requestAnimationFrame(animate);
