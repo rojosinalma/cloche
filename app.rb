@@ -12,7 +12,7 @@ require_relative "lib/idle_sweeper"
 # Stateful modules above load once; everything below reloads in development.
 %w[
   models/setting models/share models/download
-  lib/path_guard lib/listing lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
+  lib/path_guard lib/listing lib/text_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
 ].each do |file|
   defined?(Unreloader) ? Unreloader.require(File.expand_path("#{file}.rb", __dir__)) : require_relative(file)
 end
@@ -92,12 +92,28 @@ class App < Roda
 
   def decode_path(path) = Rack::Utils.unescape_path(path.to_s).dup.force_encoding(Encoding::UTF_8)
 
+  def share_page(template, share, **locals)
+    page(template, title: share.title, idle_label: ShareManager.idle_label(share),
+                   expires_at: ShareManager.expires_at(share)&.to_i, permanent: share.permanent?,
+                   share: share, base: Listing.base(share), **locals)
+  end
+
   def gallery(share, items, crumbs:, zip_href:)
     media = items.select { |i| Listing.media?(i) }
-    page("gallery", title: share.title, idle_label: ShareManager.idle_label(share),
-                    expires_at: ShareManager.expires_at(share)&.to_i, permanent: share.permanent?,
-                    share: share, base: Listing.base(share), crumbs: crumbs, media: media, files: items - media,
-                    total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
+    share_page("gallery", share, crumbs: crumbs, media: media, files: items - media,
+                                 total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
+  end
+
+  # The viewer page counts as one download of the file (its content was
+  # fetched); the Pretty/Raw toggle and Copy are client-side and add nothing.
+  def viewer(share, index, rel, real)
+    entry = share.entries[index]
+    name = rel.empty? ? File.basename(real) : rel
+    view = TextView.build(real, name: File.basename(real), share: share, index: index, rel: rel)
+    FileServer.count(request: request, share: share, name: name) unless view.too_large? || FileServer.skip_count?(request)
+    crumbs = entry.dir ? Listing.crumbs(share, index, rel.include?("/") ? File.dirname(rel) : "") : []
+    share_page("viewer", share, crumbs: crumbs, view: view, download_href: "#{Listing.href(share, index, rel)}?dl=1",
+                                back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
   end
 
   def gallery_folder(share, index, rel, real)
@@ -116,6 +132,7 @@ class App < Roda
     rel = rel.delete_prefix("/").delete_suffix("/")
     real = PathGuard.resolve(entry, rel) or not_found_page!
     return gallery_folder(share, index, rel, real) if File.directory?(real)
+    return viewer(share, index, rel, real) if request.params.key?("view") && Listing.kind_of(real) == :text
 
     request.halt FileServer.serve(request: request, share: share, real_path: real,
                                   name: rel.empty? ? File.basename(real) : rel,

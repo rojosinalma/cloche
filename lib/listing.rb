@@ -9,7 +9,7 @@ module Listing
     audio: %w[mp3 ogg oga wav flac m4a opus aac].freeze
   }.freeze
   ICONS = { dir: "folder-fill", image: "file-earmark-image", video: "file-earmark-play",
-            audio: "file-earmark-music", file: "file-earmark" }.freeze
+            audio: "file-earmark-music", text: "file-earmark-text", file: "file-earmark" }.freeze
   MEDIA_KINDS = %i[image video audio].freeze
   SIZE_UNITS = %w[B KB MB GB TB].freeze
 
@@ -17,14 +17,18 @@ module Listing
 
   module_function
 
+  # :text is any file the viewer can show (see TextView.text?); it is still
+  # served as an attachment like every other non-media file.
   def kind_of(path)
     return :dir if File.directory?(path)
 
     ext = File.extname(path).delete(".").downcase
-    KINDS.find { |_, exts| exts.include?(ext) }&.first || :file
+    KINDS.find { |_, exts| exts.include?(ext) }&.first || (TextView.text?(path) ? :text : :file)
   end
 
   def media?(item) = MEDIA_KINDS.include?(item.kind)
+
+  def media_kind?(kind) = MEDIA_KINDS.include?(kind)
 
   def icon_for(kind) = ICONS.fetch(kind, ICONS[:file])
 
@@ -62,7 +66,7 @@ module Listing
     else
       link = href(share, index, rel)
       Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
-               view_href: link, icon: icon_for(kind))
+               view_href: kind == :text ? "#{link}?view=1" : link, icon: icon_for(kind))
     end
   end
 

@@ -1,14 +1,6 @@
 <% items = media + files -%>
 <% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
-  <nav class="navbar sticky-top navbar-padded">
-    <a class="brand fs-5" href="<%= base %>/"><i class="bi bi-cloud-arrow-down me-2"></i><%= share.title %></a>
-    <div class="ms-auto d-flex align-items-center gap-2">
-      <% unless items.empty? -%>
-      <a class="btn btn-sm btn-primary serve-action" href="<%= zip_href %>"><i class="bi bi-file-earmark-zip me-1"></i>Download all</a>
-      <% end -%>
-      <button class="btn btn-sm btn-outline-danger serve-action" data-bs-toggle="modal" data-bs-target="#stop-modal"><i class="bi bi-stop-circle me-1"></i>Stop serving</button>
-    </div>
-  </nav>
+<%== render("share_nav", locals: { share: share, base: base, zip_href: items.empty? ? nil : zip_href }) %>
 
   <main class="main-content" id="content">
     <% unless crumbs.empty? -%>
@@ -65,7 +57,12 @@
             <% if f.kind == :dir -%>
             <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
             <% else -%>
-            <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
+            <div class="d-flex gap-1 justify-content-end">
+              <% if f.kind == :text -%>
+              <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View"><i class="bi bi-eye"></i></a>
+              <% end -%>
+              <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
+            </div>
             <% end -%>
           </td>
         </tr>
@@ -90,11 +87,7 @@
     <button class="lightbox-nav lightbox-next" id="lightbox-next" title="Next (→)"><i class="bi bi-chevron-right"></i></button>
   </div>
 
-  <div class="modal fade" id="stop-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-stop-circle me-2"></i>Stop serving?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body">The links on this page stop working and the agent that served them is told you ended it.</div>
-    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="stop-confirm" data-stop-url="<%= base %>/stop" onclick="stopServing()">Stop serving</button></div>
-  </div></div></div>
+<%== render("stop_modal", locals: { base: base }) %>
 
   <script>
     (function lightbox() {
@@ -135,22 +128,4 @@
         else if (e.key === ' ' || e.key === 'z') { e.preventDefault(); toggleZoom(); }
       });
     })();
-
-    async function stopServing() {
-      const btn = document.getElementById('stop-confirm');
-      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-      try {
-        const res = await fetch(btn.dataset.stopUrl, { method: 'POST', headers: { 'Accept': 'application/json' } });
-        const r = await res.json();
-        if (!r.ok) throw new Error(r.message || `HTTP ${res.status}`);
-        bootstrap.Modal.getInstance(document.getElementById('stop-modal')).hide();
-        document.querySelectorAll('.serve-action').forEach(b => b.remove());
-        document.getElementById('content').innerHTML =
-          '<div class="empty-state"><i class="bi bi-stop-circle"></i>Serving stopped. You can close this tab.</div>';
-        toast('success', r.message);
-      } catch (e) {
-        btn.disabled = false; btn.textContent = 'Stop serving';
-        toast('error', `Could not stop: ${e.message}`);
-      }
-    }
   </script>

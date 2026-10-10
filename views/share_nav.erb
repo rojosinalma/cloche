@@ -1,0 +1,9 @@
+  <nav class="navbar sticky-top navbar-padded">
+    <a class="brand fs-5" href="<%= base %>/"><i class="bi bi-cloud-arrow-down me-2"></i><%= share.title %></a>
+    <div class="ms-auto d-flex align-items-center gap-2">
+      <% if zip_href -%>
+      <a class="btn btn-sm btn-primary serve-action" href="<%= zip_href %>"><i class="bi bi-file-earmark-zip me-1"></i>Download all</a>
+      <% end -%>
+      <button class="btn btn-sm btn-outline-danger serve-action" data-bs-toggle="modal" data-bs-target="#stop-modal"><i class="bi bi-stop-circle me-1"></i>Stop serving</button>
+    </div>
+  </nav>
