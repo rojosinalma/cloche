@@ -17,7 +17,10 @@ class Setting < Sequel::Model(:settings)
       "callback_mode" => "instruction",
       "callback_entry_key" => "cloche",
       "callback_history" => "3",
-      "wait_max_timeout" => "300"
+      "wait_max_timeout" => "300",
+      "text_view_max_bytes" => (2 * 1024 * 1024).to_s,
+      "text_view_max_rows" => "500",
+      "text_view_sniff_bytes" => "8192"
     }
   end
 

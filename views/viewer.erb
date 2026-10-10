@@ -1,0 +1,70 @@
+<%== render("share_nav", locals: { share: share, base: base, zip_href: nil }) %>
+
+  <main class="main-content" id="content">
+    <div class="crumbs mb-4">
+      <a class="btn btn-sm btn-outline-secondary me-2" href="<%= back_href %>" title="Back to the folder"><i class="bi bi-arrow-left"></i></a>
+      <a href="<%= base %>/"><i class="bi bi-house-door"></i></a>
+      <% crumbs.each do |label, link| -%>
+      <span class="sep">/</span><a href="<%= link %>"><%= label %></a>
+      <% end -%>
+      <span class="sep">/</span><span><%= view.name %></span>
+    </div>
+
+    <div class="card file-view" id="file-view">
+      <div class="card-header file-view-header">
+        <i class="bi bi-file-earmark-text file-view-icon"></i>
+        <span class="file-view-name" title="<%= view.name %>"><%= view.name %></span>
+        <span class="file-view-badge"><%= view.label %></span>
+        <span class="file-size"><%= Listing.human_size(view.size) %><% if view.lines %> · <%= view.lines %> line<%= 's' unless view.lines == 1 %><% end %></span>
+        <div class="file-view-actions">
+          <% if view.pretty? -%>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Pretty or raw">
+            <button class="btn btn-outline-secondary pane-btn active" data-pane="pretty" onclick="showPane('pretty')" title="Rendered view">Pretty</button>
+            <button class="btn btn-outline-secondary pane-btn" data-pane="source" onclick="showPane('source')" title="Exact file content">Raw</button>
+          </div>
+          <% end -%>
+          <% unless view.too_large? || view.empty? -%>
+          <button class="btn btn-sm btn-outline-secondary" onclick="copyText()" title="Copy file content"><i class="bi bi-clipboard"></i></button>
+          <% end -%>
+          <a class="btn btn-sm btn-outline-success" href="<%= download_href %>" title="Download"><i class="bi bi-download"></i></a>
+        </div>
+      </div>
+      <% view.notices.each do |notice| -%>
+      <div class="file-view-notice"><i class="bi bi-info-circle me-2"></i><%= notice %></div>
+      <% end -%>
+      <div class="card-body file-view-body">
+        <% if view.too_large? -%>
+        <div class="empty-state">
+          <i class="bi bi-file-earmark-x"></i>
+          This file is <%= Listing.human_size(view.size) %>, above the <%= Listing.human_size(view.max_bytes) %> viewer limit.
+          <div class="mt-3"><a class="btn btn-success" href="<%= download_href %>"><i class="bi bi-download me-1"></i>Download it instead</a></div>
+        </div>
+        <% elsif view.empty? -%>
+        <div class="empty-state"><i class="bi bi-file-earmark"></i>This file is empty.</div>
+        <% else -%>
+        <% if view.pretty? -%>
+        <div class="view-pane" data-pane="pretty"><%== view.pretty_html %></div>
+        <% end -%>
+        <div class="view-pane code-lines hl" data-pane="source" id="source-pane"<%== ' hidden' if view.pretty? %>><%== view.source_html %></div>
+        <% end -%>
+      </div>
+    </div>
+  </main>
+
+<%== render("stop_modal", locals: { base: base }) %>
+
+  <script>
+    function showPane(name) {
+      document.querySelectorAll('.view-pane').forEach(p => { p.hidden = p.dataset.pane !== name; });
+      document.querySelectorAll('.pane-btn').forEach(b => b.classList.toggle('active', b.dataset.pane === name));
+    }
+    async function copyText() {
+      const text = document.getElementById('source-pane').textContent.replace(/\n$/, '');
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('success', 'Copied to clipboard');
+      } catch (e) {
+        toast('error', `Could not copy: ${e.message}`);
+      }
+    }
+  </script>

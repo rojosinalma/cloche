@@ -1,0 +1,25 @@
+  <div class="modal fade" id="stop-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-stop-circle me-2"></i>Stop serving?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">The links on this page stop working and the agent that served them is told you ended it.</div>
+    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="stop-confirm" data-stop-url="<%= base %>/stop" onclick="stopServing()">Stop serving</button></div>
+  </div></div></div>
+
+  <script>
+    async function stopServing() {
+      const btn = document.getElementById('stop-confirm');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      try {
+        const res = await fetch(btn.dataset.stopUrl, { method: 'POST', headers: { 'Accept': 'application/json' } });
+        const r = await res.json();
+        if (!r.ok) throw new Error(r.message || `HTTP ${res.status}`);
+        bootstrap.Modal.getInstance(document.getElementById('stop-modal')).hide();
+        document.querySelectorAll('.serve-action').forEach(b => b.remove());
+        document.getElementById('content').innerHTML =
+          '<div class="empty-state"><i class="bi bi-stop-circle"></i>Serving stopped. You can close this tab.</div>';
+        toast('success', r.message);
+      } catch (e) {
+        btn.disabled = false; btn.textContent = 'Stop serving';
+        toast('error', `Could not stop: ${e.message}`);
+      }
+    }
+  </script>
