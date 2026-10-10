@@ -6,19 +6,22 @@ module Listing
   KINDS = {
     image: %w[png jpg jpeg gif webp svg avif bmp ico].freeze,
     video: %w[mp4 webm ogv m4v mov].freeze,
-    audio: %w[mp3 ogg oga wav flac m4a opus aac].freeze
+    audio: %w[mp3 ogg oga wav flac m4a opus aac].freeze,
+    model: %w[stl 3mf obj].freeze
   }.freeze
   ICONS = { dir: "folder-fill", image: "file-earmark-image", video: "file-earmark-play",
-            audio: "file-earmark-music", text: "file-earmark-text", file: "file-earmark" }.freeze
+            audio: "file-earmark-music", text: "file-earmark-text", model: "box", file: "file-earmark" }.freeze
   MEDIA_KINDS = %i[image video audio].freeze
+  VIEWABLE_KINDS = %i[text model].freeze
   SIZE_UNITS = %w[B KB MB GB TB].freeze
 
   Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, keyword_init: true)
 
   module_function
 
-  # :text is any file the viewer can show (see TextView.text?); it is still
-  # served as an attachment like every other non-media file.
+  # :text is any file the viewer can show (see TextView.text?) and :model a
+  # 3D file for the model viewer; both are still served as attachments like
+  # every other non-media file. Extensions win, so an ASCII STL is :model.
   def kind_of(path)
     return :dir if File.directory?(path)
 
@@ -29,6 +32,8 @@ module Listing
   def media?(item) = MEDIA_KINDS.include?(item.kind)
 
   def media_kind?(kind) = MEDIA_KINDS.include?(kind)
+
+  def viewable?(kind) = VIEWABLE_KINDS.include?(kind)
 
   def icon_for(kind) = ICONS.fetch(kind, ICONS[:file])
 
@@ -66,7 +71,7 @@ module Listing
     else
       link = href(share, index, rel)
       Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
-               view_href: kind == :text ? "#{link}?view=1" : link, icon: icon_for(kind))
+               view_href: viewable?(kind) ? "#{link}?view=1" : link, icon: icon_for(kind))
     end
   end
 

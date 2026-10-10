@@ -150,3 +150,13 @@ body.lightbox-open { overflow: hidden; }
 .csv-table tbody tr::before { counter-increment: row; content: counter(row); display: table-cell; padding: .3rem .75rem; text-align: right;
                               color: var(--drac-comment); border-right: 1px solid var(--drac-selection); border-bottom: 1px solid var(--drac-selection); user-select: none; }
 .card .csv-table { border-radius: 0; }
+
+/* 3D model viewer: a Three.js canvas filling the card */
+.model-stage { position: relative; height: 68vh; min-height: 320px; background: var(--drac-bg); overflow: hidden; border-radius: 0 0 var(--bs-card-border-radius, .5rem) var(--bs-card-border-radius, .5rem); }
+.model-stage canvas { display: block; width: 100% !important; height: 100% !important; outline: none; touch-action: none; }
+.model-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
+                 color: var(--drac-comment); text-align: center; padding: 1.5rem; background: var(--drac-bg); }
+.model-overlay[hidden] { display: none; }
+.model-overlay > i { font-size: 2.5rem; color: var(--drac-orange); }
+.model-fallback img { max-width: 100%; max-height: calc(100% - 4rem); object-fit: contain; border-radius: 6px; border: 1px solid var(--drac-selection); background: var(--drac-bg-darker); }
+
