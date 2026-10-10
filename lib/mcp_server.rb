@@ -94,7 +94,8 @@ module McpServer
       title: "cloche",
       version: "1.0.0",
       instructions: "Shares files and folders from this host with the user's browser as a gallery page " \
-                    "(previews, downloads, zip). Paths are absolute host paths under ~/dev, ~/tiny or " \
+                    "(image/video/audio previews, a card viewer for text files — Markdown rendered, JSON/CSV " \
+                    "pretty, source highlighted — downloads, zip). Paths are absolute host paths under ~/dev, ~/tiny or " \
                     "~/.opencode/plan. Hand the user the returned `url` (not lan_url). create_share learns the " \
                     "calling session from the MCP request, so when the share ends a message saying how it " \
                     "ended and what was downloaded lands in your session automatically; no waiting needed. " \
@@ -105,7 +106,9 @@ module McpServer
   end
 
   register "create_share",
-           "Share files and/or folders with the user. Returns the share url to hand him. raw=true serves " \
+           "Share files and/or folders with the user. Returns the share url to hand him. Text files " \
+           "(logs, Markdown, JSON, CSV, code …) get a View button that opens them readable in the page, " \
+           "so this also hands over things to read, not just download. raw=true serves " \
            "exactly one folder as a plain static site (HTML renders, relative links work).",
            { properties: {
                paths: { type: "array", items: { type: "string" }, description: "Absolute host paths" },
