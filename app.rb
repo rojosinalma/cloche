@@ -12,7 +12,7 @@ require_relative "lib/idle_sweeper"
 # Stateful modules above load once; everything below reloads in development.
 %w[
   models/setting models/share models/download
-  lib/path_guard lib/listing lib/text_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
+  lib/path_guard lib/listing lib/text_view lib/model_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
 ].each do |file|
   defined?(Unreloader) ? Unreloader.require(File.expand_path("#{file}.rb", __dir__)) : require_relative(file)
 end
@@ -116,6 +116,19 @@ class App < Roda
                                 back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
   end
 
+  # Same counting rule as the text viewer: the page is the one download, the
+  # browser's ?preview=1 fetch of the geometry adds nothing.
+  def model_viewer(share, index, rel, real)
+    entry = share.entries[index]
+    name = rel.empty? ? File.basename(real) : rel
+    view = ModelView.build(real, name: File.basename(real))
+    FileServer.count(request: request, share: share, name: name) unless view.too_large? || FileServer.skip_count?(request)
+    crumbs = entry.dir ? Listing.crumbs(share, index, rel.include?("/") ? File.dirname(rel) : "") : []
+    href = Listing.href(share, index, rel)
+    share_page("model_viewer", share, crumbs: crumbs, view: view, download_href: "#{href}?dl=1", model_href: "#{href}?preview=1",
+                                      back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
+  end
+
   def gallery_folder(share, index, rel, real)
     entry = share.entries[index]
     name = rel.empty? ? entry.name : File.basename(rel)
@@ -132,7 +145,12 @@ class App < Roda
     rel = rel.delete_prefix("/").delete_suffix("/")
     real = PathGuard.resolve(entry, rel) or not_found_page!
     return gallery_folder(share, index, rel, real) if File.directory?(real)
-    return viewer(share, index, rel, real) if request.params.key?("view") && Listing.kind_of(real) == :text
+    if request.params.key?("view")
+      case Listing.kind_of(real)
+      when :text then return viewer(share, index, rel, real)
+      when :model then return model_viewer(share, index, rel, real)
+      end
+    end
 
     request.halt FileServer.serve(request: request, share: share, real_path: real,
                                   name: rel.empty? ? File.basename(real) : rel,

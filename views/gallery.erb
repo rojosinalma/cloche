@@ -50,7 +50,7 @@
       <% files.each do |f| -%>
         <tr>
           <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
-          <td><a class="file-name d-block" href="<%= f.href %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
+          <td><a class="file-name d-block" href="<%= Listing.viewable?(f.kind) ? f.view_href : f.href %>" title="<%= f.kind == :dir ? 'Open' : Listing.viewable?(f.kind) ? 'View' : 'Download' %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
           <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
           <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
           <td class="col-shrink">
@@ -58,7 +58,7 @@
             <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
             <% else -%>
             <div class="d-flex gap-1 justify-content-end">
-              <% if f.kind == :text -%>
+              <% if Listing.viewable?(f.kind) -%>
               <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View"><i class="bi bi-eye"></i></a>
               <% end -%>
               <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
