@@ -99,7 +99,7 @@ module FileServer
 
   def file_headers(real_path, name, download:, sandbox:)
     headers = { "content-type" => mime_for(real_path), "cache-control" => FILE_CACHE }
-    if download || (sandbox && kind_of(real_path) == :file)
+    if download || (sandbox && !::Listing.media_kind?(kind_of(real_path)))
       headers["content-disposition"] = attachment(File.basename(name))
     else
       headers["content-disposition"] = "inline"

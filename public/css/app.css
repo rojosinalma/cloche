@@ -77,3 +77,76 @@ body.lightbox-open { overflow: hidden; }
 .lightbox-nav:hover { background: var(--drac-selection); color: var(--drac-purple); }
 .lightbox-prev { left: .75rem; }
 .lightbox-next { right: .75rem; }
+
+/* ─── Text viewer: one card that reads like a file ───────── */
+.file-view { margin-bottom: 2rem; }
+.file-view-header { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; padding: .6rem .9rem; }
+.file-view-icon { color: var(--drac-purple); font-size: 1.15rem; }
+.file-view-name { font-weight: 600; color: var(--drac-fg); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40vw; }
+.file-view-badge { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; padding: .15rem .5rem; border-radius: 999px;
+                   color: var(--drac-purple); background: color-mix(in srgb, var(--drac-purple) 16%, transparent); border: 1px solid color-mix(in srgb, var(--drac-purple) 40%, transparent); }
+.file-view-actions { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+.file-view-notice { display: flex; align-items: center; padding: .45rem .9rem; font-size: .85rem; color: var(--drac-orange);
+                    background: color-mix(in srgb, var(--drac-orange) 10%, transparent); border-bottom: 1px solid var(--drac-selection); }
+.file-view-body { padding: 0; background: var(--drac-bg-dark); }
+.file-view-body .empty-state { padding: 3rem 1rem; }
+.file-view-body .empty-state .btn i { display: inline; font-size: inherit; margin-bottom: 0; }
+.view-pane[hidden] { display: none; }
+.view-pane[data-pane="pretty"] { padding: 1.25rem 1.5rem; overflow-x: auto; }
+
+/* Line-numbered source: one .line per source line, numbers via CSS counters (not selectable, not copied) */
+.code-lines { counter-reset: line; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; line-height: 1.5;
+              color: var(--drac-fg); overflow-x: auto; padding: .6rem 0; tab-size: 4; }
+.code-lines .line { display: block; white-space: pre; min-height: 1.5em; padding-right: 1rem; }
+.code-lines .line::before { counter-increment: line; content: counter(line); display: inline-block; width: 3.5em; text-align: right; padding-right: 1em; margin-right: .75em;
+                            color: var(--drac-comment); border-right: 1px solid var(--drac-selection); user-select: none; }
+.code-lines .line:hover { background: color-mix(in srgb, var(--drac-selection) 55%, transparent); }
+.view-pane[data-pane="pretty"] .code-lines { padding: 0; margin: -1.25rem -1.5rem; }
+
+/* Rouge token classes on the palette; works in Classic and Alucard alike */
+.hl .c, .hl .c1, .hl .cm, .hl .cp, .hl .cpf, .hl .cs, .hl .ch { color: var(--drac-comment); font-style: italic; }
+.hl .k, .hl .kc, .hl .kd, .hl .kn, .hl .kp, .hl .kr, .hl .kv, .hl .o, .hl .ow, .hl .nt, .hl .se, .hl .si { color: var(--drac-pink); }
+.hl .kt, .hl .nb, .hl .bp, .hl .nc, .hl .ni, .hl .nn, .hl .nl { color: var(--drac-cyan); }
+.hl .kt, .hl .nc { font-style: italic; }
+.hl .nf, .hl .fm, .hl .na, .hl .nd, .hl .gi { color: var(--drac-green); }
+.hl .s, .hl .sa, .hl .sb, .hl .sc, .hl .dl, .hl .sd, .hl .s2, .hl .sh, .hl .sx, .hl .s1, .hl .ss { color: var(--drac-yellow); }
+.hl .sr, .hl .gd, .hl .gt, .hl .err { color: var(--drac-red); }
+.hl .m, .hl .mb, .hl .mf, .hl .mh, .hl .mi, .hl .il, .hl .mo, .hl .mx, .hl .no, .hl .gh, .hl .gu { color: var(--drac-purple); }
+.hl .nv, .hl .vc, .hl .vg, .hl .vi, .hl .gp { color: var(--drac-orange); }
+.hl .gh, .hl .gs { font-weight: 700; }
+.hl .ge { font-style: italic; }
+.hl .p, .hl .w, .hl .nx, .hl .n { color: var(--drac-fg); }
+
+/* Rendered Markdown */
+.md-body { max-width: 56rem; line-height: 1.6; }
+.md-body > :first-child { margin-top: 0; }
+.md-body > :last-child { margin-bottom: 0; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 { color: var(--drac-purple); font-weight: 600; margin-top: 1.5rem; margin-bottom: .6rem; }
+.md-body h1 { font-size: 1.6rem; } .md-body h2 { font-size: 1.3rem; padding-bottom: .25rem; border-bottom: 1px solid var(--drac-selection); } .md-body h3 { font-size: 1.1rem; }
+.md-body a { color: var(--drac-cyan); }
+.md-body a:hover { color: var(--drac-pink); }
+.md-body code { font-size: .85em; padding: .1em .35em; border-radius: 4px; color: var(--drac-pink); background: var(--drac-bg-darker); }
+.md-body pre.md-code { font-size: .82rem; line-height: 1.5; padding: .8rem 1rem; border-radius: 6px; border: 1px solid var(--drac-selection);
+                       background: var(--drac-bg-darker); color: var(--drac-fg); overflow-x: auto; }
+.md-body pre.md-code code { padding: 0; background: none; color: inherit; font-size: inherit; }
+.md-body blockquote { margin: 0 0 1rem; padding: .4rem 1rem; border-left: 3px solid var(--drac-purple); color: var(--drac-muted, var(--drac-comment)); }
+.md-body blockquote > :last-child { margin-bottom: 0; }
+.md-body hr { border-color: var(--drac-selection); opacity: 1; }
+.md-body img { max-width: 100%; border-radius: 6px; }
+.md-body ul, .md-body ol { padding-left: 1.6rem; }
+.md-body li.task-item { list-style: none; margin-left: -1.3rem; }
+.md-body li.task-item input { margin-right: .35rem; vertical-align: -.1em; accent-color: var(--drac-purple); }
+.md-body .table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+.md-body .md-table { width: auto; margin: 0; }
+.md-body .md-table th { color: var(--drac-purple); white-space: nowrap; }
+.md-body .footnotes { font-size: .85rem; color: var(--drac-muted, var(--drac-comment)); border-top: 1px solid var(--drac-selection); margin-top: 1.5rem; padding-top: .75rem; }
+.md-missing { color: var(--drac-muted, var(--drac-comment)); border-bottom: 1px dotted var(--drac-comment); cursor: help; }
+
+/* CSV / TSV as a table */
+.view-pane .table-wrap:has(.csv-table) { margin: -1.25rem -1.5rem; overflow: auto; max-height: calc(100vh - 56px - 32px - 14rem); }
+.csv-table { margin: 0; font-size: .85rem; white-space: nowrap; counter-reset: row; }
+.csv-table thead th { position: sticky; top: 0; z-index: 1; color: var(--drac-purple); background: var(--drac-bg-darker); }
+.csv-table td, .csv-table th { padding: .3rem .75rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.csv-table tbody tr::before { counter-increment: row; content: counter(row); display: table-cell; padding: .3rem .75rem; text-align: right;
+                              color: var(--drac-comment); border-right: 1px solid var(--drac-selection); border-bottom: 1px solid var(--drac-selection); user-select: none; }
+.card .csv-table { border-radius: 0; }
