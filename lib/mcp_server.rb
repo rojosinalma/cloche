@@ -25,6 +25,43 @@ module McpServer
                  "Omitted = the server default (30 min). Any request or download restarts the clock."
   }.freeze
 
+  OPTION_SCHEMA = {
+    description: "Choices for checklist/radio/select: a plain string (value = label) or {value, label?, hint?}. " \
+                 "Values must be unique, non-empty strings; the answer carries the value, the user sees the label.",
+    oneOf: [
+      { type: "string" },
+      { type: "object", properties: { value: { type: "string" }, label: { type: "string" }, hint: { type: "string" } },
+        required: %w[value] }
+    ]
+  }.freeze
+
+  FIELD_SCHEMA = {
+    type: "object",
+    description: "One question. Types and their answer values: checklist → array of option values (props: options, " \
+                 "min, max); radio and select → one option value (options); text → string (multiline, placeholder, " \
+                 "max_chars); tasklist → array of 1-based ordinals of the task items in `markdown` or in the file at " \
+                 "`path` (lines `- [ ] item`; `[x]` items are pre-ticked; other lines are shown as prose); markdown → " \
+                 "static prose from `markdown` or `path`, no answer. Common: id (a-z0-9_, unique; markdown fields may " \
+                 "omit it), label, help, required, default (same shape as the answer).",
+    properties: {
+      id: { type: "string", description: "Answer key, /^[a-z0-9_]{1,64}$/" },
+      type: { type: "string", enum: %w[checklist radio select text tasklist markdown] },
+      label: { type: "string", description: "The question" },
+      help: { type: "string", description: "Short hint under the label" },
+      required: { type: "boolean" },
+      default: { description: "Pre-filled answer: array for checklist/tasklist, string otherwise" },
+      options: { type: "array", items: OPTION_SCHEMA, description: "checklist/radio/select choices (≥1)" },
+      min: { type: "integer", description: "checklist/tasklist: least picks allowed when answered" },
+      max: { type: "integer", description: "checklist/tasklist: most picks allowed" },
+      multiline: { type: "boolean", description: "text: textarea instead of one line" },
+      placeholder: { type: "string", description: "text: placeholder" },
+      max_chars: { type: "integer", description: "text: cap (≤ the server's form_text_max_chars, default 4000)" },
+      markdown: { type: "string", description: "tasklist/markdown: inline Markdown (GFM)" },
+      path: { type: "string", description: "tasklist/markdown: absolute path of a Markdown file under an allowed root, read once now" }
+    },
+    required: %w[type]
+  }.freeze
+
   module_function
 
   def api(method, path, body = nil)
@@ -100,7 +137,10 @@ module McpServer
                     "calling session from the MCP request, so when the share ends a message saying how it " \
                     "ended and what was downloaded lands in your session automatically; no waiting needed. " \
                     "Shares end after 30 min idle by default; pass idle_timeout (seconds, 0 = never) to " \
-                    "create_share or update_share to change that. Stop shares you no longer need with stop_share.",
+                    "create_share or update_share to change that. Stop shares you no longer need with stop_share. " \
+                    "create_form shares a questionnaire instead (checklists, radios, selects, text, Markdown task " \
+                    "lists): the user answers in the browser, every Submit reaches your session as a callback and " \
+                    "is readable via wait_share/get_share under `answers`.",
       tools: TOOLS
     )
   end
@@ -109,7 +149,8 @@ module McpServer
            "Share files and/or folders with the user. Returns the share url to hand him. Text files " \
            "(logs, Markdown, JSON, CSV, code …) get a View button that opens them readable in the page, " \
            "so this also hands over things to read, not just download. raw=true serves " \
-           "exactly one folder as a plain static site (HTML renders, relative links work).",
+           "exactly one folder as a plain static site (HTML renders, relative links work). To ask the user " \
+           "questions (picks, choices, free text) use create_form instead.",
            { properties: {
                paths: { type: "array", items: { type: "string" }, description: "Absolute host paths" },
                title: { type: "string", description: "Page heading (defaults to the basename or \"N items\")" },
@@ -118,6 +159,28 @@ module McpServer
                session: SESSION_SCHEMA
              }, required: %w[paths] } do |args, session_id|
     body = args.slice(:paths, :title, :raw, :idle_timeout, :session)
+    body[:session] ||= { id: session_id } if session_id
+    api_text(:post, "/api/shares", body)
+  end
+
+  register "create_form",
+           "Ask the user questions in his browser: a form share with checklists, radio/select choices, free text, " \
+           "Markdown task lists (every `- [ ]` becomes a live checkbox) and static Markdown. Hand him the returned " \
+           "`url`. He can save as he goes (server-side draft) and Submit; Submit keeps the share open so he may " \
+           "resubmit (each submit overwrites, `submissions` counts). Every submit lands in your session as a " \
+           "callback and is readable with wait_share (pass since=<submissions seen>) or get_share under `answers` " \
+           "(field id → value). Optional paths show files under the form (a gallery) so he can look at what he is " \
+           "deciding about. Form shares default to a 24 h idle timeout. Call stop_share when you have what you need.",
+           { properties: {
+               title: { type: "string", description: "Page heading (defaults to \"Questions\")" },
+               intro: { type: "string", description: "Markdown shown above the fields" },
+               fields: { type: "array", items: FIELD_SCHEMA, description: "The questions, in order (≤ 50)" },
+               paths: { type: "array", items: { type: "string" }, description: "Optional absolute host paths to show under the form" },
+               idle_timeout: IDLE_SCHEMA,
+               session: SESSION_SCHEMA
+             }, required: %w[fields] } do |args, session_id|
+    body = args.slice(:paths, :title, :idle_timeout, :session)
+    body[:form] = { intro: args[:intro], fields: args[:fields] }.compact
     body[:session] ||= { id: session_id } if session_id
     api_text(:post, "/api/shares", body)
   end
@@ -139,7 +202,9 @@ module McpServer
   end
 
   register "get_share",
-           "One share with its download log and, if it has ended, its result.",
+           "One share with its download log and, if it has ended, its result. A form share also carries `form` " \
+           "(the normalised spec), `draft` (what the user has picked so far) and `answers` (the last submit, " \
+           "null until the first one).",
            { properties: { id: { type: "string", description: "Share id" } }, required: %w[id] } do |args|
     api_text(:get, share_path(args[:id]))
   end
@@ -151,14 +216,18 @@ module McpServer
   end
 
   register "wait_share",
-           "Block until the share ends or the timeout passes. Returns {ended: true, result} or " \
-           "{ended: false} — call again to keep waiting.",
+           "Block until the share ends, a form submission newer than `since` lands, or the timeout passes. Three " \
+           "outcomes: {ended: true, result} (result carries `answers` for a form share); {ended: false, " \
+           "submitted: true, submissions, submitted_at, answers} as soon as submissions > since (returns at once " \
+           "if that already happened); {ended: false, submitted: false} on timeout — call again, passing the " \
+           "`submissions` you have seen as `since`.",
            { properties: {
                id: { type: "string", description: "Share id" },
-               timeout: { type: "integer", description: "Seconds to wait (capped at the server's wait_max_timeout, default 300)" }
+               timeout: { type: "integer", description: "Seconds to wait (capped at the server's wait_max_timeout, default 300)" },
+               since: { type: "integer", description: "The submission count you have already seen (default 0): return as soon as it is higher" }
              }, required: %w[id] } do |args|
-    query = args[:timeout] ? "?timeout=#{Integer(args[:timeout])}" : ""
-    api_text(:post, share_path(args[:id], "/wait#{query}"))
+    query = { timeout: args[:timeout], since: args[:since] }.compact.map { |k, v| "#{k}=#{Integer(v)}" }.join("&")
+    api_text(:post, share_path(args[:id], "/wait#{query.empty? ? '' : "?#{query}"}"))
   end
 
   TOOLS.freeze
