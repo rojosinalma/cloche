@@ -1,6 +1,20 @@
 <% fmt_time = ->(t) { t.respond_to?(:strftime) ? t.strftime('%Y-%m-%d %H:%M') : t.to_s } -%>
+<% rv = ->(h, k) { h.respond_to?(:key?) ? (h.key?(k.to_s) ? h[k.to_s] : h[k.to_sym]) : (h.respond_to?(k) ? h.public_send(k) : nil) } -%>
 <% tally = result[:files] || {} -%>
 <% count = result[:downloads].to_i -%>
+<% answers = rv.(result, :answers); draft = rv.(result, :draft); form = rv.(result, :form) -%>
+<% form_fields = (form && rv.(form, :fields)) || [] -%>
+<% submissions = rv.(result, :submissions).to_i; submitted_at = rv.(result, :submitted_at) -%>
+<% answer_rows = ->(values) {
+     labelled = form_fields.reject { |f| rv.(f, :type).to_s == "markdown" }.map { |f| [rv.(f, :id).to_s, f] }
+     extra = (values || {}).keys.map(&:to_s) - labelled.map(&:first)
+     (labelled + extra.map { |k| [k, nil] }).map do |id, f|
+       names = ((f && rv.(f, :options)) || []).to_h { |o| [rv.(o, :value).to_s, rv.(o, :label).to_s] }
+       v = rv.(values || {}, id)
+       shown = Array(v).map { |x| names.fetch(x.to_s, x.to_s) }.reject(&:empty?)
+       [f ? rv.(f, :label).to_s : id, shown]
+     end
+   } -%>
   <nav class="navbar sticky-top navbar-padded">
     <span class="brand fs-5"><i class="bi bi-cloud-arrow-down me-2"></i><%= result[:title] || share.title %></span>
   </nav>
@@ -27,6 +41,38 @@
           <li><i class="bi bi-download kind-file"></i><span class="file-name"><%= name %></span><% if n.to_i > 1 %><span class="download-count">×<%= n %></span><% end %></li>
           <% end -%>
         </ul>
+      </div></div>
+      <% end -%>
+
+      <% if answers -%>
+      <div class="section-label text-start">Answers</div>
+      <div class="card mb-3">
+        <div class="card-body py-2">
+          <table class="table table-borderless answers-table">
+            <tbody>
+            <% answer_rows.(answers).each do |label, shown| -%>
+            <tr><th scope="row"><%= label %></th><td><% if shown.empty? %><span class="answer-empty">—</span><% else %><%= shown.join(', ') %><% end %></td></tr>
+            <% end -%>
+            </tbody>
+          </table>
+        </div>
+        <% if submissions.positive? -%>
+        <div class="card-footer text-secondary small text-start"><i class="bi bi-send me-1"></i>Submitted <%= submissions %> time<%= 's' unless submissions == 1 %><% if submitted_at %>, last at <%= fmt_time.(submitted_at) %><% end %></div>
+        <% end -%>
+      </div>
+      <% end -%>
+
+      <% if draft && !draft.empty? -%>
+      <div class="section-label text-start">Unsubmitted draft</div>
+      <div class="card mb-3"><div class="card-body py-2">
+        <p class="text-secondary small mb-2 text-start"><i class="bi bi-pencil me-1"></i>Changed after the last submit, never submitted.</p>
+        <table class="table table-borderless answers-table answers-draft">
+          <tbody>
+          <% answer_rows.(draft).each do |label, shown| -%>
+          <tr><th scope="row"><%= label %></th><td><% if shown.empty? %><span class="answer-empty">—</span><% else %><%= shown.join(', ') %><% end %></td></tr>
+          <% end -%>
+          </tbody>
+        </table>
       </div></div>
       <% end -%>
 

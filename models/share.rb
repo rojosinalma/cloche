@@ -21,12 +21,29 @@ class Share < Sequel::Model(:shares)
 
   def single_dir? = entries.size == 1 && entries.first.dir
 
+  def form? = !form.to_s.empty?
+
+  def form_spec
+    @form_spec ||= Form::Spec.new(JSON.parse(form)) if form?
+  end
+
+  def draft_hash = json_hash(draft)
+
+  def answers_hash = json_hash(answers)
+
+  def submitted? = submissions.to_i.positive?
+
   def live? = ended_at.nil?
 
   def ended? = !live?
 
-  # nil column = follow the global setting; 0 = never times out.
-  def effective_idle_timeout = idle_timeout.nil? ? Setting.fetch("idle_timeout", 1800) : idle_timeout
+  # nil column = follow the global setting (form shares have their own, longer
+  # default since the user may come back to them later); 0 = never times out.
+  def effective_idle_timeout
+    return idle_timeout unless idle_timeout.nil?
+
+    form? ? Setting.fetch("form_idle_timeout", 86_400) : Setting.fetch("idle_timeout", 1800)
+  end
 
   def permanent? = effective_idle_timeout.zero?
 
@@ -40,6 +57,18 @@ class Share < Sequel::Model(:shares)
 
   def refresh
     @entries = nil
+    @form_spec = nil
     super
+  end
+
+  private
+
+  def json_hash(text)
+    return {} if text.to_s.empty?
+
+    data = JSON.parse(text)
+    data.is_a?(Hash) ? data : {}
+  rescue JSON::ParserError
+    {}
   end
 end

@@ -1,0 +1,156 @@
+<% fv = ->(o, k) { o.respond_to?(k) ? o.public_send(k) : (o.respond_to?(:[]) ? (o[k.to_s].nil? ? o[k] : o[k.to_s]) : nil) } -%>
+<% fields = (spec && fv.(spec, :fields)) || [] -%>
+<% intro_html = spec && fv.(spec, :intro_html) -%>
+<% draft = draft || {} -%>
+<% draft_for = ->(id) { draft.key?(id) ? draft[id] : draft[id.to_sym] } -%>
+<% input_fields = fields.reject { |f| fv.(f, :type).to_s == "markdown" } -%>
+<% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
+<% form_data = {
+     base: base, draft: draft, submissions: submissions.to_i, submitted_at: submitted_at&.respond_to?(:iso8601) ? submitted_at.iso8601 : submitted_at,
+     fields: input_fields.map do |f|
+       { id: fv.(f, :id).to_s, type: fv.(f, :type).to_s, label: fv.(f, :label).to_s, required: !!fv.(f, :required),
+         min: fv.(f, :min), max: fv.(f, :max), max_chars: fv.(f, :max_chars) || text_max_chars, default: fv.(f, :default),
+         option_values: (fv.(f, :options) || []).map { |o| fv.(o, :value) } }
+     end
+   } -%>
+<%== render("share_nav", locals: { share: share, base: base, zip_href: zip_href }) %>
+
+  <main class="main-content has-form-bar" id="content">
+    <form class="share-form" id="share-form" novalidate autocomplete="off">
+      <% if intro_html && !intro_html.to_s.empty? -%>
+      <div class="card form-intro mb-4"><div class="card-body md-body"><%== intro_html %></div></div>
+      <% end -%>
+
+      <% fields.each_with_index do |f, fi| -%>
+      <% id = fv.(f, :id).to_s; type = fv.(f, :type).to_s; value = draft_for.(id) -%>
+      <% if type == "markdown" -%>
+      <div class="card form-field form-field-prose mb-3" data-field="<%= id %>" data-type="markdown">
+        <div class="card-body md-body"><%== fv.(f, :html) %></div>
+      </div>
+      <% else -%>
+      <% required = !!fv.(f, :required); help = fv.(f, :help); min = fv.(f, :min); max = fv.(f, :max) -%>
+      <div class="card form-field mb-3" data-field="<%= id %>" data-type="<%= type %>">
+        <div class="card-header form-field-header">
+          <span class="form-field-label"><%= fv.(f, :label) %><% if required %> <span class="form-required" title="Required">*</span><% end %></span>
+          <% if help && !help.to_s.empty? %><span class="form-field-help"><%= help %></span><% end %>
+        </div>
+        <div class="card-body">
+          <% case type when "checklist", "tasklist" -%>
+          <% prose = type == "tasklist" && fv.(f, :html) -%>
+          <% if prose && !prose.to_s.empty? %><div class="md-body mb-3"><%== prose %></div><% end %>
+          <% opts = fv.(f, :options) || []; selected = Array(value).map(&:to_s) -%>
+          <% if opts.size >= bulk_threshold.to_i -%>
+          <div class="bulk-bar">
+            <div class="input-group input-group-sm bulk-filter">
+              <span class="input-group-text"><i class="bi bi-funnel"></i></span>
+              <input type="search" class="form-control" placeholder="Filter…" aria-label="Filter options" data-filter>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bulk="all" title="Check every visible row"><i class="bi bi-check2-all me-1"></i>Check all</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bulk="none" title="Uncheck every visible row"><i class="bi bi-x-lg me-1"></i>Uncheck all</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bulk="invert" title="Invert every visible row"><i class="bi bi-arrow-left-right me-1"></i>Invert</button>
+            <span class="badge opt-count" data-count><%= selected.size %> of <%= opts.size %> selected</span>
+          </div>
+          <% end -%>
+          <div class="opt-list">
+            <% opts.each_with_index do |o, oi| -%>
+            <% v = fv.(o, :value); on = selected.include?(v.to_s); hint = fv.(o, :hint); label_html = type == "tasklist" && fv.(o, :label_html) -%>
+            <div class="form-check opt-row<%= ' on' if on %>" data-text="<%= [fv.(o, :label), hint].compact.join(' ').downcase %>">
+              <input class="form-check-input" type="checkbox" id="opt-<%= fi %>-<%= oi %>" name="<%= id %>" value="<%= v %>"<%= ' checked' if on %>>
+              <label class="form-check-label" for="opt-<%= fi %>-<%= oi %>"><% if label_html && !label_html.to_s.empty? %><%== label_html %><% else %><%= fv.(o, :label) %><% end %><% if hint && !hint.to_s.empty? %><span class="opt-hint"><%= hint %></span><% end %></label>
+            </div>
+            <% end -%>
+            <div class="opt-none text-secondary small" hidden>No option matches the filter.</div>
+          </div>
+          <% if min || max -%>
+          <div class="form-text opt-limits" data-limits><% if min && max %>Pick <%= min == max ? min : "#{min} to #{max}" %><% elsif min %>Pick at least <%= min %><% else %>Pick at most <%= max %><% end %>.</div>
+          <% end -%>
+          <% when "radio" -%>
+          <div class="opt-list">
+            <% (fv.(f, :options) || []).each_with_index do |o, oi| -%>
+            <% v = fv.(o, :value); on = value.to_s == v.to_s && !value.nil?; hint = fv.(o, :hint) -%>
+            <div class="form-check opt-row<%= ' on' if on %>">
+              <input class="form-check-input" type="radio" id="opt-<%= fi %>-<%= oi %>" name="<%= id %>" value="<%= v %>"<%= ' checked' if on %>>
+              <label class="form-check-label" for="opt-<%= fi %>-<%= oi %>"><%= fv.(o, :label) %><% if hint && !hint.to_s.empty? %><span class="opt-hint"><%= hint %></span><% end %></label>
+            </div>
+            <% end -%>
+          </div>
+          <% when "select" -%>
+          <select class="form-select" name="<%= id %>" id="field-<%= fi %>">
+            <option value=""<%= ' selected' if value.nil? || value.to_s.empty? %>>— choose —</option>
+            <% (fv.(f, :options) || []).each do |o| -%>
+            <% v = fv.(o, :value); hint = fv.(o, :hint) -%>
+            <option value="<%= v %>"<%= ' selected' if !value.nil? && value.to_s == v.to_s %>><%= fv.(o, :label) %><% if hint && !hint.to_s.empty? %> — <%= hint %><% end %></option>
+            <% end -%>
+          </select>
+          <% when "text" -%>
+          <% limit = fv.(f, :max_chars) || text_max_chars; placeholder = fv.(f, :placeholder) -%>
+          <% if fv.(f, :multiline) -%>
+          <textarea class="form-control" name="<%= id %>" id="field-<%= fi %>" rows="4" maxlength="<%= limit %>" placeholder="<%= placeholder %>"><%= value %></textarea>
+          <% else -%>
+          <input type="text" class="form-control" name="<%= id %>" id="field-<%= fi %>" maxlength="<%= limit %>" placeholder="<%= placeholder %>" value="<%= value %>">
+          <% end -%>
+          <div class="form-text char-count" data-char-count data-max="<%= limit %>"><%= value.to_s.length %> / <%= limit %></div>
+          <% end -%>
+          <div class="invalid-feedback d-block form-error" data-error-for="<%= id %>"></div>
+        </div>
+      </div>
+      <% end -%>
+      <% end -%>
+
+      <% if fields.empty? -%>
+      <div class="empty-state"><i class="bi bi-ui-checks"></i>This form has no fields.</div>
+      <% end -%>
+    </form>
+
+    <% unless items.nil? || items.empty? -%>
+    <div class="section-label mt-4">Files</div>
+    <div class="card mb-3"><table class="table table-hover mb-0 file-table">
+      <tbody>
+      <% items.each do |f| -%>
+        <% openable = f.kind == :dir || Listing.viewable?(f.kind) || Listing.media?(f) -%>
+        <tr>
+          <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
+          <td><a class="file-name d-block" href="<%= openable ? f.view_href : f.href %>" title="<%= f.kind == :dir ? 'Open' : openable ? 'View' : 'Download' %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
+          <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
+          <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="col-shrink">
+            <% if f.kind == :dir -%>
+            <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
+            <% else -%>
+            <div class="d-flex gap-1 justify-content-end">
+              <% if openable -%>
+              <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View"><i class="bi bi-eye"></i></a>
+              <% end -%>
+              <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
+            </div>
+            <% end -%>
+          </td>
+        </tr>
+      <% end -%>
+      </tbody>
+    </table></div>
+    <% end -%>
+
+    <div class="form-bar" id="form-bar">
+      <div class="form-bar-status">
+        <span class="form-status" id="bar-progress" title="Fields answered"><i class="bi bi-list-check"></i> <span>…</span></span>
+        <span class="form-status" id="bar-draft" data-state="saved" title="Draft autosave"><i class="bi bi-cloud-check"></i> <span>Saved</span></span>
+        <span class="form-status" id="bar-submit" title="Submission state"><i class="bi bi-send"></i> <span>Not submitted yet</span></span>
+      </div>
+      <div class="form-bar-actions">
+        <button type="button" class="btn btn-outline-secondary serve-action" data-bs-toggle="modal" data-bs-target="#reset-modal" title="Restore the defaults"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset</button>
+        <button type="button" class="btn btn-primary serve-action" id="submit-btn"><i class="bi bi-send me-1"></i>Submit</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal fade" id="reset-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h6 class="modal-title"><i class="bi bi-arrow-counterclockwise me-2"></i>Reset the form?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">Every field goes back to its default and the draft is saved that way. Earlier submissions are kept.</div>
+    <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="reset-confirm">Reset</button></div>
+  </div></div></div>
+
+<%== render("stop_modal", locals: { base: base }) %>
+
+  <script type="application/json" id="form-data"><%== JSON.generate(form_data).gsub("<", "\\u003c") %></script>
+  <script type="module" src="<%= asset("js/form.js") %>"></script>

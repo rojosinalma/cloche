@@ -12,7 +12,7 @@ require_relative "lib/idle_sweeper"
 # Stateful modules above load once; everything below reloads in development.
 %w[
   models/setting models/share models/download
-  lib/path_guard lib/listing lib/text_view lib/model_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
+  lib/path_guard lib/listing lib/text_view lib/form lib/model_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
 ].each do |file|
   defined?(Unreloader) ? Unreloader.require(File.expand_path("#{file}.rb", __dir__)) : require_relative(file)
 end
@@ -172,6 +172,56 @@ class App < Roda
     json_ok("Stopped serving")
   end
 
+  # Locals here are the contract with views/form.erb.
+  def form_page(share)
+    has_paths = !share.entries.empty?
+    share_page("form", share, spec: share.form_spec, draft: share.draft_hash,
+                              submissions: share.submissions.to_i, submitted_at: share.submitted_at,
+                              items: has_paths ? Listing.top_items(share) : [],
+                              zip_href: has_paths ? "#{Listing.base(share)}/all.zip" : nil,
+                              bulk_threshold: Setting.fetch("form_bulk_threshold", 8),
+                              text_max_chars: Setting.fetch("form_text_max_chars", 4000))
+  end
+
+  def body_within_cap!
+    cap = Setting.fetch("form_max_bytes", 512 * 1024)
+    return if request.content_length.to_i <= cap
+
+    request.halt [413, { "content-type" => "application/json" },
+                  [JSON.generate(json_err("Request body is over the #{cap} byte cap"))]]
+  end
+
+  def form_share!(share)
+    halt_json(400, "Not a form share") unless share.form?
+    body_within_cap!
+  end
+
+  def ended_json(share)
+    response.status = 410
+    json_err("Share has ended", reason: share.end_reason)
+  end
+
+  def save_draft(share)
+    saved_at = ShareManager.save_draft(share, request.POST["answers"])
+    json_ok("Draft saved", saved_at: saved_at.getutc.iso8601)
+  rescue Form::Invalid => e
+    response.status = 422
+    json_err(e.message)
+  rescue ShareManager::AlreadyEnded
+    ended_json(share)
+  end
+
+  def submit_answers(share)
+    ShareManager.submit(share, request.POST["answers"])
+    json_ok("Answers submitted", submissions: share.submissions, submitted_at: share.submitted_at.getutc.iso8601,
+                                 answers: share.answers_hash)
+  rescue Form::Invalid => e
+    response.status = 422
+    json_err(e.message, errors: e.errors || {})
+  rescue ShareManager::AlreadyEnded
+    ended_json(share)
+  end
+
   route do |r|
     r.public
 
@@ -190,8 +240,9 @@ class App < Roda
           end
 
           r.post do
+            body_within_cap!
             body = r.POST
-            share = ShareManager.create(paths: body["paths"], title: body["title"], raw: body["raw"],
+            share = ShareManager.create(paths: body["paths"], title: body["title"], raw: body["raw"], form: body["form"],
                                         session: body["session"], idle_timeout: body["idle_timeout"])
             response.status = 201
             json_ok("Share created", **ShareManager.summary(share))
@@ -226,8 +277,15 @@ class App < Roda
           end
 
           r.post "wait" do
-            result = ShareManager.wait(share, timeout: r.params["timeout"])
-            result ? json_ok("Share ended", ended: true, result: result) : json_ok("Share still live", ended: false)
+            outcome = ShareManager.wait(share, timeout: r.params["timeout"], since: r.params["since"])
+            message = if outcome[:ended] then "Share ended"
+                      elsif outcome[:submitted] then "Answers submitted (##{outcome[:submissions]})"
+                      else "Share still live"
+                      end
+            json_ok(message, **outcome)
+          rescue ShareManager::ValidationError => e
+            response.status = 422
+            json_err(e.message)
           end
         end
       end
@@ -256,6 +314,8 @@ class App < Roda
 
       if share.ended?
         r.post("stop") { json_ok("Already stopped") }
+        r.put("draft") { ended_json(share) }
+        r.post("submit") { ended_json(share) }
         response.status = 410
         next page("ended", title: share.title, share: share, result: ShareManager.result(share))
       end
@@ -263,10 +323,21 @@ class App < Roda
       share.touch!
       r.post("stop") { stop_by_user(share) }
 
+      r.put "draft" do
+        form_share!(share)
+        save_draft(share)
+      end
+
+      r.post "submit" do
+        form_share!(share)
+        submit_answers(share)
+      end
+
       r.get do
         next raw_served(share, decode_path(r.remaining_path)) if share.raw
 
         r.root do
+          next form_page(share) if share.form?
           next gallery_served(share, 0, "") if share.single_dir?
 
           gallery(share, Listing.top_items(share), crumbs: [], zip_href: "#{Listing.base(share)}/all.zip")
