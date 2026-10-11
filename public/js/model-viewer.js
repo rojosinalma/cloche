@@ -12,7 +12,7 @@ const errorBox = document.getElementById('model-error');
 const fallback = document.getElementById('model-fallback');
 const notice = document.getElementById('model-notice');
 const stats = document.getElementById('model-stats');
-const buttons = { reset: document.getElementById('model-reset'), grid: document.getElementById('model-grid'), wire: document.getElementById('model-wire'), colors: document.getElementById('model-colors') };
+const buttons = { reset: document.getElementById('model-reset'), grid: document.getElementById('model-grid'), wire: document.getElementById('model-wire') };
 const swatches = Array.from(document.querySelectorAll('.model-swatch'));
 const fileSwatch = document.querySelector('.model-swatch-file');
 
@@ -211,6 +211,7 @@ if (renderer) {
   stage.prepend(renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.1;
+  controls.zoomToCursor = true;
   new ResizeObserver(resize).observe(stage);
   resize();
   applyTheme();
