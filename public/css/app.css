@@ -152,19 +152,28 @@ body.lightbox-open { overflow: hidden; }
 .card .csv-table { border-radius: 0; }
 
 /* 3D model viewer: a Three.js canvas filling the card */
-.model-stage { position: relative; height: 68vh; min-height: 320px; background: var(--drac-bg); overflow: hidden; border-radius: 0 0 var(--bs-card-border-radius, .5rem) var(--bs-card-border-radius, .5rem); }
+.model-body { display: flex; align-items: stretch; height: 68vh; min-height: 320px; border-radius: 0 0 var(--bs-card-border-radius, .5rem) var(--bs-card-border-radius, .5rem); overflow: hidden; }
+.model-stage { position: relative; flex: 1 1 auto; min-width: 0; background: var(--drac-bg); overflow: hidden; }
 .model-stage canvas { display: block; width: 100% !important; height: 100% !important; outline: none; touch-action: none; }
 .model-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
                  color: var(--drac-comment); text-align: center; padding: 1.5rem; background: var(--drac-bg); }
 .model-overlay[hidden] { display: none; }
 .model-overlay > i { font-size: 2.5rem; color: var(--drac-orange); }
 .model-fallback img { max-width: 100%; max-height: calc(100% - 4rem); object-fit: contain; border-radius: 6px; border: 1px solid var(--drac-selection); background: var(--drac-bg-darker); }
-.model-colors { min-width: 0; }
-.model-colors-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--drac-comment); margin-bottom: .35rem; }
-.model-swatches { display: flex; gap: .35rem; flex-wrap: wrap; max-width: 12rem; }
-.model-swatch { width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--drac-selection); background: var(--swatch, var(--drac-bg)); padding: 0; cursor: pointer;
-                display: inline-flex; align-items: center; justify-content: center; color: var(--drac-fg); font-size: .85rem; }
+.model-rail { flex: 0 0 auto; display: flex; flex-direction: column; gap: 1rem; padding: .6rem .5rem; background: var(--drac-bg-dark); border-left: 1px solid var(--drac-selection); overflow-y: auto; }
+.model-rail-group { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
+.model-colors-label { font-size: .8rem; color: var(--drac-comment); line-height: 1; margin-bottom: .1rem; }
+.model-swatches { display: flex; flex-direction: column; gap: .35rem; }
+.model-swatch { width: 1.5rem; height: 1.5rem; border-radius: 50%; border: 2px solid var(--drac-selection); background: var(--swatch, var(--drac-bg)); padding: 0; cursor: pointer;
+                display: inline-flex; align-items: center; justify-content: center; color: var(--drac-fg); font-size: .8rem; }
 .model-swatch:hover { border-color: var(--drac-fg); }
-.model-swatch.active { border-color: var(--drac-fg); box-shadow: 0 0 0 2px var(--drac-bg), 0 0 0 4px var(--drac-purple); }
+.model-swatch.active { border-color: var(--drac-fg); box-shadow: 0 0 0 2px var(--drac-bg-dark), 0 0 0 4px var(--drac-purple); }
 .model-swatch[hidden] { display: none; }
+@media (max-width: 767.98px) {
+  .model-body { flex-direction: column; height: auto; }
+  .model-stage { height: 55vh; min-height: 280px; }
+  .model-rail { flex-direction: row; justify-content: center; border-left: 0; border-top: 1px solid var(--drac-selection); overflow-x: auto; }
+  .model-rail-group { flex-direction: row; }
+  .model-swatches { flex-direction: row; flex-wrap: wrap; }
+}
 
