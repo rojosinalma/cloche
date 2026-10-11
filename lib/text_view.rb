@@ -256,11 +256,24 @@ module TextView
   end
 
   def markdown(text, links)
-    renderer = MarkdownRenderer.new(links)
+    %(<div class="md-body">#{render_markdown(text, links)}</div>)
+  end
+
+  # Markdown → HTML with the viewer's renderer (escape_html on, safe links
+  # only). Without share links, relative links/images render as muted text.
+  def render_markdown(text, links = nil)
+    renderer = MarkdownRenderer.new(links || ShareLinks.new(nil, nil, ""))
     md = Redcarpet::Markdown.new(renderer, tables: true, fenced_code_blocks: true, autolink: true,
                                            strikethrough: true, footnotes: true, no_intra_emphasis: true,
                                            lax_spacing: true)
-    %(<div class="md-body">#{md.render(text)}</div>)
+    md.render(text.to_s)
+  end
+
+  # Inline Markdown (emphasis, code, links) for a single line: the block
+  # wrapper Redcarpet adds around a paragraph is stripped.
+  def render_inline_markdown(text)
+    html = render_markdown(text.to_s.strip).strip
+    html.match?(%r{\A<p>.*</p>\z}m) && html.scan("<p>").size == 1 ? html.delete_prefix("<p>").delete_suffix("</p>") : html
   end
 
   def pretty_json(text, view)

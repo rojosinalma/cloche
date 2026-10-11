@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "socket"
+
 class Setting < Sequel::Model(:settings)
   unrestrict_primary_key
 
@@ -21,7 +23,14 @@ class Setting < Sequel::Model(:settings)
       "text_view_max_bytes" => (2 * 1024 * 1024).to_s,
       "text_view_max_rows" => "500",
       "text_view_sniff_bytes" => "8192",
-      "model_view_max_bytes" => (100 * 1024 * 1024).to_s
+      "model_view_max_bytes" => (100 * 1024 * 1024).to_s,
+      "form_max_fields" => "50",
+      "form_max_options" => "1000",
+      "form_text_max_chars" => "4000",
+      "form_max_bytes" => (512 * 1024).to_s,
+      "form_bulk_threshold" => "8",
+      "form_idle_timeout" => "86400",
+      "instance_name" => ENV.fetch("HOSTNAME") { Socket.gethostname }
     }
   end
 

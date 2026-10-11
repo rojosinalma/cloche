@@ -177,3 +177,63 @@ body.lightbox-open { overflow: hidden; }
   .model-swatches { flex-direction: row; flex-wrap: wrap; }
 }
 
+
+/* ─── Form shares: one card per field, sticky action bar ─── */
+.share-form { max-width: 64rem; }
+.form-intro { max-width: 64rem; }
+.form-field-header { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; padding: .6rem .9rem; }
+.form-field-label { font-weight: 600; color: var(--drac-fg); }
+.form-required { color: var(--drac-red); font-weight: 700; }
+.form-field-help { color: var(--drac-muted); font-size: .85rem; }
+.form-field.has-error { border-color: var(--drac-red); }
+.form-field .form-error { color: var(--drac-red); font-size: .85rem; margin-top: .5rem; }
+.form-field .form-error:empty { display: none !important; }
+.form-field .form-select, .form-field .form-control { max-width: 40rem; }
+.form-field textarea.form-control { font-family: inherit; }
+.char-count { font-family: monospace; font-size: .75rem; text-align: right; max-width: 40rem; }
+
+/* option rows: whole row clickable, checked rows tinted */
+.opt-list { display: flex; flex-direction: column; gap: .15rem; }
+.opt-row { display: flex; align-items: flex-start; gap: .6rem; margin: 0; padding: .4rem .6rem .4rem .6rem; border-radius: 6px; border: 1px solid transparent; }
+.opt-row .form-check-input { float: none; margin: .2rem 0 0; flex: 0 0 auto; cursor: pointer; }
+.opt-row .form-check-label { flex: 1; min-width: 0; cursor: pointer; overflow-wrap: anywhere; }
+.opt-row:hover { background: color-mix(in srgb, var(--drac-selection) 55%, transparent); }
+.opt-row.on { background: color-mix(in srgb, var(--drac-purple) 14%, transparent); border-color: color-mix(in srgb, var(--drac-purple) 35%, transparent); }
+.opt-row.on .form-check-label { color: var(--drac-fg); }
+.opt-row[hidden] { display: none; }
+.opt-hint { display: block; color: var(--drac-muted); font-size: .8rem; }
+.opt-row .form-check-label code { color: var(--drac-pink); background: var(--drac-bg-darker); padding: .05em .3em; border-radius: 4px; font-size: .85em; }
+.opt-limits.text-warning { color: var(--drac-orange) !important; }
+
+/* bulk toolbar above long checklists */
+.bulk-bar { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .75rem; padding-bottom: .75rem; border-bottom: 1px solid var(--drac-selection); }
+.bulk-filter { flex: 1 1 14rem; max-width: 24rem; }
+.bulk-bar .input-group-text { background: var(--drac-bg-darker); border-color: var(--drac-comment); color: var(--drac-muted); }
+.opt-count { margin-left: auto; font-weight: 500; font-size: .78rem; font-family: monospace; color: var(--drac-purple);
+             background: color-mix(in srgb, var(--drac-purple) 16%, transparent); border: 1px solid color-mix(in srgb, var(--drac-purple) 40%, transparent); }
+
+/* action bar: fixed above the 32px footer (body is its own scroll container in dracula.css, so sticky would not stick) */
+.has-form-bar { padding-bottom: calc(2rem + 32px + 5.5rem); }
+.form-bar { position: fixed; bottom: calc(32px + .75rem); left: clamp(1rem, 3vw, 3rem); right: clamp(1rem, 3vw, 3rem); z-index: 10; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; max-width: 64rem;
+            padding: .6rem .9rem; border-radius: 8px; border: 1px solid var(--drac-selection); background: var(--drac-bg-dark); box-shadow: 0 6px 20px rgba(0, 0, 0, .35); }
+.form-bar-status { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; font-size: .85rem; color: var(--drac-muted); }
+.form-bar-actions { display: flex; gap: .5rem; margin-left: auto; }
+.form-status { display: inline-flex; align-items: center; gap: .35rem; white-space: nowrap; }
+.form-status i { color: var(--drac-comment); }
+.form-status.text-warning { color: var(--drac-orange) !important; }
+.form-status.text-warning i { color: var(--drac-orange); }
+#bar-draft[data-state="saved"] i { color: var(--drac-green); }
+#bar-draft[data-state="saving"] i { color: var(--drac-cyan); }
+#bar-draft[data-state="unsaved"] i { color: var(--drac-orange); }
+#bar-draft[data-state="failed"] { color: var(--drac-red); }
+#bar-draft[data-state="failed"] i { color: var(--drac-red); }
+@media (max-width: 575.98px) {
+  .form-bar-actions { margin-left: 0; width: 100%; justify-content: flex-end; }
+}
+
+/* ended page: answers table */
+.answers-table { margin: 0; font-size: .9rem; text-align: left; }
+.answers-table th { color: var(--drac-muted); font-weight: 500; white-space: nowrap; width: 1%; padding-right: 1.25rem; vertical-align: top; }
+.answers-table td { color: var(--drac-fg); overflow-wrap: anywhere; vertical-align: top; }
+.answers-table .answer-empty { color: var(--drac-comment); }
+.answers-table.answers-draft td { color: var(--drac-muted); }
