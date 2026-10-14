@@ -61,22 +61,40 @@
 #expiry.in-flight { color: var(--drac-cyan); }
 #expiry.text-warning { color: var(--drac-orange) !important; }
 
-.lightbox-link { cursor: zoom-in; display: block; width: 100%; height: 100%; }
-.lightbox { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: rgba(20, 21, 30, .96); }
-.lightbox[hidden] { display: none; }
-body.lightbox-open { overflow: hidden; }
-.lightbox-bar { display: flex; align-items: center; gap: 1rem; padding: .5rem 1rem; background: var(--drac-bg-dark); border-bottom: 1px solid var(--drac-selection); }
-.lightbox-name { color: var(--drac-fg); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lightbox-count { color: var(--drac-comment); font-family: monospace; font-size: .8rem; }
-.lightbox-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; }
-.lightbox-stage img { max-width: 100%; max-height: 100%; object-fit: contain; cursor: zoom-in; user-select: none; }
-.lightbox.zoomed .lightbox-stage { display: block; }
-.lightbox.zoomed .lightbox-stage img { max-width: none; max-height: none; cursor: zoom-out; display: block; margin: auto; }
-.lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 3rem; height: 5rem; border: none; border-radius: 8px;
-                background: rgba(40, 42, 54, .7); color: var(--drac-fg); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; }
-.lightbox-nav:hover { background: var(--drac-selection); color: var(--drac-purple); }
-.lightbox-prev { left: .75rem; }
-.lightbox-next { right: .75rem; }
+/* ─── Preview modal: image / video / audio / 3D over the gallery ─── */
+.preview-link { cursor: zoom-in; display: flex; width: 100%; height: 100%; position: relative; text-decoration: none; }
+.media-play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--drac-fg);
+              opacity: .75; text-shadow: 0 2px 12px rgba(0, 0, 0, .7); pointer-events: none; transition: opacity .15s; }
+.media-card:hover .media-play { opacity: 1; color: var(--drac-purple); }
+.media-thumb video { pointer-events: none; }
+.preview { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: rgba(20, 21, 30, .96); }
+.preview[hidden] { display: none; }
+body.preview-open { overflow: hidden; }
+.preview-bar { display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; background: var(--drac-bg-dark); border-bottom: 1px solid var(--drac-selection); }
+.preview-icon { color: var(--drac-purple); font-size: 1.1rem; }
+.preview-name { color: var(--drac-fg); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.preview-count { color: var(--drac-comment); font-family: monospace; font-size: .8rem; }
+.preview-tool[hidden] { display: none; }
+.preview-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; }
+.preview-stage > [hidden] { display: none; }
+.preview-stage img, .preview-stage video { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
+.preview-stage img { cursor: zoom-in; }
+.preview-stage video { outline: none; }
+.preview.zoomed .preview-stage { display: block; }
+.preview.zoomed .preview-stage img { max-width: none; max-height: none; cursor: zoom-out; display: block; margin: auto; }
+.preview-audio { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2.5rem 3rem; border-radius: 12px;
+                 background: var(--drac-bg-dark); border: 1px solid var(--drac-selection); width: min(92vw, 560px); }
+.preview-audio > i { font-size: 5rem; color: var(--drac-purple); }
+.preview-audio audio { width: 100%; }
+.preview-model { display: flex; flex-direction: column; width: min(100vw - 9rem, 1500px); height: calc(100% - 2rem); border-radius: 8px; overflow: hidden;
+                 border: 1px solid var(--drac-selection); background: var(--drac-bg-dark); }
+.preview-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 3rem; height: 5rem; border: none; border-radius: 8px; z-index: 1;
+               background: rgba(40, 42, 54, .7); color: var(--drac-fg); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; }
+.preview-nav:hover { background: var(--drac-selection); color: var(--drac-purple); }
+.preview-prev { left: .75rem; }
+.preview-next { right: .75rem; }
+.preview:not([data-kind="image"]) .preview-nav { opacity: .55; }
+.preview .preview-nav:hover { opacity: 1; }
 
 /* ─── Text viewer: one card that reads like a file ───────── */
 .file-view { margin-bottom: 2rem; }
@@ -151,8 +169,8 @@ body.lightbox-open { overflow: hidden; }
                               color: var(--drac-comment); border-right: 1px solid var(--drac-selection); border-bottom: 1px solid var(--drac-selection); user-select: none; }
 .card .csv-table { border-radius: 0; }
 
-/* 3D model viewer: a Three.js canvas filling the card */
-.model-body { display: flex; align-items: stretch; height: 68vh; min-height: 320px; border-radius: 0 0 var(--bs-card-border-radius, .5rem) var(--bs-card-border-radius, .5rem); overflow: hidden; }
+/* 3D model viewer: a Three.js canvas filling the preview panel */
+.model-body { display: flex; align-items: stretch; flex: 1; min-height: 0; overflow: hidden; }
 .model-stage { position: relative; flex: 1 1 auto; min-width: 0; background: var(--drac-bg); overflow: hidden; }
 .model-stage canvas { display: block; width: 100% !important; height: 100% !important; outline: none; touch-action: none; }
 .model-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
@@ -170,8 +188,8 @@ body.lightbox-open { overflow: hidden; }
 .model-swatch.active { border-color: var(--drac-fg); box-shadow: 0 0 0 2px var(--drac-bg-dark), 0 0 0 4px var(--drac-purple); }
 .model-swatch[hidden] { display: none; }
 @media (max-width: 767.98px) {
-  .model-body { flex-direction: column; height: auto; }
-  .model-stage { height: 55vh; min-height: 280px; }
+  .model-body { flex-direction: column; }
+  .model-stage { flex: 1 1 auto; min-height: 0; }
   .model-rail { flex-direction: row; justify-content: center; border-left: 0; border-top: 1px solid var(--drac-selection); overflow-x: auto; }
   .model-rail-group { flex-direction: row; }
   .model-swatches { flex-direction: row; flex-wrap: wrap; }

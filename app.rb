@@ -78,6 +78,15 @@ class App < Roda
     "/#{path}?v=#{File.exist?(file) ? File.mtime(file).to_i : 0}"
   end
 
+  # data-* attributes that make an element open the preview modal on an item.
+  def preview_attrs(item)
+    return "" unless item.previewable?
+
+    attrs = { preview: "", kind: item.kind, src: item.preview_src, name: item.name, download: item.href,
+              href: item.view_href.delete_suffix("?view=1"), format: item.format, size: item.size }
+    attrs.map { |k, v| %(data-#{k}="#{Rack::Utils.escape_html(v.to_s)}") }.join(" ")
+  end
+
   def page(template, title:, idle_label: nil, **locals)
     view(template, locals: locals.merge(idle_label: idle_label),
                    layout_opts: { locals: { title: title, idle_label: idle_label, permanent: locals[:permanent],
@@ -116,17 +125,12 @@ class App < Roda
                                 back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
   end
 
-  # Same counting rule as the text viewer: the page is the one download, the
-  # browser's ?preview=1 fetch of the geometry adds nothing.
-  def model_viewer(share, index, rel, real)
-    entry = share.entries[index]
-    name = rel.empty? ? File.basename(real) : rel
-    view = ModelView.build(real, name: File.basename(real))
-    FileServer.count(request: request, share: share, name: name) unless view.too_large? || FileServer.skip_count?(request)
-    crumbs = entry.dir ? Listing.crumbs(share, index, rel.include?("/") ? File.dirname(rel) : "") : []
-    href = Listing.href(share, index, rel)
-    share_page("model_viewer", share, crumbs: crumbs, view: view, download_href: "#{href}?dl=1", model_href: "#{href}?preview=1",
-                                      back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
+  # Previewable files (image, video, audio, 3D model) have no page of their
+  # own: a ?view=1 deep link lands on the gallery that lists the file, with
+  # the preview modal opened on it (#v=<href>). The modal's data fetch for a
+  # model is ?model=1, which counts once like the former model page did.
+  def preview_redirect(share, index, rel)
+    request.redirect("#{Listing.container_href(share, index, rel)}#v=#{Listing.href(share, index, rel)}", 302)
   end
 
   def gallery_folder(share, index, rel, real)
@@ -146,14 +150,17 @@ class App < Roda
     real = PathGuard.resolve(entry, rel) or not_found_page!
     return gallery_folder(share, index, rel, real) if File.directory?(real)
     if request.params.key?("view")
-      case Listing.kind_of(real)
-      when :text then return viewer(share, index, rel, real)
-      when :model then return model_viewer(share, index, rel, real)
-      end
+      kind = Listing.kind_of(real)
+      return viewer(share, index, rel, real) if kind == :text
+      preview_redirect(share, index, rel) if Listing.previewable?(kind)
     end
 
-    request.halt FileServer.serve(request: request, share: share, real_path: real,
-                                  name: rel.empty? ? File.basename(real) : rel,
+    name = rel.empty? ? File.basename(real) : rel
+    if request.params.key?("model") && Listing.kind_of(real) == :model
+      request.halt FileServer.serve(request: request, share: share, real_path: real, name: name, sandbox: false)
+    end
+
+    request.halt FileServer.serve(request: request, share: share, real_path: real, name: name,
                                   download: request.params.key?("dl"), preview: request.params.key?("preview"))
   end
 

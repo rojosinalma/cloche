@@ -4,7 +4,6 @@
 <% draft = draft || {} -%>
 <% draft_for = ->(id) { draft.key?(id) ? draft[id] : draft[id.to_sym] } -%>
 <% input_fields = fields.reject { |f| fv.(f, :type).to_s == "markdown" } -%>
-<% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
 <% form_data = {
      base: base, draft: draft, submissions: submissions.to_i, submitted_at: submitted_at&.respond_to?(:iso8601) ? submitted_at.iso8601 : submitted_at,
      fields: input_fields.map do |f|
@@ -104,31 +103,7 @@
 
     <% unless items.nil? || items.empty? -%>
     <div class="section-label mt-4">Files</div>
-    <div class="card mb-3"><table class="table table-hover mb-0 file-table">
-      <tbody>
-      <% items.each do |f| -%>
-        <% openable = f.kind == :dir || Listing.viewable?(f.kind) || Listing.media?(f) -%>
-        <tr>
-          <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
-          <td><a class="file-name d-block" href="<%= openable ? f.view_href : f.href %>" title="<%= f.kind == :dir ? 'Open' : openable ? 'View' : 'Download' %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
-          <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
-          <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
-          <td class="col-shrink">
-            <% if f.kind == :dir -%>
-            <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
-            <% else -%>
-            <div class="d-flex gap-1 justify-content-end">
-              <% if openable -%>
-              <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View"><i class="bi bi-eye"></i></a>
-              <% end -%>
-              <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
-            </div>
-            <% end -%>
-          </td>
-        </tr>
-      <% end -%>
-      </tbody>
-    </table></div>
+<%== render("file_table", locals: { rows: items }) %>
     <% end -%>
 
     <div class="form-bar" id="form-bar">
@@ -150,6 +125,7 @@
     <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" id="reset-confirm">Reset</button></div>
   </div></div></div>
 
+<%== render("preview_modal") %>
 <%== render("stop_modal", locals: { base: base }) %>
 
   <script type="application/json" id="form-data"><%== JSON.generate(form_data).gsub("<", "\\u003c") %></script>
