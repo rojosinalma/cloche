@@ -2,7 +2,7 @@
     <div class="card"><table class="table table-hover mb-0 file-table">
       <tbody>
       <% rows.each do |f| -%>
-        <% opens = f.kind == :dir || Listing.viewable?(f.kind) || f.previewable? -%>
+        <% opens = f.kind == :dir || f.previewable? -%>
         <% action = f.kind == :dir ? 'Open' : opens ? 'View' : 'Download' -%>
         <tr>
           <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>

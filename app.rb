@@ -113,22 +113,21 @@ class App < Roda
                                  total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
   end
 
-  # The viewer page counts as one download of the file (its content was
-  # fetched); the Pretty/Raw toggle and Copy are client-side and add nothing.
-  def viewer(share, index, rel, real)
-    entry = share.entries[index]
+  # The text fragment the preview modal fetches (?text=1) is the one download
+  # of the file; Pretty/Raw and Copy are client-side and add nothing.
+  def text_card(share, index, rel, real)
     name = rel.empty? ? File.basename(real) : rel
     view = TextView.build(real, name: File.basename(real), share: share, index: index, rel: rel)
     FileServer.count(request: request, share: share, name: name) unless view.too_large? || FileServer.skip_count?(request)
-    crumbs = entry.dir ? Listing.crumbs(share, index, rel.include?("/") ? File.dirname(rel) : "") : []
-    share_page("viewer", share, crumbs: crumbs, view: view, download_href: "#{Listing.href(share, index, rel)}?dl=1",
-                                back_href: crumbs.empty? ? "#{Listing.base(share)}/" : crumbs.last[1])
+    response["content-type"] = "text/html; charset=utf-8"
+    response["cache-control"] = FileServer::PAGE_CACHE
+    render("text_card", locals: { view: view, download_href: "#{Listing.href(share, index, rel)}?dl=1" })
   end
 
-  # Previewable files (image, video, audio, 3D model) have no page of their
-  # own: a ?view=1 deep link lands on the gallery that lists the file, with
-  # the preview modal opened on it (#v=<href>). The modal's data fetch for a
-  # model is ?model=1, which counts once like the former model page did.
+  # Previewable files (text, image, video, audio, 3D model) have no page of
+  # their own: a ?view=1 deep link lands on the gallery that lists the file,
+  # with the preview modal opened on it (#v=<href>). The modal's data fetch
+  # for a model is ?model=1 and for text ?text=1; each counts once.
   def preview_redirect(share, index, rel)
     request.redirect("#{Listing.container_href(share, index, rel)}#v=#{Listing.href(share, index, rel)}", 302)
   end
@@ -149,14 +148,12 @@ class App < Roda
     rel = rel.delete_prefix("/").delete_suffix("/")
     real = PathGuard.resolve(entry, rel) or not_found_page!
     return gallery_folder(share, index, rel, real) if File.directory?(real)
-    if request.params.key?("view")
-      kind = Listing.kind_of(real)
-      return viewer(share, index, rel, real) if kind == :text
-      preview_redirect(share, index, rel) if Listing.previewable?(kind)
-    end
+    kind = Listing.kind_of(real)
+    preview_redirect(share, index, rel) if request.params.key?("view") && Listing.previewable?(kind)
+    return text_card(share, index, rel, real) if request.params.key?("text") && kind == :text
 
     name = rel.empty? ? File.basename(real) : rel
-    if request.params.key?("model") && Listing.kind_of(real) == :model
+    if request.params.key?("model") && kind == :model
       request.halt FileServer.serve(request: request, share: share, real_path: real, name: name, sandbox: false)
     end
 
