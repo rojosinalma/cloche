@@ -1,0 +1,71 @@
+  <div class="preview" id="preview" hidden data-model-module="<%= asset("js/model-viewer.js") %>" data-model-max="<%= ModelView.max_bytes %>" data-model-max-label="<%= Listing.human_size(ModelView.max_bytes) %>">
+    <div class="preview-bar">
+      <i class="bi preview-icon" id="preview-icon"></i>
+      <span class="preview-name" id="preview-name"></span>
+      <span class="file-view-badge" id="preview-badge" hidden></span>
+      <span class="file-size"><span id="preview-size"></span><span id="preview-model-stats"></span></span>
+      <span class="preview-count" id="preview-count"></span>
+      <div class="ms-auto d-flex gap-2 align-items-center">
+        <button class="btn btn-sm btn-outline-secondary preview-tool" data-for="image" id="preview-zoom" title="Toggle fit / actual size (or click the image)"><i class="bi bi-zoom-in"></i></button>
+        <div class="btn-group btn-group-sm preview-tool" data-for="model" role="group" aria-label="Model view options">
+          <button class="btn btn-outline-secondary" id="model-reset" title="Reset view" disabled><i class="bi bi-arrows-fullscreen"></i></button>
+          <button class="btn btn-outline-secondary active" id="model-grid" title="Toggle grid" disabled><i class="bi bi-grid-3x3"></i></button>
+          <button class="btn btn-outline-secondary" id="model-wire" title="Toggle wireframe" disabled><i class="bi bi-bounding-box"></i></button>
+        </div>
+        <a class="btn btn-sm btn-outline-success" id="preview-download" href="#" title="Download"><i class="bi bi-download"></i></a>
+        <button class="btn btn-sm btn-outline-secondary" id="preview-close" title="Close (Esc)"><i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+    <button class="preview-nav preview-prev" id="preview-prev" title="Previous (←)"><i class="bi bi-chevron-left"></i></button>
+    <div class="preview-stage" id="preview-stage">
+      <img id="preview-img" alt="" hidden>
+      <video id="preview-video" controls playsinline hidden></video>
+      <div class="preview-audio" id="preview-audio" hidden>
+        <i class="bi bi-file-earmark-music"></i>
+        <audio id="preview-audio-el" controls></audio>
+      </div>
+      <div class="preview-model" id="preview-model" hidden>
+        <div class="file-view-notice" id="model-notice" hidden><i class="bi bi-info-circle me-2"></i><span></span></div>
+        <div class="model-body">
+          <div class="model-stage" id="model-stage">
+            <div class="model-overlay" id="model-loading"><div class="spinner-border text-primary" role="status"></div><span>Loading…</span></div>
+            <div class="model-overlay" id="model-error" hidden>
+              <i class="bi bi-exclamation-triangle"></i>
+              <span id="model-error-text"></span>
+              <a class="btn btn-success mt-3 preview-download-link" href="#"><i class="bi bi-download me-1"></i>Download it instead</a>
+            </div>
+            <div class="model-overlay model-fallback" id="model-fallback" hidden>
+              <img id="model-fallback-img" alt="Plate thumbnail">
+              <a class="btn btn-success mt-3 preview-download-link" href="#"><i class="bi bi-download me-1"></i>Download it instead</a>
+            </div>
+          </div>
+          <aside class="model-rail" aria-label="Colours">
+            <div class="model-rail-group">
+              <div class="model-colors-label" title="Model colour"><i class="bi bi-box"></i></div>
+              <div class="model-swatches" data-target="mesh">
+                <% %w[purple cyan green orange pink red yellow fg comment].each do |c| -%>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(--drac-<%= c %>)" title="Model: <%= c %>"></button>
+                <% end -%>
+                <button type="button" class="model-swatch model-swatch-file" data-color="file" title="Model: colours from the file" hidden><i class="bi bi-file-earmark"></i></button>
+              </div>
+            </div>
+            <div class="model-rail-group">
+              <div class="model-colors-label" title="Background colour"><i class="bi bi-square-fill"></i></div>
+              <div class="model-swatches" data-target="bg">
+                <% %w[bg bg-dark bg-darker selection comment fg].each do |c| -%>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(--drac-<%= c %>)" title="Background: <%= c %>"></button>
+                <% end -%>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+    <button class="preview-nav preview-next" id="preview-next" title="Next (→)"><i class="bi bi-chevron-right"></i></button>
+  </div>
+
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+                   "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/" } }
+  </script>
+  <script src="<%= asset("js/preview.js") %>"></script>
