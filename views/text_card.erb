@@ -1,0 +1,21 @@
+<div class="text-card" data-label="<%= view.label %>" data-lines="<%= view.lines.to_i %>" data-pretty="<%= view.pretty? ? 1 : 0 %>" data-copy="<%= view.too_large? || view.empty? ? 0 : 1 %>">
+  <% view.notices.each do |notice| -%>
+  <div class="file-view-notice"><i class="bi bi-info-circle me-2"></i><%= notice %></div>
+  <% end -%>
+  <div class="file-view-body">
+    <% if view.too_large? -%>
+    <div class="empty-state">
+      <i class="bi bi-file-earmark-x"></i>
+      This file is <%= Listing.human_size(view.size) %>, above the <%= Listing.human_size(view.max_bytes) %> viewer limit.
+      <div class="mt-3"><a class="btn btn-success" href="<%= download_href %>"><i class="bi bi-download me-1"></i>Download it instead</a></div>
+    </div>
+    <% elsif view.empty? -%>
+    <div class="empty-state"><i class="bi bi-file-earmark"></i>This file is empty.</div>
+    <% else -%>
+    <% if view.pretty? -%>
+    <div class="view-pane" data-pane="pretty"><%== view.pretty_html %></div>
+    <% end -%>
+    <div class="view-pane code-lines hl" data-pane="source"<%== ' hidden' if view.pretty? %>><%== view.source_html %></div>
+    <% end -%>
+  </div>
+</div>

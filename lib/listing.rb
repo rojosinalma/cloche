@@ -12,10 +12,9 @@ module Listing
   ICONS = { dir: "folder-fill", image: "file-earmark-image", video: "file-earmark-play",
             audio: "file-earmark-music", text: "file-earmark-text", model: "box", file: "file-earmark" }.freeze
   MEDIA_KINDS = %i[image video audio].freeze
-  # Kinds that open in the preview modal on the gallery page (image, video,
-  # audio, 3D model); :text is the only kind with a page of its own.
-  PREVIEW_KINDS = %i[image video audio model].freeze
-  VIEWABLE_KINDS = %i[text model].freeze
+  # Kinds that open in the preview modal on the gallery page; nothing in a
+  # share has a page of its own.
+  PREVIEW_KINDS = %i[text image video audio model].freeze
   SIZE_UNITS = %w[B KB MB GB TB].freeze
 
   Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, :preview_src, :format,
@@ -38,8 +37,6 @@ module Listing
   def media?(item) = MEDIA_KINDS.include?(item.kind)
 
   def media_kind?(kind) = MEDIA_KINDS.include?(kind)
-
-  def viewable?(kind) = VIEWABLE_KINDS.include?(kind)
 
   def previewable?(kind) = PREVIEW_KINDS.include?(kind)
 
@@ -79,15 +76,17 @@ module Listing
     else
       link = href(share, index, rel)
       Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
-               view_href: viewable?(kind) || previewable?(kind) ? "#{link}?view=1" : link,
+               view_href: previewable?(kind) ? "#{link}?view=1" : link,
                preview_src: preview_src(link, kind), format: File.extname(real).delete(".").downcase, icon: icon_for(kind))
     end
   end
 
-  # Where the preview modal fetches the bytes: media loads do not count
-  # (thumbnails already use them), a model load counts once (?model=1).
+  # Where the preview modal fetches its content: media loads do not count
+  # (thumbnails already use them); a model (?model=1) or the rendered text
+  # fragment (?text=1) counts once.
   def preview_src(link, kind)
     return "#{link}?model=1" if kind == :model
+    return "#{link}?text=1" if kind == :text
 
     "#{link}?preview=1" if media_kind?(kind)
   end

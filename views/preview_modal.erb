@@ -7,6 +7,11 @@
       <span class="preview-count" id="preview-count"></span>
       <div class="ms-auto d-flex gap-2 align-items-center">
         <button class="btn btn-sm btn-outline-secondary preview-tool" data-for="image" id="preview-zoom" title="Toggle fit / actual size (or click the image)"><i class="bi bi-zoom-in"></i></button>
+        <div class="btn-group btn-group-sm preview-tool" data-for="text" id="text-panes" role="group" aria-label="Pretty or raw" hidden>
+          <button class="btn btn-outline-secondary pane-btn active" data-pane="pretty" title="Rendered view">Pretty</button>
+          <button class="btn btn-outline-secondary pane-btn" data-pane="source" title="Exact file content">Raw</button>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary preview-tool" data-for="text" id="text-copy" title="Copy file content" hidden><i class="bi bi-clipboard"></i></button>
         <div class="btn-group btn-group-sm preview-tool" data-for="model" role="group" aria-label="Model view options">
           <button class="btn btn-outline-secondary" id="model-reset" title="Reset view" disabled><i class="bi bi-arrows-fullscreen"></i></button>
           <button class="btn btn-outline-secondary active" id="model-grid" title="Toggle grid" disabled><i class="bi bi-grid-3x3"></i></button>
@@ -19,6 +24,10 @@
     <button class="preview-nav preview-prev" id="preview-prev" title="Previous (←)"><i class="bi bi-chevron-left"></i></button>
     <div class="preview-stage" id="preview-stage">
       <img id="preview-img" alt="" hidden>
+      <div class="preview-text" id="preview-text" hidden>
+        <div class="model-overlay" id="text-loading"><div class="spinner-border text-primary" role="status"></div><span>Loading…</span></div>
+        <div class="preview-text-content" id="preview-text-content"></div>
+      </div>
       <video id="preview-video" controls playsinline hidden></video>
       <div class="preview-audio" id="preview-audio" hidden>
         <i class="bi bi-file-earmark-music"></i>
