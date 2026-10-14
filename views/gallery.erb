@@ -1,5 +1,4 @@
 <% items = media + files -%>
-<% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
 <%== render("share_nav", locals: { share: share, base: base, zip_href: items.empty? ? nil : zip_href }) %>
 
   <main class="main-content" id="content">
@@ -24,17 +23,20 @@
     <div class="media-grid mb-4">
       <% media.each do |m| -%>
       <div class="media-card">
-        <div class="media-thumb">
-          <% case m.kind when :image -%>
-          <a href="<%= m.view_href %>" class="lightbox-link" data-src="<%= m.view_href %>?preview=1" data-name="<%= m.name %>" data-download="<%= m.href %>" title="Open preview"><img src="<%= m.view_href %>?preview=1" alt="<%= m.name %>" loading="lazy"></a>
-          <% when :video -%>
-          <video src="<%= m.view_href %>?preview=1" controls preload="metadata"></video>
+        <% if m.kind == :audio -%>
+        <div class="media-thumb"><audio src="<%= m.preview_src %>" controls preload="none"></audio></div>
+        <% else -%>
+        <a href="<%= m.view_href %>" class="media-thumb preview-link" title="Open preview" <%== preview_attrs(m) %>>
+          <% if m.kind == :image -%>
+          <img src="<%= m.preview_src %>" alt="<%= m.name %>" loading="lazy">
           <% else -%>
-          <audio src="<%= m.view_href %>?preview=1" controls preload="none"></audio>
+          <video src="<%= m.preview_src %>" preload="metadata" muted playsinline tabindex="-1"></video>
+          <span class="media-play"><i class="bi bi-play-circle-fill"></i></span>
           <% end -%>
-        </div>
+        </a>
+        <% end -%>
         <div class="media-meta">
-          <a class="file-name" href="<%= m.href %>" title="Download <%= m.name %>"><%= m.name %></a>
+          <a class="file-name" href="<%= m.view_href %>" title="Open preview" <%== preview_attrs(m) %>><%= m.name %></a>
           <span class="file-size"><%= Listing.human_size(m.size) %></span>
           <a class="btn btn-sm btn-outline-success" href="<%= m.href %>" title="Download"><i class="bi bi-download"></i></a>
         </div>
@@ -45,87 +47,9 @@
 
     <% unless files.empty? -%>
     <% unless media.empty? %><div class="section-label">Files</div><% end %>
-    <div class="card"><table class="table table-hover mb-0 file-table">
-      <tbody>
-      <% files.each do |f| -%>
-        <tr>
-          <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
-          <td><a class="file-name d-block" href="<%= Listing.viewable?(f.kind) ? f.view_href : f.href %>" title="<%= f.kind == :dir ? 'Open' : Listing.viewable?(f.kind) ? 'View' : 'Download' %>"><%= f.name %><%= '/' if f.kind == :dir %></a></td>
-          <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
-          <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
-          <td class="col-shrink">
-            <% if f.kind == :dir -%>
-            <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
-            <% else -%>
-            <div class="d-flex gap-1 justify-content-end">
-              <% if Listing.viewable?(f.kind) -%>
-              <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View"><i class="bi bi-eye"></i></a>
-              <% end -%>
-              <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
-            </div>
-            <% end -%>
-          </td>
-        </tr>
-      <% end -%>
-      </tbody>
-    </table></div>
+<%== render("file_table", locals: { rows: files }) %>
     <% end -%>
   </main>
 
-  <div class="lightbox" id="lightbox" hidden>
-    <div class="lightbox-bar">
-      <span class="lightbox-name" id="lightbox-name"></span>
-      <span class="lightbox-count" id="lightbox-count"></span>
-      <div class="ms-auto d-flex gap-2">
-        <button class="btn btn-sm btn-outline-secondary" id="lightbox-zoom" title="Toggle fit / actual size (or click the image)"><i class="bi bi-zoom-in"></i></button>
-        <a class="btn btn-sm btn-outline-success" id="lightbox-download" href="#" title="Download"><i class="bi bi-download"></i></a>
-        <button class="btn btn-sm btn-outline-secondary" id="lightbox-close" title="Close (Esc)"><i class="bi bi-x-lg"></i></button>
-      </div>
-    </div>
-    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" title="Previous (←)"><i class="bi bi-chevron-left"></i></button>
-    <div class="lightbox-stage" id="lightbox-stage"><img id="lightbox-img" alt=""></div>
-    <button class="lightbox-nav lightbox-next" id="lightbox-next" title="Next (→)"><i class="bi bi-chevron-right"></i></button>
-  </div>
-
+<%== render("preview_modal") %>
 <%== render("stop_modal", locals: { base: base }) %>
-
-  <script>
-    (function lightbox() {
-      const links = [...document.querySelectorAll('.lightbox-link')];
-      if (!links.length) return;
-      const box = document.getElementById('lightbox'), img = document.getElementById('lightbox-img'),
-            stage = document.getElementById('lightbox-stage'), name = document.getElementById('lightbox-name'),
-            count = document.getElementById('lightbox-count'), dl = document.getElementById('lightbox-download'),
-            zoomBtn = document.getElementById('lightbox-zoom');
-      let index = 0;
-      const show = (i) => {
-        index = (i + links.length) % links.length;
-        const l = links[index];
-        box.classList.remove('zoomed');
-        img.src = l.dataset.src; img.alt = l.dataset.name;
-        name.textContent = l.dataset.name; dl.href = l.dataset.download;
-        count.textContent = links.length > 1 ? `${index + 1} / ${links.length}` : '';
-        box.hidden = false; document.body.classList.add('lightbox-open');
-      };
-      const close = () => { box.hidden = true; img.src = ''; document.body.classList.remove('lightbox-open'); };
-      const toggleZoom = () => {
-        const zoomed = box.classList.toggle('zoomed');
-        zoomBtn.querySelector('i').className = zoomed ? 'bi bi-zoom-out' : 'bi bi-zoom-in';
-        if (zoomed) { stage.scrollTop = (stage.scrollHeight - stage.clientHeight) / 2; stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2; }
-      };
-      links.forEach((l, i) => l.addEventListener('click', (e) => { e.preventDefault(); show(i); }));
-      img.addEventListener('click', toggleZoom);
-      zoomBtn.addEventListener('click', toggleZoom);
-      document.getElementById('lightbox-close').addEventListener('click', close);
-      document.getElementById('lightbox-prev').addEventListener('click', () => show(index - 1));
-      document.getElementById('lightbox-next').addEventListener('click', () => show(index + 1));
-      stage.addEventListener('click', (e) => { if (e.target === stage) close(); });
-      document.addEventListener('keydown', (e) => {
-        if (box.hidden) return;
-        if (e.key === 'Escape') close();
-        else if (e.key === 'ArrowLeft') show(index - 1);
-        else if (e.key === 'ArrowRight') show(index + 1);
-        else if (e.key === ' ' || e.key === 'z') { e.preventDefault(); toggleZoom(); }
-      });
-    })();
-  </script>

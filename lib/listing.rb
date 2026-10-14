@@ -12,10 +12,16 @@ module Listing
   ICONS = { dir: "folder-fill", image: "file-earmark-image", video: "file-earmark-play",
             audio: "file-earmark-music", text: "file-earmark-text", model: "box", file: "file-earmark" }.freeze
   MEDIA_KINDS = %i[image video audio].freeze
+  # Kinds that open in the preview modal on the gallery page (image, video,
+  # audio, 3D model); :text is the only kind with a page of its own.
+  PREVIEW_KINDS = %i[image video audio model].freeze
   VIEWABLE_KINDS = %i[text model].freeze
   SIZE_UNITS = %w[B KB MB GB TB].freeze
 
-  Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, keyword_init: true)
+  Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, :preview_src, :format,
+                    keyword_init: true) do
+    def previewable? = Listing.previewable?(kind)
+  end
 
   module_function
 
@@ -34,6 +40,8 @@ module Listing
   def media_kind?(kind) = MEDIA_KINDS.include?(kind)
 
   def viewable?(kind) = VIEWABLE_KINDS.include?(kind)
+
+  def previewable?(kind) = PREVIEW_KINDS.include?(kind)
 
   def icon_for(kind) = ICONS.fetch(kind, ICONS[:file])
 
@@ -71,8 +79,28 @@ module Listing
     else
       link = href(share, index, rel)
       Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
-               view_href: viewable?(kind) ? "#{link}?view=1" : link, icon: icon_for(kind))
+               view_href: viewable?(kind) || previewable?(kind) ? "#{link}?view=1" : link,
+               preview_src: preview_src(link, kind), format: File.extname(real).delete(".").downcase, icon: icon_for(kind))
     end
+  end
+
+  # Where the preview modal fetches the bytes: media loads do not count
+  # (thumbnails already use them), a model load counts once (?model=1).
+  def preview_src(link, kind)
+    return "#{link}?model=1" if kind == :model
+
+    "#{link}?preview=1" if media_kind?(kind)
+  end
+
+  # The gallery page that lists the item at rel; a ?view=1 deep link to a
+  # previewable file lands there with the modal open.
+  def container_href(share, index, rel)
+    return href(share, index, File.dirname(rel), dir: true) if rel.include?("/")
+
+    entry = share.entries[index]
+    return "#{base(share)}/" if !entry.dir || share.single_dir?
+
+    href(share, index, "", dir: true)
   end
 
   def top_items(share)
