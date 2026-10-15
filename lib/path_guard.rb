@@ -5,10 +5,11 @@ module PathGuard
 
   module_function
 
+  # The allowed_roots setting as configured (unresolved); roots filters to the ones that exist.
+  def configured_roots = Setting.get("allowed_roots")
+
   def roots
-    Setting.fetch("allowed_roots", Setting.defaults["allowed_roots"])
-           .split(",").map(&:strip).reject(&:empty?)
-           .filter_map { |root| realpath_or_nil(root) }
+    configured_roots.filter_map { |root| realpath_or_nil(root) }
   end
 
   def within?(real, root) = real == root || real.start_with?("#{root}/")

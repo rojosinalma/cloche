@@ -41,9 +41,6 @@ module TextView
     ".json" => :json, ".jsonl" => :jsonl, ".ndjson" => :jsonl, ".csv" => :csv, ".tsv" => :tsv
   }.freeze
   LABELS = { markdown: "Markdown", json: "JSON", jsonl: "JSON Lines", csv: "CSV", tsv: "TSV" }.freeze
-  DEFAULT_MAX_BYTES = 2 * 1024 * 1024
-  DEFAULT_MAX_ROWS = 500
-  DEFAULT_SNIFF_BYTES = 8192
   UTF8_BOM = "\xEF\xBB\xBF".b.freeze
   SAFE_SCHEMES = %w[http https mailto].freeze
 
@@ -135,11 +132,11 @@ module TextView
 
   module_function
 
-  def max_bytes = Setting.fetch("text_view_max_bytes", DEFAULT_MAX_BYTES)
+  def max_bytes = Setting.get("text_view_max_bytes")
 
-  def max_rows = Setting.fetch("text_view_max_rows", DEFAULT_MAX_ROWS)
+  def max_rows = Setting.get("text_view_max_rows")
 
-  def sniff_bytes = Setting.fetch("text_view_sniff_bytes", DEFAULT_SNIFF_BYTES)
+  def sniff_bytes = Setting.get("text_view_sniff_bytes")
 
   # Extension or well-known name first; unknown extensions are sniffed
   # (first sniff_bytes: no NUL byte and valid UTF-8), known binaries never are.

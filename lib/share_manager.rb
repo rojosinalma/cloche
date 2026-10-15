@@ -146,7 +146,7 @@ module ShareManager
     data
   end
 
-  def instance_name = Setting.fetch("instance_name", Setting.defaults["instance_name"])
+  def instance_name = Setting.get("instance_name")
 
   def list
     (live.all + recent.all).sort_by(&:started_at).reverse.map { |share| summary(share) }
@@ -293,7 +293,7 @@ module ShareManager
   end
 
   def wait_limit(timeout)
-    max = Setting.fetch("wait_max_timeout", 300)
+    max = Setting.get("wait_max_timeout")
     return max if timeout.nil? || timeout.to_s.strip.empty?
 
     Integer(timeout.to_s, 10).clamp(0, max)
@@ -301,9 +301,9 @@ module ShareManager
     max
   end
 
-  def retention_cutoff = Time.now - Setting.fetch("result_retention", 86_400)
+  def retention_cutoff = Time.now - Setting.get("result_retention")
 
-  def base_url(key) = Setting.fetch(key, Setting.defaults[key]).chomp("/")
+  def base_url(key) = Setting.get(key).chomp("/")
 
   def iso(time) = time&.getutc&.iso8601
 end

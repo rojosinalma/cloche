@@ -183,12 +183,12 @@ class App < Roda
                               submissions: share.submissions.to_i, submitted_at: share.submitted_at,
                               items: has_paths ? Listing.top_items(share) : [],
                               zip_href: has_paths ? "#{Listing.base(share)}/all.zip" : nil,
-                              bulk_threshold: Setting.fetch("form_bulk_threshold", 8),
-                              text_max_chars: Setting.fetch("form_text_max_chars", 4000))
+                              bulk_threshold: Setting.get("form_bulk_threshold"),
+                              text_max_chars: Setting.get("form_text_max_chars"))
   end
 
   def body_within_cap!
-    cap = Setting.fetch("form_max_bytes", 512 * 1024)
+    cap = Setting.get("form_max_bytes")
     return if request.content_length.to_i <= cap
 
     request.halt [413, { "content-type" => "application/json" },
@@ -235,6 +235,30 @@ class App < Roda
 
     r.on "api" do
       api_authorized!
+
+      r.on "settings" do
+        r.is do
+          r.get { json_ok("#{Setting.defaults.size} setting(s)", settings: Setting.listing) }
+        end
+
+        r.is String do |key|
+          r.put do
+            value = Setting.update!(key, r.POST["value"])
+            json_ok("Setting #{key} updated", key: key, value: value)
+          end
+
+          r.delete do
+            value = Setting.reset!(key)
+            json_ok("Setting #{key} reset to default", key: key, value: value)
+          end
+        rescue Setting::UnknownKey => e
+          response.status = 404
+          json_err(e.message)
+        rescue Setting::Invalid => e
+          response.status = 422
+          json_err(e.message)
+        end
+      end
 
       r.on "shares" do
         r.is do
@@ -299,7 +323,7 @@ class App < Roda
       api_authorized!
 
       r.post do
-        McpServer.log_request(r) if Setting.fetch("mcp_debug", false)
+        McpServer.log_request(r) if Setting.get("mcp_debug")
         transport = MCP::Server::Transports::StreamableHTTPTransport.new(
           McpServer.build, stateless: true, dns_rebinding_protection: false
         )

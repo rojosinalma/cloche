@@ -1,26 +1,41 @@
+# cloche — share files from this host with a browser.
+#
+# Quick start:
+#   cp .env.example .env     # set HOST_HOME (and the secrets)
+#   docker compose up -d     # pulls the published image; `--build` builds from source instead
+#
+# Every knob is a variable in ./.env: compose reads it for the ${...} below and the
+# same file is mounted into the container, where the app loads it with dotenv.
 services:
   cloche:
+    image: ghcr.io/rojosinalma/cloche:latest
     build: .
     container_name: cloche
     restart: unless-stopped
+    ports:
+      # CLOCHE_BIND: host address to listen on (127.0.0.1 = this machine only; 0.0.0.0 = LAN).
+      # CLOCHE_PORT: host port. The app always listens on 9292 inside the container.
+      - "${CLOCHE_BIND:-127.0.0.1}:${CLOCHE_PORT:-9292}:9292"
     environment:
       DATABASE_PATH: /app/data/cloche.db
-      HOST_HOME: /home/rojo
-      RACK_ENV: development
+      # Your home directory on the host. Required: the app needs to know the real host path
+      # of the files it serves (paths are the same inside and outside the container).
+      HOST_HOME: ${HOST_HOME:?set HOST_HOME in .env (e.g. HOST_HOME=/home/you)}
+      RACK_ENV: ${RACK_ENV:-production}
       PORT: "9292"
+    extra_hosts:
+      # Lets the default OPENCODE_URL (http://host.docker.internal:4096) reach an
+      # opencode server running on this host.
+      - "host.docker.internal:host-gateway"
     volumes:
-      - /home/rojo/dev/cloche:/app
-      - /home/rojo/dev:/home/rojo/dev:ro
-      - /home/rojo/.opencode/plan:/home/rojo/.opencode/plan:ro
-      - type: bind
-        source: /home/rojo/tiny
-        target: /home/rojo/tiny
-        read_only: true
-        bind:
-          create_host_path: false
-    networks:
-      - ingress
-
-networks:
-  ingress:
-    external: true
+      # SQLite database and share state. Keep it on local disk.
+      - ./data:/app/data
+      # Secrets and settings for the app (CLOCHE_MCP_TOKEN, OPENCODE_SERVER_PASSWORD, CLOCHE_ROOTS,
+      # PUBLIC_BASE_URL, ...). Read by dotenv inside the container, never passed as environment.
+      - ./.env:/app/.env:ro
+      # The tree you want to share from, mounted read-only at the SAME absolute path inside the
+      # container. CLOCHE_SHARE_ROOT defaults to HOST_HOME; set it to a subfolder (e.g.
+      # /home/you/Documents) to expose less of your home to the container.
+      # CLOCHE_ROOTS (in .env) narrows further what may be shared out of the mounted tree.
+      # Each extra root outside this tree needs its own `:ro` bind at the same path here.
+      - ${CLOCHE_SHARE_ROOT:-${HOST_HOME}}:${CLOCHE_SHARE_ROOT:-${HOST_HOME}}:ro

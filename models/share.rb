@@ -42,7 +42,7 @@ class Share < Sequel::Model(:shares)
   def effective_idle_timeout
     return idle_timeout unless idle_timeout.nil?
 
-    form? ? Setting.fetch("form_idle_timeout", 86_400) : Setting.fetch("idle_timeout", 1800)
+    form? ? Setting.get("form_idle_timeout") : Setting.get("idle_timeout")
   end
 
   def permanent? = effective_idle_timeout.zero?
