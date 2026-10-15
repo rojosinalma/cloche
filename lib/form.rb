@@ -59,15 +59,15 @@ module Form
 
   module_function
 
-  def max_fields = Setting.fetch("form_max_fields", 50)
+  def max_fields = Setting.get("form_max_fields")
 
-  def max_options = Setting.fetch("form_max_options", 1000)
+  def max_options = Setting.get("form_max_options")
 
-  def text_max_chars = Setting.fetch("form_text_max_chars", 4000)
+  def text_max_chars = Setting.get("form_text_max_chars")
 
-  def max_bytes = Setting.fetch("form_max_bytes", 512 * 1024)
+  def max_bytes = Setting.get("form_max_bytes")
 
-  def bulk_threshold = Setting.fetch("form_bulk_threshold", 8)
+  def bulk_threshold = Setting.get("form_bulk_threshold")
 
   def string_or_nil(value, max, what)
     return nil if value.nil?

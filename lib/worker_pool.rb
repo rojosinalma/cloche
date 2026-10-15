@@ -43,8 +43,8 @@ module WorkerPool
 
   def pool
     MUTEX.synchronize do
-      @pool ||= Pool.new(size: Integer(Setting.fetch("callback_pool_size", 2)),
-                         queue_size: Integer(Setting.fetch("callback_queue_size", 100)))
+      @pool ||= Pool.new(size: Setting.get("callback_pool_size"),
+                         queue_size: Setting.get("callback_queue_size"))
     end
   end
 

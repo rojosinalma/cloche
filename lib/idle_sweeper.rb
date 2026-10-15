@@ -49,7 +49,7 @@ module IdleSweeper
     FALLBACK_INTERVAL
   end
 
-  def idle_timeout = Integer(Setting.fetch("idle_timeout", 1800))
+  def idle_timeout = Setting.get("idle_timeout")
 
   def sweep
     now = Time.now

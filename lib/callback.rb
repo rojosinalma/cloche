@@ -24,7 +24,7 @@ module Callback
 
     dir = share.session_directory.to_s
     dir = session_directory(share.session_id) if dir.empty?
-    mode = Setting.fetch("callback_mode", "instruction")
+    mode = Setting.get("callback_mode")
     method, path, body = request_for(mode, share, event)
     response = send_json(method, path, dir, body)
     level = response.is_a?(Net::HTTPSuccess) ? :info : :warn
@@ -43,7 +43,7 @@ module Callback
        { text: message(ShareManager.result(share), event),
          description: event == :submitted ? "cloche answers submitted" : "cloche share ended", delivery: "queue" }]
     else
-      [:put, "/api/experimental/session/#{sid}/instructions/entries/#{Setting.fetch('callback_entry_key', 'cloche')}",
+      [:put, "/api/experimental/session/#{sid}/instructions/entries/#{Setting.get('callback_entry_key')}",
        { value: instruction_value(share) }]
     end
   end
@@ -51,12 +51,12 @@ module Callback
   def instruction_value(share)
     {
       note: "Recent cloche shares from this session, newest activity first: ended ones (`live: false`, `reason`, " \
-            "`files` = what the user downloaded, name => times) and live form shares he has submitted " \
+            "`files` = what the user downloaded, name => times) and live form shares the user has submitted " \
             "(`live: true`). Form results are under `answers` (field id => value; `submissions` counts the " \
             "submits, each one overwrites the last); a live share may still be resubmitted, so re-read it before " \
             "acting on it and stop_share when done. `draft` only appears when an ended share holds picks that " \
             "were never submitted. Only relevant if you were waiting on one of them.",
-      shares: ShareManager.session_history(share.session_id, limit: Setting.fetch("callback_history", 3))
+      shares: ShareManager.session_history(share.session_id, limit: Setting.get("callback_history"))
     }
   end
 
@@ -79,14 +79,14 @@ module Callback
     http_call(request)
   end
 
-  def opencode_uri(path) = URI("#{Setting.fetch('opencode_url', 'http://192.168.1.20:4096').chomp('/')}#{path}")
+  def opencode_uri(path) = URI("#{Setting.get('opencode_url').chomp('/')}#{path}")
 
   def http_call(request)
     request.basic_auth(ENV.fetch("OPENCODE_SERVER_USERNAME", "opencode"), password)
     uri = request.uri
     Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https",
-                                        open_timeout: Integer(Setting.fetch("callback_open_timeout", 5)),
-                                        read_timeout: Integer(Setting.fetch("callback_read_timeout", 15))) do |http|
+                                        open_timeout: Setting.get("callback_open_timeout"),
+                                        read_timeout: Setting.get("callback_read_timeout")) do |http|
       http.request(request)
     end
   end
