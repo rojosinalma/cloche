@@ -19,8 +19,8 @@ services:
         bind:
           create_host_path: false
     networks:
-      - traefik-proxy
+      - ingress
 
 networks:
-  traefik-proxy:
+  ingress:
     external: true
