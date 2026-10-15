@@ -1,3 +1,6 @@
 data/
 .env
 compose.override.yaml
+compose.homelab.yaml
+.openchamber/
+AGENTS.md

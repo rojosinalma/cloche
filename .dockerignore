@@ -1,0 +1,9 @@
+.git
+.github
+.env
+.env.*
+data/
+.openchamber/
+AGENTS.md
+compose*.yaml
+*.md
