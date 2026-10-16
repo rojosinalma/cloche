@@ -1,0 +1,67 @@
+name: Bug report
+description: Something does not work as documented
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. Remove tokens, passwords and private share URLs from logs before pasting.
+  - type: input
+    id: version
+    attributes:
+      label: cloche version
+      description: From `GET /health` (`version`) or the image tag.
+      placeholder: 0.2.0 / ghcr.io/rojosinalma/cloche:latest
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How do you run it?
+      options:
+        - Docker image (ghcr.io)
+        - Docker, built from source
+        - From source (bundle exec puma)
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Gallery / previews
+        - Text or 3D viewer
+        - Forms
+        - Zip downloads
+        - REST API
+        - MCP server
+        - Callbacks into opencode
+        - Docker / deployment
+        - Other
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, what you got.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a share of a folder with `POST /api/shares`
+        2. Open the URL and click "Download all"
+        3. …
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Relevant `docker logs cloche` lines. Secrets redacted.
+      render: text
+  - type: input
+    id: browser
+    attributes:
+      label: Browser / OS
+      placeholder: Firefox 140 on Linux

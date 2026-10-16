@@ -6,23 +6,39 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 ### Changed
 
 - MCP server `instructions` cut to three lines (what cloche is and how to hand over the URL, the automatic
   callback, the idle default); the allowed roots now sit in the `paths` schema of `create_share`/`create_form`
   (refreshed from the live setting on every request) and the viewer, form and housekeeping notes moved into
   the tool descriptions. Clients that inject the instructions into every turn pay ~60 % fewer tokens for it.
-
-## [0.2.0] - 2026-10-16
-
-### Changed
-
 - The UI is built on [tailor](https://github.com/rojosinalma/tailor): the vendored `public/tailor/` files
   (core, 8 skins, 21 palettes) replace Bootstrap 5 and the Dracula stylesheet; the pages look the same by
   default (bootstrap skin, Dracula palette) and gain skin and palette pickers plus a light/dark toggle in the
   navbar. Bootstrap Icons are served locally instead of from a CDN.
 - Dialogs are native `<dialog>` elements, toasts come from tailor, and the 3D viewer reads its colours from
   the active palette.
+- Licence to AGPL-3.0 (was MIT).
+- The image runs as the unprivileged user `cloche` (uid 1000) and has a `HEALTHCHECK`; `compose.yaml`
+  sets `user:` from `CLOCHE_UID`/`CLOCHE_GID`. Started as root, the entrypoint fixes the data directory's
+  ownership and drops privileges before the app starts.
+- The base image is pinned to `ruby:3.3.12-slim-trixie`, and the bundle installs from the lockfile
+  (now with `aarch64-linux-gnu`).
+
+### Added
+
+- `GET /health` reports `version`.
+- `SECURITY.md`, `CODE_OF_CONDUCT.md`, issue and pull request templates, Dependabot for Bundler,
+  GitHub Actions and Docker.
+- A `run-tests` workflow: syntax check, boot smoke test and `compose.yaml` validation on every pull request.
+- `docs/operations.md`: health check, container user and permissions, backups, upgrades.
+
+### Upgrade notes
+
+- The container no longer runs as root. If `./data` belongs to root, or your uid is not 1000, see
+  [`docs/operations.md`](docs/operations.md) → "User and permissions" before upgrading.
 
 ## [0.1.0] - 2026-10-16
 
