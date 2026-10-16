@@ -1,11 +1,14 @@
-  <nav class="navbar sticky-top navbar-padded">
-    <a class="brand fs-5" href="/"><i class="bi bi-cloud-arrow-down me-2"></i>cloche</a>
-  </nav>
+  <header class="t-navbar t-shell-nav">
+    <a class="t-navbar-brand" href="/"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i>cloche</a>
+    <div class="t-navbar-end">
+<%== render("nav_tools") %>
+    </div>
+  </header>
 
-  <main class="main-content">
+  <main class="t-shell-main t-page">
     <div class="notice-panel">
       <i class="bi bi-cloud-arrow-down notice-brand"></i>
-      <h5 class="notice-title mb-2">cloche</h5>
-      <p class="text-secondary">cloche hands files from agent sessions to your browser; a share link looks like <code>/s/&lt;id&gt;/</code>.</p>
+      <h1 class="notice-title">cloche</h1>
+      <p class="t-muted">cloche hands files from agent sessions to your browser; a share link looks like <code>/s/&lt;id&gt;/</code>.</p>
     </div>
   </main>

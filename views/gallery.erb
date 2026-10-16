@@ -1,32 +1,33 @@
 <% items = media + files -%>
 <%== render("share_nav", locals: { share: share, base: base, zip_href: items.empty? ? nil : zip_href }) %>
 
-  <main class="main-content" id="content">
+  <main class="t-shell-main t-page" id="content">
     <% unless crumbs.empty? -%>
-    <div class="crumbs mb-4">
-      <a href="<%= base %>/"><i class="bi bi-house-door"></i></a>
-      <% crumbs.each_with_index do |(label, link), i| -%>
-      <span class="sep">/</span>
-      <% if i == crumbs.size - 1 %><span><%= label %></span><% else %><a href="<%= link %>"><%= label %></a><% end %>
-      <% end -%>
-    </div>
+    <nav class="t-breadcrumb crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="<%= base %>/" aria-label="Share root"><i class="bi bi-house-door"></i></a></li>
+        <% crumbs.each_with_index do |(label, link), i| -%>
+        <% if i == crumbs.size - 1 %><li aria-current="page"><%= label %></li><% else %><li><a href="<%= link %>"><%= label %></a></li><% end %>
+        <% end -%>
+      </ol>
+    </nav>
     <% end -%>
 
     <% if items.empty? -%>
-    <div class="empty-state"><i class="bi bi-inbox"></i>This folder is empty.</div>
+    <div class="t-empty"><i class="t-icon t-empty-icon bi bi-inbox"></i>This folder is empty.</div>
     <% else -%>
-    <p class="text-secondary small mb-4"><%= items.size %> item<%= 's' unless items.size == 1 %><% if total_size.positive? %> · <%= Listing.human_size(total_size) %><% end %></p>
+    <p class="t-muted t-small item-count"><%= items.size %> item<%= 's' unless items.size == 1 %><% if total_size.positive? %> · <%= Listing.human_size(total_size) %><% end %></p>
     <% end -%>
 
     <% unless media.empty? -%>
     <div class="section-label">Previews</div>
-    <div class="media-grid mb-4">
+    <div class="t-grid media-grid" data-min="xs">
       <% media.each do |m| -%>
-      <div class="media-card">
+      <div class="t-card media-card" data-variant="thumb">
         <% if m.kind == :audio -%>
-        <div class="media-thumb"><audio src="<%= m.preview_src %>" controls preload="none"></audio></div>
+        <div class="t-card-thumb"><audio src="<%= m.preview_src %>" controls preload="none"></audio></div>
         <% else -%>
-        <a href="<%= m.view_href %>" class="media-thumb preview-link" title="Open preview" <%== preview_attrs(m) %>>
+        <a href="<%= m.view_href %>" class="t-card-thumb preview-link" title="Open preview" <%== preview_attrs(m) %>>
           <% if m.kind == :image -%>
           <img src="<%= m.preview_src %>" alt="<%= m.name %>" loading="lazy">
           <% else -%>
@@ -35,10 +36,10 @@
           <% end -%>
         </a>
         <% end -%>
-        <div class="media-meta">
+        <div class="t-card-meta">
           <a class="file-name" href="<%= m.view_href %>" title="Open preview" <%== preview_attrs(m) %>><%= m.name %></a>
           <span class="file-size"><%= Listing.human_size(m.size) %></span>
-          <a class="btn btn-sm btn-outline-success" href="<%= m.href %>" title="Download"><i class="bi bi-download"></i></a>
+          <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= m.href %>" title="Download" aria-label="Download"><i class="t-icon bi bi-download"></i></a>
         </div>
       </div>
       <% end -%>
