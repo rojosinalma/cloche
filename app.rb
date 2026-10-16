@@ -79,6 +79,16 @@ class App < Roda
     "/#{path}?v=#{File.exist?(file) ? File.mtime(file).to_i : 0}"
   end
 
+  # One icon from the tailor sprite (public/tailor/icons.svg, declared via `tailor apply --icons`).
+  # Decorative by default; pass label: when the icon is the only content of its control.
+  def icon(name, label: nil, css: nil, id: nil)
+    name = name.to_s.delete_prefix("bi-")
+    classes = ["t-icon", css].compact.join(" ")
+    attrs = [%(class="#{classes}"), id && %(id="#{id}"), label ? 'role="img"' : 'aria-hidden="true"'].compact.join(" ")
+    title = label ? "<title>#{Rack::Utils.escape_html(label)}</title>" : ""
+    %(<svg #{attrs}>#{title}<use href="/tailor/icons.svg#bi-#{name}"/></svg>)
+  end
+
   # data-* attributes that make an element open the preview modal on an item.
   def preview_attrs(item)
     return "" unless item.previewable?

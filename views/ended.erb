@@ -16,7 +16,7 @@
      end
    } -%>
   <header class="t-navbar t-shell-nav">
-    <span class="t-navbar-brand"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i><%= result[:title] || share.title %></span>
+    <span class="t-navbar-brand"><%== icon("cloud-arrow-down") %><%= result[:title] || share.title %></span>
     <div class="t-navbar-end">
 <%== render("nav_tools") %>
     </div>
@@ -24,7 +24,7 @@
 
   <main class="t-shell-main t-page">
     <div class="notice-panel">
-      <i class="bi bi-stop-circle notice-ended"></i>
+      <%== icon("stop-circle", css: "notice-icon notice-ended") %>
       <h1 class="notice-title">This share has ended</h1>
       <p class="t-muted notice-reason"><%= result[:reason] %><% if result[:duration] %> · after <%= result[:duration] %><% end %></p>
 
@@ -41,7 +41,7 @@
       <div class="t-card"><div class="t-card-body">
         <ul class="download-list">
           <% tally.each do |name, n| -%>
-          <li><i class="bi bi-download kind-file"></i><span class="file-name"><%= name %></span><% if n.to_i > 1 %><span class="download-count">×<%= n %></span><% end %></li>
+          <li><%== icon("download", css: "kind-file") %><span class="file-name"><%= name %></span><% if n.to_i > 1 %><span class="download-count">×<%= n %></span><% end %></li>
           <% end -%>
         </ul>
       </div></div>
@@ -60,7 +60,7 @@
           </table>
         </div>
         <% if submissions.positive? -%>
-        <div class="t-card-footer t-muted t-small"><i class="t-icon bi bi-send"></i> Submitted <%= submissions %> time<%= 's' unless submissions == 1 %><% if submitted_at %>, last at <%= fmt_time.(submitted_at) %><% end %></div>
+        <div class="t-card-footer t-muted t-small"><%== icon("send") %> Submitted <%= submissions %> time<%= 's' unless submissions == 1 %><% if submitted_at %>, last at <%= fmt_time.(submitted_at) %><% end %></div>
         <% end -%>
       </div>
       <% end -%>
@@ -68,7 +68,7 @@
       <% if draft && !draft.empty? -%>
       <div class="section-label">Unsubmitted draft</div>
       <div class="t-card"><div class="t-card-body">
-        <p class="t-muted t-small draft-note"><i class="t-icon bi bi-pencil"></i> Changed after the last submit, never submitted.</p>
+        <p class="t-muted t-small draft-note"><%== icon("pencil") %> Changed after the last submit, never submitted.</p>
         <table class="t-table answers-table answers-draft">
           <tbody>
           <% answer_rows.(draft).each do |label, shown| -%>

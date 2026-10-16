@@ -1,24 +1,21 @@
-<% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
     <div class="t-table-wrap"><table class="t-table file-table">
       <tbody>
       <% rows.each do |f| -%>
         <% opens = f.kind == :dir || f.previewable? -%>
         <% action = f.kind == :dir ? 'Open' : opens ? 'View' : 'Download' -%>
         <tr>
-          <td class="t-col-icon"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
+          <td class="t-col-icon"><%== icon(f.icon, css: f.kind == :dir ? 'kind-dir' : 'kind-file') %></td>
           <td><a class="file-name file-name-block" href="<%= opens ? f.view_href : f.href %>" title="<%= action %>" <%== preview_attrs(f) %>><%= f.name %><%= '/' if f.kind == :dir %></a></td>
-          <td class="t-col-icon file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
-          <td class="t-col-icon file-size hide-sm"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="t-col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
+          <td class="t-col-shrink file-size t-hide"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
           <td class="t-col-actions">
             <% if f.kind == :dir -%>
-            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.zip_href %>" title="Download folder as zip" aria-label="Download folder as zip"><i class="t-icon bi bi-file-earmark-zip"></i></a>
+            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.zip_href %>" title="Download folder as zip" aria-label="Download folder as zip"><%== icon("file-earmark-zip") %></a>
             <% else -%>
-            <div class="t-cluster row-actions" data-gap="1">
-              <% if opens -%>
-              <a class="t-btn" data-size="sm" data-icon="only" href="<%= f.view_href %>" title="View" aria-label="View" <%== preview_attrs(f) %>><i class="t-icon bi bi-eye"></i></a>
-              <% end -%>
-              <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.href %>" title="Download" aria-label="Download"><i class="t-icon bi bi-download"></i></a>
-            </div>
+            <% if opens -%>
+            <a class="t-btn" data-size="sm" data-icon="only" href="<%= f.view_href %>" title="View" aria-label="View" <%== preview_attrs(f) %>><%== icon("eye") %></a>
+            <% end -%>
+            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.href %>" title="Download" aria-label="Download"><%== icon("download") %></a>
             <% end -%>
           </td>
         </tr>

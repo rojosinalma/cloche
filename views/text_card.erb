@@ -1,16 +1,16 @@
 <div class="text-card" data-label="<%= view.label %>" data-lines="<%= view.lines.to_i %>" data-pretty="<%= view.pretty? ? 1 : 0 %>" data-copy="<%= view.too_large? || view.empty? ? 0 : 1 %>">
   <% view.notices.each do |notice| -%>
-  <div class="file-view-notice"><i class="t-icon bi bi-info-circle"></i><%= notice %></div>
+  <div class="file-view-notice"><%== icon("info-circle") %><%= notice %></div>
   <% end -%>
   <div class="file-view-body">
     <% if view.too_large? -%>
     <div class="t-empty">
-      <i class="t-icon t-empty-icon bi bi-file-earmark-x"></i>
+      <%== icon("file-earmark-x", css: "t-empty-icon") %>
       This file is <%= Listing.human_size(view.size) %>, above the <%= Listing.human_size(view.max_bytes) %> viewer limit.
-      <div class="t-empty-actions"><a class="t-btn" data-variant="primary" href="<%= download_href %>"><i class="t-icon bi bi-download"></i>Download it instead</a></div>
+      <div class="t-empty-actions"><a class="t-btn" data-variant="primary" href="<%= download_href %>"><%== icon("download") %>Download it instead</a></div>
     </div>
     <% elsif view.empty? -%>
-    <div class="t-empty"><i class="t-icon t-empty-icon bi bi-file-earmark"></i>This file is empty.</div>
+    <div class="t-empty"><%== icon("file-earmark", css: "t-empty-icon") %>This file is empty.</div>
     <% else -%>
     <% if view.pretty? -%>
     <div class="view-pane" data-pane="pretty"><%== view.pretty_html %></div>

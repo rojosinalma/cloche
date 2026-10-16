@@ -1,5 +1,5 @@
   <header class="t-navbar t-shell-nav">
-    <a class="t-navbar-brand" href="/"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i>cloche</a>
+    <a class="t-navbar-brand" href="/"><%== icon("cloud-arrow-down") %>cloche</a>
     <div class="t-navbar-end">
 <%== render("nav_tools") %>
     </div>
@@ -7,7 +7,7 @@
 
   <main class="t-shell-main t-page">
     <div class="notice-panel">
-      <i class="bi bi-cloud-arrow-down notice-brand"></i>
+      <%== icon("cloud-arrow-down", css: "notice-icon notice-brand") %>
       <h1 class="notice-title">cloche</h1>
       <p class="t-muted">cloche hands files from agent sessions to your browser; a share link looks like <code>/s/&lt;id&gt;/</code>.</p>
     </div>

@@ -41,12 +41,12 @@
           <% if opts.size >= bulk_threshold.to_i -%>
           <div class="bulk-bar">
             <div class="t-input-group bulk-filter" data-size="sm">
-              <span class="t-input-addon"><i class="bi bi-funnel"></i></span>
+              <span class="t-input-addon"><%== icon("funnel") %></span>
               <input type="search" class="t-input" placeholder="Filter…" aria-label="Filter options" data-filter>
             </div>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="all" title="Check every visible row"><i class="t-icon bi bi-check2-all"></i>Check all</button>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="none" title="Uncheck every visible row"><i class="t-icon bi bi-x-lg"></i>Uncheck all</button>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="invert" title="Invert every visible row"><i class="t-icon bi bi-arrow-left-right"></i>Invert</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="all" title="Check every visible row"><%== icon("check2-all") %>Check all</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="none" title="Uncheck every visible row"><%== icon("x-lg") %>Uncheck all</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="invert" title="Invert every visible row"><%== icon("arrow-left-right") %>Invert</button>
             <span class="t-badge opt-count" data-tone="accent" data-count><%= selected.size %> of <%= opts.size %> selected</span>
           </div>
           <% end -%>
@@ -97,7 +97,7 @@
       <% end -%>
 
       <% if fields.empty? -%>
-      <div class="t-empty"><i class="t-icon t-empty-icon bi bi-ui-checks"></i>This form has no fields.</div>
+      <div class="t-empty"><%== icon("ui-checks", css: "t-empty-icon") %>This form has no fields.</div>
       <% end -%>
     </form>
 
@@ -108,19 +108,19 @@
 
     <div class="form-bar" id="form-bar">
       <div class="form-bar-status">
-        <span class="form-status" id="bar-progress" title="Fields answered"><i class="bi bi-list-check"></i> <span>…</span></span>
-        <span class="form-status" id="bar-draft" data-state="saved" title="Draft autosave"><i class="bi bi-cloud-check"></i> <span>Saved</span></span>
-        <span class="form-status" id="bar-submit" title="Submission state"><i class="bi bi-send"></i> <span>Not submitted yet</span></span>
+        <span class="form-status" id="bar-progress" title="Fields answered"><%== icon("list-check") %> <span>…</span></span>
+        <span class="form-status" id="bar-draft" data-state="saved" title="Draft autosave"><%== icon("cloud-check") %> <span>Saved</span></span>
+        <span class="form-status" id="bar-submit" title="Submission state"><%== icon("send") %> <span>Not submitted yet</span></span>
       </div>
       <div class="form-bar-actions">
-        <button type="button" class="t-btn serve-action" data-dialog-open="reset-modal" title="Restore the defaults"><i class="t-icon bi bi-arrow-counterclockwise"></i>Reset</button>
-        <button type="button" class="t-btn serve-action" data-variant="primary" id="submit-btn"><i class="t-icon bi bi-send"></i>Submit</button>
+        <button type="button" class="t-btn serve-action" data-dialog-open="reset-modal" title="Restore the defaults"><%== icon("arrow-counterclockwise") %>Reset</button>
+        <button type="button" class="t-btn serve-action" data-variant="primary" id="submit-btn"><%== icon("send") %>Submit</button>
       </div>
     </div>
   </main>
 
   <dialog class="t-dialog" id="reset-modal" data-tone="danger" aria-labelledby="reset-modal-title">
-    <div class="t-dialog-header"><h2 class="t-dialog-title" id="reset-modal-title"><i class="t-icon bi bi-arrow-counterclockwise" aria-hidden="true"></i><span>Reset the form?</span></h2><button class="t-dialog-close" type="button" aria-label="Close" data-dialog-close>×</button></div>
+    <div class="t-dialog-header"><h2 class="t-dialog-title" id="reset-modal-title"><%== icon("arrow-counterclockwise") %><span>Reset the form?</span></h2><button class="t-dialog-close" type="button" aria-label="Close" data-dialog-close>×</button></div>
     <div class="t-dialog-body">Every field goes back to its default and the draft is saved that way. Earlier submissions are kept.</div>
     <div class="t-dialog-footer"><button class="t-btn" type="button" data-dialog-close>Cancel</button><button class="t-btn" data-variant="danger" type="button" id="reset-confirm">Reset</button></div>
   </dialog>

@@ -20,14 +20,18 @@
   });
 
   const $ = (id) => document.getElementById(id);
+  // Icons come from the tailor sprite: build one, or swap the symbol an existing <svg class="t-icon"> uses.
+  const icon = (name, css = '') => `<svg class="t-icon${css ? ' ' + css : ''}" aria-hidden="true"><use href="/tailor/icons.svg#bi-${name}"/></svg>`;
+  const iconHref = (name) => `/tailor/icons.svg#bi-${name}`;
+  const setIcon = (svg, name) => svg.querySelector('use').setAttribute('href', iconHref(name));
   const stage = $('preview-stage'), img = $('preview-img'), video = $('preview-video'), audioBox = $('preview-audio'),
-        audio = $('preview-audio-el'), modelBox = $('preview-model'), icon = $('preview-icon'), name = $('preview-name'),
+        audio = $('preview-audio-el'), modelBox = $('preview-model'), iconEl = $('preview-icon'), name = $('preview-name'),
         badge = $('preview-badge'), sizeEl = $('preview-size'), modelStats = $('preview-model-stats'), count = $('preview-count'),
         dl = $('preview-download'), zoomBtn = $('preview-zoom'), textBox = $('preview-text'), textContent = $('preview-text-content'),
         textLoading = $('text-loading'), textPanes = $('text-panes'), textCopy = $('text-copy');
   const tools = [...box.querySelectorAll('.preview-tool')];
   const panes = { text: textBox, image: img, video, audio: audioBox, model: modelBox };
-  const icons = { text: 'bi-file-earmark-text', image: 'bi-file-earmark-image', video: 'bi-file-earmark-play', audio: 'bi-file-earmark-music', model: 'bi-box' };
+  const icons = { text: 'file-earmark-text', image: 'file-earmark-image', video: 'file-earmark-play', audio: 'file-earmark-music', model: 'box' };
   const modelMax = Number(box.dataset.modelMax || 0);
   let index = 0, model = null, modelModule = null, textAbort = null;
 
@@ -52,7 +56,7 @@
     img.src = ''; video.pause(); video.removeAttribute('src'); video.load(); audio.pause(); audio.removeAttribute('src');
     modelStats.textContent = '';
     box.classList.remove('zoomed');
-    zoomBtn.querySelector('i').className = 't-icon bi bi-zoom-in';
+    setIcon(zoomBtn.querySelector('svg'), 'zoom-in');
     Object.values(panes).forEach((p) => { p.hidden = true; });
   };
 
@@ -83,7 +87,7 @@
   };
 
   const textError = (message) => {
-    textContent.innerHTML = '<div class="t-empty"><i class="t-icon t-empty-icon bi bi-exclamation-triangle"></i><span></span></div>';
+    textContent.innerHTML = `<div class="t-empty">${icon('exclamation-triangle', 't-empty-icon')}<span></span></div>`;
     textContent.querySelector('span').textContent = message;
   };
 
@@ -127,7 +131,7 @@
     clear();
     index = (i + items.length) % items.length;
     const item = items[index];
-    icon.className = `bi preview-icon ${icons[item.kind] || 'bi-file-earmark'}`;
+    setIcon(iconEl, icons[item.kind] || 'file-earmark');
     name.textContent = item.name;
     badge.hidden = item.kind !== 'model';
     badge.textContent = (item.format || '').toUpperCase();
@@ -158,7 +162,7 @@
   const toggleZoom = () => {
     if (box.dataset.kind !== 'image') return;
     const zoomed = box.classList.toggle('zoomed');
-    zoomBtn.querySelector('i').className = zoomed ? 't-icon bi bi-zoom-out' : 't-icon bi bi-zoom-in';
+    setIcon(zoomBtn.querySelector('svg'), zoomed ? 'zoom-out' : 'zoom-in');
     if (zoomed) { stage.scrollTop = (stage.scrollHeight - stage.clientHeight) / 2; stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2; }
   };
 
