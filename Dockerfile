@@ -1,4 +1,4 @@
-FROM ruby:3.3.12-slim-trixie
+FROM ruby:4.0.7-slim-trixie
 
 LABEL org.opencontainers.image.source="https://github.com/rojosinalma/cloche" \
       org.opencontainers.image.description="Share files and folders from a host with a browser as a gallery page, with previews, downloads, forms and callbacks into opencode sessions" \
