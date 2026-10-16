@@ -12,6 +12,9 @@ never). When a share ends or a form is submitted, the agent's [opencode](https:/
 gets a silent note saying how it ended, what you downloaded or what you answered. The MCP server
 means agents need no curl and pass no session id. Named after the dome a waiter lifts off the plate.
 
+![A cloche share: file table with view and download buttons, "Download all" and "Stop serving"](docs/screenshots/gallery.png)
+
+More screenshots (image grid, text viewer, 3D viewer) are in [`docs/screenshots/`](docs/screenshots/).
 Configuration, API, MCP tools, security and development notes are documented in [`docs/`](docs/).
 
 ## Requirements
