@@ -16,7 +16,9 @@ binary, then `bundle install && bundle exec puma -C config/puma.rb`. Details in
 
 ## Tests
 
-There is no automated suite yet. Before a PR, run the syntax check and a smoke test:
+There is no automated suite yet. `.github/workflows/run-tests.yml` runs the syntax check, boots the
+app against a fresh database and validates `compose.yaml` on every pull request. Before a PR, run the
+same locally:
 
 ```sh
 ruby -wc app.rb config.ru lib/*.rb models/*.rb db/migrations/*.rb
@@ -43,6 +45,8 @@ settings typing — are very welcome.
 
 - Plain, descriptive commit messages in the imperative ("Add form shares", "Fix zip of empty folder").
   No attribution trailers.
+- Every commit is signed (GPG or SSH, `git commit -S`, or `commit.gpgsign=true`); `main` only takes
+  signed commits.
 - One logical change per PR, with the docs updated in the same PR when behaviour or configuration
   changes. Add a line under `[Unreleased]` in `CHANGELOG.md`.
 
@@ -50,8 +54,11 @@ settings typing — are very welcome.
 
 | File | What goes there |
 |---|---|
-| `README.md` | Description, requirements, setup, licence — nothing else |
+| `README.md` | Description, requirements, installation, usage, development, licence — nothing else |
+| `SECURITY.md` | How to report a vulnerability, supported versions |
+| `CODE_OF_CONDUCT.md` | Contributor Covenant 2.1 |
 | `docs/configuration.md` | Environment variables and settings |
+| `docs/operations.md` | Health check, container user and permissions, backups, upgrades |
 | `docs/api.md` | REST endpoints and payloads |
 | `docs/mcp.md` | MCP tools |
 | `docs/opencode.md` | Registering the MCP server and how callbacks reach a session |
@@ -62,9 +69,15 @@ settings typing — are very welcome.
 
 ## Releasing
 
-1. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new version heading with the date and
-   update the compare links.
-2. Commit, tag `vX.Y.Z` and push the tag.
+1. Bump `Cloche::VERSION` in `lib/version.rb` and move the `[Unreleased]` entries in `CHANGELOG.md`
+   under a new version heading with the date; update the compare links.
+2. Commit, then create a signed tag and push both: `git tag -s vX.Y.Z -m vX.Y.Z && git push origin main vX.Y.Z`.
 3. `.github/workflows/publish-image.yml` builds `linux/amd64` and `linux/arm64` and pushes
    `ghcr.io/rojosinalma/cloche:X.Y.Z`, `:X.Y` and `:sha-<short>`; pushes to `main` refresh `:latest`.
-4. Create the GitHub release from the tag with the changelog section as its notes.
+4. Create the GitHub release from the tag with the changelog section as its notes:
+   `gh release create vX.Y.Z --title "cloche X.Y.Z" --notes-file <section>`.
+
+## License
+
+By contributing you agree that your contribution is licensed under the
+[GNU Affero General Public License v3.0](LICENSE), like the rest of the project.

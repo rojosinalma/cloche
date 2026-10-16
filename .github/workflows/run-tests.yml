@@ -1,0 +1,47 @@
+name: run-tests
+run-name: ${{ github.event.pull_request.title || github.event.head_commit.message }} · ${{ github.actor }}
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Syntax check
+        run: |
+          shopt -s globstar nullglob
+          for f in app.rb config.ru lib/**/*.rb models/**/*.rb db/migrations/*.rb; do
+            ruby -wc "$f" > /dev/null
+          done
+
+      - name: Boot smoke test
+        run: |
+          mkdir -p data
+          DATABASE_PATH=data/ci.db RACK_ENV=production bundle exec puma -C config/puma.rb config.ru &
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:9292/health && exit 0
+            sleep 1
+          done
+          exit 1
+
+      - name: Validate compose.yaml
+        run: |
+          echo "HOST_HOME=/home/runner" > .env
+          docker compose -f compose.yaml config -q
