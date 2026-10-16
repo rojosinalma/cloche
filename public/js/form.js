@@ -54,7 +54,7 @@ function apply(f, value) {
 
 // ── per-field decorations: row highlight, counter, limits, char count ──
 function refreshField(el, f) {
-  $$('.opt-row', el).forEach((r) => r.classList.toggle('on', $('input', r).checked));
+  $$('.opt-row', el).forEach((r) => r.setAttribute('aria-selected', String($('input', r).checked)));
   const count = $('[data-count]', el);
   if (count) {
     const rows = $$('.opt-row', el), checked = rows.filter((r) => $('input', r).checked).length;
@@ -64,7 +64,7 @@ function refreshField(el, f) {
   const limits = $('[data-limits]', el);
   if (limits) {
     const n = $$('.opt-list input:checked', el).length;
-    limits.classList.toggle('text-warning', (f.min != null && n < f.min) || (f.max != null && n > f.max));
+    limits.dataset.tone = (f.min != null && n < f.min) || (f.max != null && n > f.max) ? 'warning' : '';
   }
   const cc = $('[data-char-count]', el);
   if (cc) cc.textContent = `${$('input, textarea', el).value.length} / ${cc.dataset.max}`;
@@ -82,14 +82,14 @@ function renderProgress() {
   const answered = fields.filter((f) => f.id in answers).length;
   const missing = fields.filter((f) => f.required && !(f.id in answers)).length;
   bar.progress.textContent = `${answered} of ${fields.length} answered` + (missing ? ` · ${missing} required missing` : '');
-  bar.progress.parentElement.classList.toggle('text-warning', missing > 0);
+  bar.progress.parentElement.dataset.tone = missing > 0 ? 'warning' : '';
 }
 
 function renderSubmit() {
   if (!submissions) { bar.submit.textContent = 'Not submitted yet'; return; }
   const changed = lastSubmitted != null ? JSON.stringify(collect()) !== lastSubmitted : dirtySinceSubmit;
   bar.submit.textContent = `Submitted #${submissions} at ${fmtTime(submittedAt)}` + (changed ? ' · unsubmitted changes' : '');
-  bar.submit.parentElement.classList.toggle('text-warning', changed);
+  bar.submit.parentElement.dataset.tone = changed ? 'warning' : '';
 }
 
 function setDraft(state, text) {
@@ -133,13 +133,13 @@ async function save(isRetry = false) {
 
 // ── submit ──
 function showErrors(errors) {
-  $$('[data-error-for]').forEach((e) => { e.textContent = ''; e.closest('.form-field').classList.remove('has-error'); });
+  $$('[data-error-for]').forEach((e) => { e.textContent = ''; e.closest('.form-field').removeAttribute('data-invalid'); });
   let first = null;
   for (const [id, msg] of Object.entries(errors || {})) {
     const slot = $(`[data-error-for="${CSS.escape(id)}"]`);
     if (!slot) continue;
     slot.textContent = msg;
-    slot.closest('.form-field').classList.add('has-error');
+    slot.closest('.form-field').dataset.invalid = '';
     first ||= slot.closest('.form-field');
   }
   first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -149,7 +149,7 @@ async function submit() {
   if (ended) return;
   clearTimeout(saveTimer); clearTimeout(retryTimer);
   submitBtn.disabled = true;
-  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Submitting…';
+  submitBtn.innerHTML = '<span class="t-spinner" data-size="sm" role="status"></span>Submitting…';
   try {
     if (bar.draft.dataset.state !== 'saved') await save();
     const res = await fetch(`${base}/submit`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json' },
@@ -166,7 +166,7 @@ async function submit() {
   } catch (e) {
     toast('error', `Submit failed: ${e.message}`);
   } finally {
-    if (!ended) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-send me-1"></i>Submit'; }
+    if (!ended) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="t-icon bi bi-send"></i>Submit'; }
   }
 }
 
@@ -210,7 +210,7 @@ fields.forEach((f) => {
 submitBtn.addEventListener('click', submit);
 $('#reset-confirm').addEventListener('click', () => {
   fields.forEach((f) => apply(f, f.default));
-  bootstrap.Modal.getInstance($('#reset-modal'))?.hide();
+  $('#reset-modal').close();
   showErrors({});
   scheduleSave(); renderProgress(); renderSubmit();
   toast('warning', 'Form reset to its defaults');

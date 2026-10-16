@@ -52,7 +52,7 @@
     img.src = ''; video.pause(); video.removeAttribute('src'); video.load(); audio.pause(); audio.removeAttribute('src');
     modelStats.textContent = '';
     box.classList.remove('zoomed');
-    zoomBtn.querySelector('i').className = 'bi bi-zoom-in';
+    zoomBtn.querySelector('i').className = 't-icon bi bi-zoom-in';
     Object.values(panes).forEach((p) => { p.hidden = true; });
   };
 
@@ -79,11 +79,11 @@
 
   const showPane = (pane) => {
     textContent.querySelectorAll('.view-pane').forEach((p) => { p.hidden = p.dataset.pane !== pane; });
-    textPanes.querySelectorAll('.pane-btn').forEach((b) => b.classList.toggle('active', b.dataset.pane === pane));
+    textPanes.querySelectorAll('.pane-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pane === pane)));
   };
 
   const textError = (message) => {
-    textContent.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><span></span></div>';
+    textContent.innerHTML = '<div class="t-empty"><i class="t-icon t-empty-icon bi bi-exclamation-triangle"></i><span></span></div>';
     textContent.querySelector('span').textContent = message;
   };
 
@@ -158,7 +158,7 @@
   const toggleZoom = () => {
     if (box.dataset.kind !== 'image') return;
     const zoomed = box.classList.toggle('zoomed');
-    zoomBtn.querySelector('i').className = zoomed ? 'bi bi-zoom-out' : 'bi bi-zoom-in';
+    zoomBtn.querySelector('i').className = zoomed ? 't-icon bi bi-zoom-out' : 't-icon bi bi-zoom-in';
     if (zoomed) { stage.scrollTop = (stage.scrollHeight - stage.clientHeight) / 2; stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2; }
   };
 

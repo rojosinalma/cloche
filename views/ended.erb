@@ -15,17 +15,20 @@
        [f ? rv.(f, :label).to_s : id, shown]
      end
    } -%>
-  <nav class="navbar sticky-top navbar-padded">
-    <span class="brand fs-5"><i class="bi bi-cloud-arrow-down me-2"></i><%= result[:title] || share.title %></span>
-  </nav>
+  <header class="t-navbar t-shell-nav">
+    <span class="t-navbar-brand"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i><%= result[:title] || share.title %></span>
+    <div class="t-navbar-end">
+<%== render("nav_tools") %>
+    </div>
+  </header>
 
-  <main class="main-content">
+  <main class="t-shell-main t-page">
     <div class="notice-panel">
       <i class="bi bi-stop-circle notice-ended"></i>
-      <h5 class="notice-title mb-1">This share has ended</h5>
-      <p class="text-secondary mb-4"><%= result[:reason] %><% if result[:duration] %> · after <%= result[:duration] %><% end %></p>
+      <h1 class="notice-title">This share has ended</h1>
+      <p class="t-muted notice-reason"><%= result[:reason] %><% if result[:duration] %> · after <%= result[:duration] %><% end %></p>
 
-      <div class="card mb-3"><div class="card-body">
+      <div class="t-card"><div class="t-card-body">
         <dl class="notice-facts">
           <dt>Started</dt><dd><%= fmt_time.(result[:started_at]) %></dd>
           <dt>Ended</dt><dd><%= fmt_time.(result[:ended_at]) %></dd>
@@ -34,8 +37,8 @@
       </div></div>
 
       <% unless tally.empty? -%>
-      <div class="section-label text-start">Downloaded</div>
-      <div class="card mb-3"><div class="card-body py-2">
+      <div class="section-label">Downloaded</div>
+      <div class="t-card"><div class="t-card-body">
         <ul class="download-list">
           <% tally.each do |name, n| -%>
           <li><i class="bi bi-download kind-file"></i><span class="file-name"><%= name %></span><% if n.to_i > 1 %><span class="download-count">×<%= n %></span><% end %></li>
@@ -45,10 +48,10 @@
       <% end -%>
 
       <% if answers -%>
-      <div class="section-label text-start">Answers</div>
-      <div class="card mb-3">
-        <div class="card-body py-2">
-          <table class="table table-borderless answers-table">
+      <div class="section-label">Answers</div>
+      <div class="t-card">
+        <div class="t-card-body">
+          <table class="t-table answers-table">
             <tbody>
             <% answer_rows.(answers).each do |label, shown| -%>
             <tr><th scope="row"><%= label %></th><td><% if shown.empty? %><span class="answer-empty">—</span><% else %><%= shown.join(', ') %><% end %></td></tr>
@@ -57,16 +60,16 @@
           </table>
         </div>
         <% if submissions.positive? -%>
-        <div class="card-footer text-secondary small text-start"><i class="bi bi-send me-1"></i>Submitted <%= submissions %> time<%= 's' unless submissions == 1 %><% if submitted_at %>, last at <%= fmt_time.(submitted_at) %><% end %></div>
+        <div class="t-card-footer t-muted t-small"><i class="t-icon bi bi-send"></i> Submitted <%= submissions %> time<%= 's' unless submissions == 1 %><% if submitted_at %>, last at <%= fmt_time.(submitted_at) %><% end %></div>
         <% end -%>
       </div>
       <% end -%>
 
       <% if draft && !draft.empty? -%>
-      <div class="section-label text-start">Unsubmitted draft</div>
-      <div class="card mb-3"><div class="card-body py-2">
-        <p class="text-secondary small mb-2 text-start"><i class="bi bi-pencil me-1"></i>Changed after the last submit, never submitted.</p>
-        <table class="table table-borderless answers-table answers-draft">
+      <div class="section-label">Unsubmitted draft</div>
+      <div class="t-card"><div class="t-card-body">
+        <p class="t-muted t-small draft-note"><i class="t-icon bi bi-pencil"></i> Changed after the last submit, never submitted.</p>
+        <table class="t-table answers-table answers-draft">
           <tbody>
           <% answer_rows.(draft).each do |label, shown| -%>
           <tr><th scope="row"><%= label %></th><td><% if shown.empty? %><span class="answer-empty">—</span><% else %><%= shown.join(', ') %><% end %></td></tr>
@@ -76,6 +79,6 @@
       </div></div>
       <% end -%>
 
-      <p class="text-secondary small mt-4">You can close this tab.</p>
+      <p class="t-muted t-small notice-close">You can close this tab.</p>
     </div>
   </main>

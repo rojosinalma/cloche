@@ -119,7 +119,7 @@ module TextView
       %(<img src="#{h(href)}" alt="#{h(alt_text)}"#{title_attr(title)} loading="lazy">)
     end
 
-    def table(header, body) = %(<div class="table-wrap"><table class="table table-sm md-table"><thead>#{header}</thead><tbody>#{body}</tbody></table></div>\n)
+    def table(header, body) = %(<div class="table-wrap"><table class="t-table md-table"><thead>#{header}</thead><tbody>#{body}</tbody></table></div>\n)
 
     private
 
@@ -320,7 +320,7 @@ module TextView
     h = ->(cell) { Rack::Utils.escape_html(cell.to_s) }
     head = header.map { |c| "<th>#{h.(c)}</th>" }.join
     body = rows.map { |row| "<tr>#{row.map { |c| "<td>#{h.(c)}</td>" }.join}</tr>" }.join("\n")
-    %(<div class="table-wrap"><table class="table table-sm table-hover csv-table"><thead><tr><th class="row-num"></th>#{head}</tr></thead><tbody>#{body}</tbody></table></div>)
+    %(<div class="table-wrap"><table class="t-table csv-table"><thead><tr><th class="row-num"></th>#{head}</tr></thead><tbody>#{body}</tbody></table></div>)
   end
 
   def short_error(error) = error.message.lines.first.to_s.strip[0, 120]

@@ -1,0 +1,7 @@
+      <select class="t-select" data-size="sm" data-tailor-picker="skin" aria-label="Skin" title="Skin">
+        <% %w[bootstrap webtui daisyui govuk luz pico simple tufte].each do |s| %><option value="<%= s %>"><%= s %></option><% end %>
+      </select>
+      <select class="t-select" data-size="sm" data-tailor-picker="palette" aria-label="Palette" title="Palette">
+        <% %w[dracula ayu catppuccin everforest flexoki gruvbox kanagawa modusvivendi nightfox nightowl nord onedark oxocarbon poimandres rosepine selenized solarized synthwave84 tokyonight vitesse zenburn].each do |p| %><option value="<%= p %>"><%= p %></option><% end %>
+      </select>
+      <button class="t-btn" data-variant="ghost" data-size="sm" data-tailor-mode-toggle type="button" aria-label="Toggle light/dark" title="Toggle light/dark mode"><i class="bi bi-sun-fill theme-icon-light"></i><i class="bi bi-moon-fill theme-icon-dark"></i></button>
