@@ -89,6 +89,7 @@ module McpServer
   def share_path(id, suffix = "") = "/api/shares/#{URI.encode_www_form_component(id.to_s.strip)}#{suffix}"
 
   def register(name, desc, schema, &handler)
+    BASE_SCHEMAS[name] = schema
     klass = Class.new(MCP::Tool) do
       tool_name name
       description desc
@@ -125,35 +126,49 @@ module McpServer
     nil
   end
 
+  # Built per request so the roots and the idle default reflect the live settings. The instructions
+  # stay at three lines (they are injected into every agent turn); everything else lives in the
+  # tool descriptions, which the agent reads only when it looks the tool up.
   def build
+    refresh_paths_descriptions!
     MCP::Server.new(name: "cloche", title: "cloche", version: "1.0.0", instructions: instructions, tools: TOOLS)
   end
 
-  # Built per request so the roots and the idle default reflect the live settings.
   def instructions
+    [
+      "Shares files, folders and question forms from this host with the user's browser; hand the user the returned `url` as a Markdown link (never lan_url).",
+      "The calling session is detected from the MCP request: when a share ends or a form is submitted, the result lands in your session automatically (no waiting).",
+      "Shares end after #{Listing.human_duration(Setting.get('idle_timeout'))} idle by default; idle_timeout (seconds, 0 = never) on create_share/create_form/update_share changes that."
+    ].join("\n")
+  end
+
+  def roots_description(purpose)
     roots = PathGuard.configured_roots
-    "Shares files and folders from this host with the user's browser as a gallery page " \
-      "(image/video/audio previews, a card viewer for text files — Markdown rendered, JSON/CSV " \
-      "pretty, source highlighted — downloads, zip). Paths are absolute host paths under " \
-      "#{roots.empty? ? 'the configured allowed_roots (none set)' : roots.join(', ')}. Hand the user the returned " \
-      "`url` (not lan_url). create_share learns the calling session from the MCP request, so when the share ends " \
-      "a message saying how it ended and what was downloaded lands in your session automatically; no waiting " \
-      "needed. Shares end after #{Listing.human_duration(Setting.get('idle_timeout'))} idle by default; pass " \
-      "idle_timeout (seconds, 0 = never) to create_share or update_share to change that. Stop shares you no " \
-      "longer need with stop_share. create_form shares a questionnaire instead (checklists, radios, selects, text, " \
-      "Markdown task lists): the user answers in the browser, every Submit reaches your session as a callback and " \
-      "is readable via wait_share/get_share under `answers`. get_settings/set_setting read and change the server " \
-      "settings (roots, URLs, timeouts); changes apply immediately."
+    where = roots.empty? ? "an allowed root (none configured; see get_settings → allowed_roots)" : roots.join(", ")
+    "#{purpose}: absolute host paths under #{where}"
+  end
+
+  PATHS_TOOLS = { "create_share" => "Files and/or folders to share", "create_form" => "Optional files to show under the form" }.freeze
+  BASE_SCHEMAS = {}
+
+  def refresh_paths_descriptions!
+    TOOLS.each do |tool|
+      purpose = PATHS_TOOLS[tool.tool_name] or next
+      schema = JSON.parse(JSON.generate(BASE_SCHEMAS[tool.tool_name]), symbolize_names: true)
+      schema[:properties][:paths][:description] = roots_description(purpose)
+      tool.input_schema(schema)
+    end
   end
 
   register "create_share",
-           "Share files and/or folders with the user. Returns the share url to hand the user. Text files " \
-           "(logs, Markdown, JSON, CSV, code …) get a View button that opens them readable in the page, " \
-           "so this also hands over things to read, not just download. raw=true serves " \
-           "exactly one folder as a plain static site (HTML renders, relative links work). To ask the user " \
-           "questions (picks, choices, free text) use create_form instead.",
+           "Share files and/or folders with the user as a gallery page: image/video/audio previews, 3D models " \
+           "(STL/3MF/OBJ) rendered, text files (logs, Markdown, JSON, CSV, YAML, code …) opened readable in a viewer " \
+           "(Markdown rendered, JSON/CSV pretty, source highlighted) — so this hands over things to read, not just " \
+           "download; per-file downloads, folder navigation and zip. Returns `url` (hand it over as a Markdown link) " \
+           "and the share `id`. raw=true serves exactly one folder as a plain static site (HTML renders, relative links " \
+           "work). To ask the user questions (picks, choices, free text) use create_form instead.",
            { properties: {
-               paths: { type: "array", items: { type: "string" }, description: "Absolute host paths under an allowed root (see get_settings → allowed_roots)" },
+               paths: { type: "array", items: { type: "string" }, description: "Absolute host paths under an allowed root" },
                title: { type: "string", description: "Page heading (defaults to the basename or \"N items\")" },
                raw: { type: "boolean", description: "Serve one folder as a static site instead of a gallery" },
                idle_timeout: IDLE_SCHEMA,
@@ -165,18 +180,19 @@ module McpServer
   end
 
   register "create_form",
-           "Ask the user questions in their browser: a form share with checklists, radio/select choices, free text, " \
-           "Markdown task lists (every `- [ ]` becomes a live checkbox) and static Markdown. Hand the user the returned " \
-           "`url`. They can save as they go (server-side draft) and Submit; Submit keeps the share open so they may " \
-           "resubmit (each submit overwrites, `submissions` counts). Every submit lands in your session as a " \
-           "callback and is readable with wait_share (pass since=<submissions seen>) or get_share under `answers` " \
-           "(field id → value). Optional paths show files under the form (a gallery) so the user can look at what they are " \
-           "deciding about. Form shares default to a 24 h idle timeout. Call stop_share when you have what you need.",
+           "Ask the user questions in their browser instead of sharing files: a form share with checklists, radio/select " \
+           "choices, free text, Markdown task lists (every `- [ ]` becomes a live checkbox) and static Markdown. Returns " \
+           "`url` (hand it over as a Markdown link) and the share `id`. The user can save as they go (server-side draft) " \
+           "and Submit; Submit keeps the share open so they may resubmit (each submit overwrites, `submissions` counts). " \
+           "Every submit reaches your session automatically as a callback and is readable with wait_share (pass " \
+           "since=<submissions seen>) or get_share under `answers` (field id → value). Optional paths show files under " \
+           "the form (a gallery) so the user can look at what they are deciding about. Form shares default to a 24 h idle " \
+           "timeout. Call stop_share when you have what you need.",
            { properties: {
                title: { type: "string", description: "Page heading (defaults to \"Questions\")" },
                intro: { type: "string", description: "Markdown shown above the fields" },
                fields: { type: "array", items: FIELD_SCHEMA, description: "The questions, in order (≤ 50)" },
-               paths: { type: "array", items: { type: "string" }, description: "Optional absolute host paths to show under the form" },
+               paths: { type: "array", items: { type: "string" }, description: "Optional absolute host paths under an allowed root" },
                idle_timeout: IDLE_SCHEMA,
                session: SESSION_SCHEMA
              }, required: %w[fields] } do |args, session_id|
@@ -211,7 +227,8 @@ module McpServer
   end
 
   register "stop_share",
-           "End a share now (reason \"stopped via api\"). Its links stop working.",
+           "End a share now (reason \"stopped via api\"); its links stop working. Stop shares you no longer need, " \
+           "especially permanent ones (idle_timeout 0) and forms whose answers you have.",
            { properties: { id: { type: "string", description: "Share id" } }, required: %w[id] } do |args|
     api_text(:delete, share_path(args[:id]))
   end
@@ -234,7 +251,8 @@ module McpServer
   register "get_settings",
            "List every server setting: key, current value (as stored), default and source (\"db\" when set, " \
            "\"default\" otherwise). Covers allowed_roots (comma-separated absolute paths shareable), public_base_url, " \
-           "lan_base_url, opencode_url, idle timeouts, viewer caps, form limits, callback mode.",
+           "lan_base_url, opencode_url, idle timeouts, viewer caps, form limits, callback mode. Change one with " \
+           "set_setting; changes apply immediately.",
            { properties: {}, required: [] } do
     api_text(:get, "/api/settings")
   end
