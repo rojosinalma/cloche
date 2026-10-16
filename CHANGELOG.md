@@ -6,6 +6,18 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-16
+
+### Changed
+
+- Icons come from tailor's subsetted SVG sprite (`public/tailor/icons.svg`, 47 Bootstrap Icons declared with
+  `tailor apply --icons`) as `<svg class="t-icon">` elements; the Bootstrap Icons web font and its vendored
+  files are gone, so a page loads one small sprite instead of a font and a stylesheet.
+- `app.css` dropped the rules that tailor core 0.5.1 now covers: responsive hiding (`t-hide` on the date
+  column and the navbar pickers), the row-action cluster (plain buttons in `t-col-actions`), the size/date
+  columns on `t-col-shrink`. What stays is cloche's own: the preview overlay, the text viewer, the 3D colour
+  rail, the form action bar and the field header.
+
 ## [0.2.0] - 2026-10-16
 
 ### Changed
@@ -61,6 +73,7 @@ First public release.
 - Download log per share (name, time, IP); previews and resumed range requests are not counted.
 - Docker image published to GHCR (`ghcr.io/rojosinalma/cloche`) by GitHub Actions.
 
-[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/rojosinalma/cloche/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rojosinalma/cloche/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rojosinalma/cloche/releases/tag/v0.1.0

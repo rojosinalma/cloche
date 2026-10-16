@@ -1,5 +1,5 @@
   <header class="t-navbar t-shell-nav">
-    <a class="t-navbar-brand" href="/"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i>cloche</a>
+    <a class="t-navbar-brand" href="/"><%== icon("cloud-arrow-down") %>cloche</a>
     <div class="t-navbar-end">
 <%== render("nav_tools") %>
     </div>
@@ -7,7 +7,7 @@
 
   <main class="t-shell-main t-page">
     <div class="notice-panel">
-      <i class="bi bi-question-circle"></i>
+      <%== icon("question-circle", css: "notice-icon") %>
       <h1 class="notice-title">Not found</h1>
       <p class="t-muted">Nothing is shared at this address. The link may be mistyped, or the share has expired.</p>
     </div>

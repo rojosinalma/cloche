@@ -114,7 +114,7 @@ module TextView
 
     def image(link, title, alt_text)
       href = TextView.href_for(link, @links, image: true)
-      return %(<span class="md-missing" title="Image not in this share"><i class="bi bi-image"></i> #{h(alt_text)}</span>) unless href
+      return %(<span class="md-missing" title="Image not in this share"><svg class="t-icon" aria-hidden="true"><use href="/tailor/icons.svg#bi-image"/></svg> #{h(alt_text)}</span>) unless href
 
       %(<img src="#{h(href)}" alt="#{h(alt_text)}"#{title_attr(title)} loading="lazy">)
     end

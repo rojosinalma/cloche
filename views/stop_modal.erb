@@ -1,5 +1,5 @@
   <dialog class="t-dialog" id="stop-modal" data-tone="danger" aria-labelledby="stop-modal-title">
-    <div class="t-dialog-header"><h2 class="t-dialog-title" id="stop-modal-title"><i class="t-icon bi bi-stop-circle" aria-hidden="true"></i><span>Stop serving?</span></h2><button class="t-dialog-close" type="button" aria-label="Close" data-dialog-close>×</button></div>
+    <div class="t-dialog-header"><h2 class="t-dialog-title" id="stop-modal-title"><%== icon("stop-circle") %><span>Stop serving?</span></h2><button class="t-dialog-close" type="button" aria-label="Close" data-dialog-close>×</button></div>
     <div class="t-dialog-body">The links on this page stop working and the agent that served them is told you ended it.</div>
     <div class="t-dialog-footer"><button class="t-btn" type="button" data-dialog-close>Cancel</button><button class="t-btn" data-variant="danger" type="button" id="stop-confirm" data-stop-url="<%= base %>/stop" onclick="stopServing()">Stop serving</button></div>
   </dialog>
@@ -15,7 +15,7 @@
         document.getElementById('stop-modal').close();
         document.querySelectorAll('.serve-action').forEach(b => b.remove());
         document.getElementById('content').innerHTML =
-          '<div class="t-empty"><i class="t-icon t-empty-icon bi bi-stop-circle"></i>Serving stopped. You can close this tab.</div>';
+          '<div class="t-empty"><%== icon("stop-circle", css: "t-empty-icon") %>Serving stopped. You can close this tab.</div>';
         toast('success', r.message);
       } catch (e) {
         btn.disabled = false; btn.textContent = 'Stop serving';

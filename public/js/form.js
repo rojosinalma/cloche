@@ -6,6 +6,9 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const card = (id) => $(`.form-field[data-field="${CSS.escape(id)}"]`);
 const bar = { progress: $('#bar-progress span'), draft: $('#bar-draft'), submit: $('#bar-submit span') };
 const submitBtn = $('#submit-btn');
+// Icons come from the tailor sprite.
+const icon = (name, css = '') => `<svg class="t-icon${css ? ' ' + css : ''}" aria-hidden="true"><use href="/tailor/icons.svg#bi-${name}"/></svg>`;
+const iconHref = (name) => `/tailor/icons.svg#bi-${name}`;
 
 let submissions = data.submissions || 0;
 let submittedAt = data.submitted_at;
@@ -95,7 +98,7 @@ function renderSubmit() {
 function setDraft(state, text) {
   const icons = { idle: 'cloud-check', saving: 'cloud-arrow-up', saved: 'cloud-check', unsaved: 'cloud', failed: 'cloud-slash' };
   bar.draft.dataset.state = state;
-  $('i', bar.draft).className = `bi bi-${icons[state]}`;
+  $('use', bar.draft).setAttribute('href', iconHref(icons[state]));
   $('span', bar.draft).textContent = text;
 }
 
@@ -166,7 +169,7 @@ async function submit() {
   } catch (e) {
     toast('error', `Submit failed: ${e.message}`);
   } finally {
-    if (!ended) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="t-icon bi bi-send"></i>Submit'; }
+    if (!ended) { submitBtn.disabled = false; submitBtn.innerHTML = `${icon('send')}Submit`; }
   }
 }
 

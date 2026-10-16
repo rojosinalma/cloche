@@ -1,10 +1,10 @@
   <header class="t-navbar t-shell-nav">
-    <a class="t-navbar-brand" href="<%= base %>/"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i><%= share.title %></a>
+    <a class="t-navbar-brand" href="<%= base %>/"><%== icon("cloud-arrow-down") %><%= share.title %></a>
     <div class="t-navbar-end">
       <% if zip_href -%>
-      <a class="t-btn serve-action" data-variant="primary" data-size="sm" href="<%= zip_href %>"><i class="t-icon bi bi-file-earmark-zip"></i>Download all</a>
+      <a class="t-btn serve-action" data-variant="primary" data-size="sm" href="<%= zip_href %>"><%== icon("file-earmark-zip") %>Download all</a>
       <% end -%>
-      <button class="t-btn serve-action" data-variant="ghost" data-tone="danger" data-size="sm" type="button" data-dialog-open="stop-modal"><i class="t-icon bi bi-stop-circle"></i>Stop serving</button>
+      <button class="t-btn serve-action" data-variant="ghost" data-tone="danger" data-size="sm" type="button" data-dialog-open="stop-modal"><%== icon("stop-circle") %>Stop serving</button>
       <span class="t-navbar-sep"></span>
 <%== render("nav_tools") %>
     </div>

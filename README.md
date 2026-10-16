@@ -34,7 +34,7 @@ Configuration, API, MCP tools, operations, security and development notes live i
 - Docker Engine 24 or later with Docker Compose v2 (the image `ghcr.io/rojosinalma/cloche` is
   published for linux/amd64 and linux/arm64)
 - A browser with ES modules and WebGL (WebGL only for the 3D viewer); the UI is built on
-  [tailor](https://github.com/rojosinalma/tailor) (vendored, with Bootstrap Icons 1.11.3) and loads
+  [tailor](https://github.com/rojosinalma/tailor) (vendored, icons from its Bootstrap Icons sprite) and loads
   three.js 0.186.1 from jsdelivr
 - For callbacks: an [opencode](https://opencode.ai) 2.0 or later server reachable from the container
 - From source only: Ruby 3.3 or later, Bundler 2, the `zip` binary
