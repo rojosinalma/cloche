@@ -1,23 +1,23 @@
 <% bi = ->(icon) { icon.to_s.start_with?("bi-") ? icon : "bi-#{icon}" } -%>
-    <div class="card"><table class="table table-hover mb-0 file-table">
+    <div class="t-table-wrap"><table class="t-table file-table">
       <tbody>
       <% rows.each do |f| -%>
         <% opens = f.kind == :dir || f.previewable? -%>
         <% action = f.kind == :dir ? 'Open' : opens ? 'View' : 'Download' -%>
         <tr>
-          <td class="col-shrink"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
-          <td><a class="file-name d-block" href="<%= opens ? f.view_href : f.href %>" title="<%= action %>" <%== preview_attrs(f) %>><%= f.name %><%= '/' if f.kind == :dir %></a></td>
-          <td class="col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
-          <td class="col-shrink file-size d-none d-md-table-cell"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
-          <td class="col-shrink">
+          <td class="t-col-icon"><i class="bi <%= bi.(f.icon) %> <%= f.kind == :dir ? 'kind-dir' : 'kind-file' %>"></i></td>
+          <td><a class="file-name file-name-block" href="<%= opens ? f.view_href : f.href %>" title="<%= action %>" <%== preview_attrs(f) %>><%= f.name %><%= '/' if f.kind == :dir %></a></td>
+          <td class="t-col-icon file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
+          <td class="t-col-icon file-size hide-sm"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="t-col-actions">
             <% if f.kind == :dir -%>
-            <a class="btn btn-sm btn-outline-success" href="<%= f.zip_href %>" title="Download folder as zip"><i class="bi bi-file-earmark-zip"></i></a>
+            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.zip_href %>" title="Download folder as zip" aria-label="Download folder as zip"><i class="t-icon bi bi-file-earmark-zip"></i></a>
             <% else -%>
-            <div class="d-flex gap-1 justify-content-end">
+            <div class="t-cluster row-actions" data-gap="1">
               <% if opens -%>
-              <a class="btn btn-sm btn-outline-secondary" href="<%= f.view_href %>" title="View" <%== preview_attrs(f) %>><i class="bi bi-eye"></i></a>
+              <a class="t-btn" data-size="sm" data-icon="only" href="<%= f.view_href %>" title="View" aria-label="View" <%== preview_attrs(f) %>><i class="t-icon bi bi-eye"></i></a>
               <% end -%>
-              <a class="btn btn-sm btn-outline-success" href="<%= f.href %>" title="Download"><i class="bi bi-download"></i></a>
+              <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.href %>" title="Download" aria-label="Download"><i class="t-icon bi bi-download"></i></a>
             </div>
             <% end -%>
           </td>

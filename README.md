@@ -29,8 +29,9 @@ Configuration, API, MCP tools, security and development notes are documented in 
 ## Requirements
 
 - Docker and Docker Compose (the published image is `ghcr.io/rojosinalma/cloche`, linux/amd64 and linux/arm64)
-- A current browser with ES modules and WebGL for the 3D viewer; the pages load Bootstrap 5.3.3,
-  Bootstrap Icons 1.11.3 and three.js 0.186.1 from jsdelivr
+- A current browser with ES modules and WebGL for the 3D viewer; the UI is built on
+  [tailor](https://github.com/rojosinalma/tailor) (vendored, with Bootstrap Icons 1.11.3) and loads
+  three.js 0.186.1 from jsdelivr
 - For callbacks: an opencode 2.x server reachable from the container
 
 ## Setup

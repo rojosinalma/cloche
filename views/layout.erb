@@ -10,44 +10,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= page_title %></title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="<%= asset("css/dracula.css") %>" rel="stylesheet">
+  <%# tailor head (vendored public/tailor/tailor-head.html, kept current by `tailor sync`) %>
+  <%== File.read(File.join(opts[:root] || Dir.pwd, "public/tailor/tailor-head.html")) %>
+  <link href="/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
   <link href="<%= asset("css/app.css") %>" rel="stylesheet">
   <script>
-    (function() {
-      var t = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-      document.documentElement.setAttribute('data-theme', t);
-    })();
+    // toast() is called by page scripts that may run before tailor.js is up: queue until then.
+    function toast(type, msg) {
+      if (window.Tailor) return Tailor.toast(type === 'error' ? 'danger' : type, msg);
+      document.addEventListener('DOMContentLoaded', () => toast(type, msg), { once: true });
+    }
   </script>
 </head>
 <body>
+<div class="t-shell" data-sidebar="none">
 <%== yield %>
 
-  <div id="toast-container"></div>
-
-  <footer class="app-footer">
-    <div class="footer-right">
-      <span class="footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" title="This share stays up until it is stopped"><i class="bi bi-infinity"></i> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><i class="bi bi-hourglass-split"></i> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"><i class="bi bi-sun-fill theme-icon-light"></i><i class="bi bi-moon-fill theme-icon-dark"></i></button>
+  <footer class="t-footer t-shell-foot">
+    <div class="t-footer-end">
+      <span class="t-footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" title="This share stays up until it is stopped"><i class="bi bi-infinity"></i> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><i class="bi bi-hourglass-split"></i> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
     </div>
   </footer>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<%# Tailor.toast appends .t-toast here %>
+<div id="t-toasts" class="t-toasts" aria-live="polite" aria-atomic="false"></div>
+
   <script>
-    function toggleTheme() {
-      const t = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t); localStorage.setItem('theme', t);
-    }
-    function toast(type, msg) {
-      const icons = { success: 'check-circle-fill', warning: 'exclamation-triangle-fill', error: 'x-circle-fill' };
-      const el = document.createElement('div');
-      el.className = `toast-item toast-${type}`;
-      el.innerHTML = `<i class="bi bi-${icons[type] || icons.error}"></i><span></span>`;
-      el.querySelector('span').textContent = msg;
-      document.getElementById('toast-container').appendChild(el);
-      setTimeout(() => { el.classList.add('leaving'); setTimeout(() => el.remove(), 300); }, 2500);
-    }
     (function expiryTimer() {
       const el = document.getElementById('expiry');
       if (!el) return;
@@ -66,14 +55,14 @@
         left.textContent = 'ended';
         document.querySelectorAll('.serve-action').forEach(b => b.remove());
         const content = document.getElementById('content');
-        if (content) content.innerHTML = `<div class="empty-state"><i class="bi bi-hourglass-bottom"></i>This share has ended (${reason}). You can close this tab.</div>`;
+        if (content) content.innerHTML = `<div class="t-empty"><i class="t-icon t-empty-icon bi bi-hourglass-bottom"></i>This share has ended (${reason}). You can close this tab.</div>`;
         toast('warning', `Share ended: ${reason}`);
       };
       const setPermanent = (on) => {
         permanent = on;
         icon.className = on ? 'bi bi-infinity' : 'bi bi-hourglass-split';
         el.title = on ? 'This share stays up until it is stopped' : 'Time left before this share ends if nobody touches it';
-        if (on) { left.textContent = 'until stopped'; el.classList.remove('text-warning'); }
+        if (on) { left.textContent = 'until stopped'; delete el.dataset.soon; }
       };
       const sync = async () => {
         try {
@@ -88,7 +77,7 @@
         if (ended || permanent) return;
         const s = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
         left.textContent = fmt(s);
-        el.classList.toggle('text-warning', s > 0 && s <= 300);
+        if (s > 0 && s <= 300) el.dataset.soon = ''; else delete el.dataset.soon;
         if (s === 0) sync();
       };
       tick();

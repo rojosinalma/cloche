@@ -6,6 +6,17 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
+### Changed
+
+- The UI is built on [tailor](https://github.com/rojosinalma/tailor): the vendored `public/tailor/` files
+  (core, 8 skins, 21 palettes) replace Bootstrap 5 and the Dracula stylesheet; the pages look the same by
+  default (bootstrap skin, Dracula palette) and gain skin and palette pickers plus a light/dark toggle in the
+  navbar. Bootstrap Icons are served locally instead of from a CDN.
+- Dialogs are native `<dialog>` elements, toasts come from tailor, and the 3D viewer reads its colours from
+  the active palette.
+
 ## [0.1.0] - 2026-10-16
 
 First public release.
@@ -27,5 +38,6 @@ First public release.
 - Download log per share (name, time, IP); previews and resumed range requests are not counted.
 - Docker image published to GHCR (`ghcr.io/rojosinalma/cloche`) by GitHub Actions.
 
-[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/rojosinalma/cloche/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rojosinalma/cloche/releases/tag/v0.1.0

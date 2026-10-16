@@ -12,6 +12,9 @@ import * as fflate from 'three/addons/libs/fflate.module.js';
 const STORAGE_KEY = 'cloche.model-colors';
 const defaults = { mesh: 'purple', bg: 'bg' };
 
+// Swatch names → tailor palette tokens (the theme colours come from --t-*; cssColor reads them live).
+const TOKENS = { fg: '--t-text', comment: '--t-disabled', bg: '--t-canvas', 'bg-dark': '--t-inset', 'bg-darker': '--t-overlay-bg', selection: '--t-selection' };
+const token = (name) => TOKENS[name] || `--t-hue-${name}`;
 const cssColor = (name) => new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#000000');
 const fmt = (n) => (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
 
@@ -58,7 +61,7 @@ export function mount(els, opts) {
   setNotice('');
   stats.textContent = '';
   Object.values(buttons).forEach((b) => { b.disabled = true; });
-  buttons.wire.classList.remove('active');
+  buttons.wire.setAttribute('aria-pressed', 'false');
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
@@ -90,20 +93,20 @@ export function mount(els, opts) {
 
   const markSwatches = () => swatches.forEach((s) => {
     const target = s.closest('.model-swatches').dataset.target;
-    s.classList.toggle('active', choice[target] === s.dataset.color);
+    s.setAttribute('aria-pressed', String(choice[target] === s.dataset.color));
   });
 
   const applyTheme = () => {
-    scene.background = cssColor(`--drac-${choice.bg}`);
-    hemi.color.copy(cssColor('--drac-fg'));
-    hemi.groundColor.copy(cssColor('--drac-bg-darker'));
+    scene.background = cssColor(token(choice.bg));
+    hemi.color.copy(cssColor(token('fg')));
+    hemi.groundColor.copy(cssColor(token('bg-darker')));
     const useFile = choice.mesh === 'file' && hasFileColors;
-    const tint = useFile ? null : cssColor(`--drac-${choice.mesh}`);
+    const tint = useFile ? null : cssColor(token(choice.mesh));
     meshes.forEach((m) => {
       if (useFile && m.userData.fileColor) m.material.color.copy(m.userData.fileColor);
-      else m.material.color.copy(tint || cssColor('--drac-purple'));
+      else m.material.color.copy(tint || cssColor(token('purple')));
     });
-    if (grid) grid.material.color.copy(cssColor('--drac-comment'));
+    if (grid) grid.material.color.copy(cssColor(token('comment')));
     markSwatches();
   };
 
@@ -116,7 +119,7 @@ export function mount(els, opts) {
     grid.material.transparent = true;
     grid.material.opacity = 0.45;
     grid.position.set((box.min.x + box.max.x) / 2, box.min.z - 0.01, -(box.min.y + box.max.y) / 2);
-    grid.visible = buttons.grid.classList.contains('active');
+    grid.visible = buttons.grid.getAttribute('aria-pressed') === 'true';
     scene.add(grid);
   };
 
@@ -145,7 +148,7 @@ export function mount(els, opts) {
   };
 
   const adopt = (object) => {
-    const purple = cssColor('--drac-purple');
+    const purple = cssColor(token('purple'));
     object.traverse((node) => {
       if (!node.isMesh) return;
       const source = Array.isArray(node.material) ? node.material[0] : node.material;
@@ -217,11 +220,12 @@ export function mount(els, opts) {
   resize();
   applyTheme();
   const mo = new MutationObserver(applyTheme);
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin', 'data-palette', 'data-mode'] });
 
   on(buttons.reset, 'click', () => fit && fit());
-  on(buttons.grid, 'click', () => { const g = buttons.grid.classList.toggle('active'); if (grid) grid.visible = g; });
-  on(buttons.wire, 'click', () => { const w = buttons.wire.classList.toggle('active'); meshes.forEach((m) => { m.material.wireframe = w; }); });
+  const toggle = (b) => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); return on; };
+  on(buttons.grid, 'click', () => { const g = toggle(buttons.grid); if (grid) grid.visible = g; });
+  on(buttons.wire, 'click', () => { const w = toggle(buttons.wire); meshes.forEach((m) => { m.material.wireframe = w; }); });
   swatches.forEach((s) => on(s, 'click', () => {
     choice[s.closest('.model-swatches').dataset.target] = s.dataset.color;
     remember();

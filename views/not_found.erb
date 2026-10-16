@@ -1,11 +1,14 @@
-  <nav class="navbar sticky-top navbar-padded">
-    <a class="brand fs-5" href="/"><i class="bi bi-cloud-arrow-down me-2"></i>cloche</a>
-  </nav>
+  <header class="t-navbar t-shell-nav">
+    <a class="t-navbar-brand" href="/"><i class="t-icon bi bi-cloud-arrow-down" aria-hidden="true"></i>cloche</a>
+    <div class="t-navbar-end">
+<%== render("nav_tools") %>
+    </div>
+  </header>
 
-  <main class="main-content">
+  <main class="t-shell-main t-page">
     <div class="notice-panel">
       <i class="bi bi-question-circle"></i>
-      <h5 class="notice-title mb-2">Not found</h5>
-      <p class="text-secondary">Nothing is shared at this address. The link may be mistyped, or the share has expired.</p>
+      <h1 class="notice-title">Not found</h1>
+      <p class="t-muted">Nothing is shared at this address. The link may be mistyped, or the share has expired.</p>
     </div>
   </main>
