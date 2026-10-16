@@ -4,6 +4,7 @@ require "json"
 require "roda"
 require "rack/utils"
 
+require_relative "lib/version"
 require_relative "lib/logger"
 require_relative "models/database"
 require_relative "lib/worker_pool"
@@ -231,7 +232,7 @@ class App < Roda
 
     r.root { page("landing", title: "cloche") }
 
-    r.get("health") { { status: "ok", live_shares: ShareManager.live.count } }
+    r.get("health") { { status: "ok", version: Cloche::VERSION, live_shares: ShareManager.live.count } }
 
     r.on "api" do
       api_authorized!

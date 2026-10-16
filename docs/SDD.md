@@ -115,7 +115,7 @@ targets or auth schemes would plug in.
 - **Logs**: stdout, one global logger (`lib/logger.rb`), subsystem prefixes (`[share]`, `[idle]`,
   `[callback]`, `[zipper]`, `[mcp]`, `[db]`); `LOG_LEVEL` in `.env`; `mcp_debug` setting for raw MCP
   bodies.
-- **Health**: `GET /health` → `{status, live_shares}`, no auth.
+- **Health**: `GET /health` → `{status, version, live_shares}`, no auth.
 - **State**: `./data/cloche.db` (plus WAL files); back it up with the container stopped or with the
   SQLite backup API. Deleting it resets settings to the seeds.
 - **Upgrade**: `docker compose pull && docker compose up -d`; migrations run on boot and are additive,

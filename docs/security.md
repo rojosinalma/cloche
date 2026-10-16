@@ -9,8 +9,8 @@
 | Zip | Built from a symlink mirror of validated paths only; escaping symlinks are never followed |
 | Previews | Served inline with `Content-Security-Policy: sandbox` (an SVG cannot run script); raw shares render HTML on purpose and skip the sandbox |
 | Mounts | Host files are mounted read-only; cloche never writes to them |
+| Container | Runs as the unprivileged `cloche` user (uid 1000); started as root it only fixes the data directory's ownership and drops privileges before the app starts |
 | Callbacks | Outbound only, to the configured `opencode_url`, with HTTP Basic credentials from `.env` |
 | Secrets | `.env` is mounted into the container and read by dotenv; nothing is passed through the compose `environment:` block except structural values |
 
-Report a vulnerability by opening a GitHub issue marked "security", or by contacting me through the
-address on my GitHub profile if the details should stay private until fixed.
+Report a vulnerability privately as described in [`SECURITY.md`](../SECURITY.md).

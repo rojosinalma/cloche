@@ -1,0 +1,15 @@
+#!/bin/sh
+# Container entrypoint. The image runs as the unprivileged `cloche` user by default.
+# When it is started as root instead (compose `user: "0:0"`), the data directory is
+# handed to that user first and the process then drops its privileges, so a volume
+# that Docker created as root still works and the app never runs as root.
+set -e
+
+if [ "$(id -u)" = "0" ]; then
+  data_dir=$(dirname "${DATABASE_PATH:-/app/data/cloche.db}")
+  mkdir -p "$data_dir"
+  chown -R cloche:cloche "$data_dir"
+  exec setpriv --reuid=cloche --regid=cloche --init-groups "$@"
+fi
+
+exec "$@"

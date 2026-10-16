@@ -7,7 +7,7 @@
 | Database | SQLite at `DATABASE_PATH` (`data/cloche.db`); migrations in `db/migrations` are additive and run on every boot |
 | Image | `docker compose up -d --build` builds from the local `Dockerfile` instead of pulling |
 | Syntax check | `ruby -wc app.rb lib/*.rb models/*.rb` |
-| Smoke test | `curl -s localhost:9292/health` → `{"status":"ok","live_shares":0}` |
+| Smoke test | `curl -s localhost:9292/health` → `{"status":"ok","version":"0.2.0","live_shares":0}` |
 
 ## Layout
 

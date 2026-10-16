@@ -15,7 +15,7 @@ Without a configured token, `/api` and `/mcp` answer 404.
 | `PUT` | `/api/settings/:key` | `{value}`; 422 on a bad type, 404 on an unknown key |
 | `DELETE` | `/api/settings/:key` | Reset to default |
 | `POST` | `/mcp` | MCP (stateless Streamable HTTP, JSON-RPC); tools in [`mcp.md`](mcp.md) |
-| `GET` | `/health` | `{status, live_shares}` (no auth) |
+| `GET` | `/health` | `{status, version, live_shares}` (no auth) |
 | `GET` | `/s/<id>/` | Gallery or form page (the id is the key) |
 | `GET` | `/s/<id>/all.zip` | Whole share as a streamed zip |
 | `GET` | `/s/<id>/status` | Live state for the open page |
