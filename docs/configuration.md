@@ -14,6 +14,7 @@ dotenv) and runtime settings in the database, changed over the API without a res
 | `CLOCHE_SHARE_ROOT` | `HOST_HOME` | Host dir bind-mounted read-only into the container |
 | `CLOCHE_BIND` | `127.0.0.1` | Host interface of the published port |
 | `CLOCHE_PORT` | `9292` | Host port |
+| `CLOCHE_UID` / `CLOCHE_GID` | `1000` | uid/gid the container runs as (compose `user:`); `0` = the entrypoint fixes `./data` ownership, then drops to uid 1000 |
 | `RACK_ENV` | `production` | `development` = live code reload |
 | `LOG_LEVEL` | `info` | Log level |
 | `DATABASE_PATH` | `data/cloche.db` | SQLite file (set by `compose.yaml` to `/app/data/cloche.db`) |
