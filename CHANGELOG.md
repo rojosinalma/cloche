@@ -12,7 +12,7 @@ First public release.
 
 ### Added
 
-- Shares: agents share files and folders by absolute host path over REST or MCP and get a URL for the user.
+- Shares: agents share files and folders by absolute host path over REST or MCP and get a URL to hand out.
 - Gallery page: image/video/audio previews, folder navigation with breadcrumbs, per-file downloads, Stop button, idle countdown, light/dark theme.
 - Raw shares: serve one folder as a plain static site (HTML renders, relative links work).
 - Text viewer: syntax highlighting for any text file, pretty forms for Markdown (GFM), JSON, JSONL and CSV/TSV.
