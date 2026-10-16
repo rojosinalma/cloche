@@ -28,11 +28,13 @@ GEM
     sequel (5.108.0)
       bigdecimal
     simpleidn (0.3.0)
+    sqlite3 (2.9.6-aarch64-linux-gnu)
     sqlite3 (2.9.6-x86_64-linux-gnu)
     strscan (3.1.8)
     tilt (2.9.0)
 
 PLATFORMS
+  aarch64-linux-gnu
   x86_64-linux-gnu
 
 DEPENDENCIES
