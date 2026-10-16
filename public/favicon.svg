@@ -1,2 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#282A36"/>
-<path d="M16 7v12m-5-5 5 5 5-5M9 24h14" stroke="#BD93F9" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img">
+  <!-- palette: gruvbox · canvas #282828 · accent #fabd2f · secondary #8ec07c · glyph lucide:download -->
+  <title>cloche</title>
+  <rect width="32" height="32" rx="6" fill="#282828"/>
+  <g transform="translate(4 4)" fill="none" stroke="#fabd2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 15V3"/>
+    <path d="m7 10l5 5l5-5"/>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#8ec07c"/>
+  </g>
+</svg>
