@@ -6,6 +6,13 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- MCP server `instructions` cut to three lines (what cloche is and how to hand over the URL, the automatic
+  callback, the idle default); the allowed roots now sit in the `paths` schema of `create_share`/`create_form`
+  (refreshed from the live setting on every request) and the viewer, form and housekeeping notes moved into
+  the tool descriptions. Clients that inject the instructions into every turn pay ~60 % fewer tokens for it.
+
 ## [0.2.0] - 2026-10-16
 
 ### Changed

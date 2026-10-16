@@ -18,7 +18,10 @@ to it and the callback reaches that session without the agent passing anything.
 | `set_setting` | Change one setting (`key`, `value`) |
 
 Tool results are the same JSON documents the REST API returns (`{ok, message, …}`), so an agent can
-switch between the two freely. The server's `instructions` text tells the agent the allowed roots,
-how the end-of-share callback arrives and when to use `wait_share` instead.
+switch between the two freely. The server's `instructions` text is deliberately three lines (clients inject
+it into every agent turn): what cloche is and to hand over `url` as a link, that the end-of-share and
+form-submit callbacks reach the calling session on their own, and the idle default. Everything else — the
+allowed roots (refreshed from the live setting on every request), viewer features, form field types, the
+`since` protocol of `wait_share`, what `get_settings` covers — lives in the tool descriptions and schemas.
 
 Set the `mcp_debug` setting to `true` to log the raw request bodies while debugging a client.
