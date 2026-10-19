@@ -5,8 +5,7 @@
    Responsive hiding (t-hide), nowrap, shrink columns and card tools come from core. Icons are <svg class="t-icon">
    from the tailor sprite. No hex: --t-* only. */
 
-/* navbar: mode toggle icons; the brand truncates on long share titles (the pickers carry t-hide) */
-[data-mode="dark"] .theme-icon-light { display: none; } [data-mode="light"] .theme-icon-dark { display: none; }
+/* navbar: the brand truncates on long share titles */
 .t-navbar-brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .t-navbar-brand:hover { color: var(--t-link); }
 
