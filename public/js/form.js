@@ -48,7 +48,7 @@ function apply(f, value) {
   } else if (f.type === 'radio') {
     $$('input', el).forEach((i) => { i.checked = value != null && String(value) === i.value; });
   } else if (f.type === 'select') {
-    $('select', el).value = value == null ? '' : String(value);
+    const sel = $('select', el); sel.value = value == null ? '' : String(value); window.Tailor?.sync(sel);
   } else if (f.type === 'text') {
     $('input, textarea', el).value = value == null ? '' : String(value);
   }

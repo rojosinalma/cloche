@@ -27,7 +27,7 @@
         <% if m.kind == :audio -%>
         <div class="t-card-thumb"><audio src="<%= m.preview_src %>" controls preload="none"></audio></div>
         <% else -%>
-        <a href="<%= m.view_href %>" class="t-card-thumb preview-link" title="Open preview" <%== preview_attrs(m) %>>
+        <a href="<%= m.view_href %>" class="t-card-thumb preview-link" data-tip="Open preview" <%== preview_attrs(m) %>>
           <% if m.kind == :image -%>
           <img src="<%= m.preview_src %>" alt="<%= m.name %>" loading="lazy">
           <% else -%>
@@ -37,9 +37,9 @@
         </a>
         <% end -%>
         <div class="t-card-meta">
-          <a class="file-name" href="<%= m.view_href %>" title="Open preview" <%== preview_attrs(m) %>><%= m.name %></a>
+          <a class="file-name" href="<%= m.view_href %>" data-tip="Open preview" <%== preview_attrs(m) %>><%= m.name %></a>
           <span class="file-size"><%= Listing.human_size(m.size) %></span>
-          <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= m.href %>" title="Download" aria-label="Download"><%== icon("download") %></a>
+          <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= m.href %>" data-tip="Download" aria-label="Download"><%== icon("download") %></a>
         </div>
       </div>
       <% end -%>

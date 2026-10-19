@@ -100,7 +100,7 @@ module TextView
 
     def link(link, title, content)
       href = TextView.href_for(link, @links)
-      return %(<span class="md-missing" title="Link not available here">#{content}</span>) unless href
+      return %(<span class="md-missing" data-tip="Link not available here">#{content}</span>) unless href
 
       %(<a href="#{h(href)}"#{title_attr(title)}#{external_attrs(link)}>#{content}</a>)
     end
@@ -114,7 +114,7 @@ module TextView
 
     def image(link, title, alt_text)
       href = TextView.href_for(link, @links, image: true)
-      return %(<span class="md-missing" title="Image not in this share"><svg class="t-icon" aria-hidden="true"><use href="/tailor/icons.svg#bi-image"/></svg> #{h(alt_text)}</span>) unless href
+      return %(<span class="md-missing" data-tip="Image not in this share"><svg class="t-icon" aria-hidden="true"><use href="/tailor/icons.svg#bi-image"/></svg> #{h(alt_text)}</span>) unless href
 
       %(<img src="#{h(href)}" alt="#{h(alt_text)}"#{title_attr(title)} loading="lazy">)
     end
@@ -125,7 +125,7 @@ module TextView
 
     def h(text) = Rack::Utils.escape_html(text.to_s)
 
-    def title_attr(title) = title.to_s.empty? ? "" : %( title="#{h(title)}")
+    def title_attr(title) = title.to_s.empty? ? "" : %( data-tip="#{h(title)}")
 
     def external_attrs(link) = TextView.relative?(link) ? "" : %( target="_blank" rel="noopener noreferrer")
   end
