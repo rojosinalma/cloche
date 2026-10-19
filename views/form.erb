@@ -30,7 +30,7 @@
       <% required = !!fv.(f, :required); help = fv.(f, :help); min = fv.(f, :min); max = fv.(f, :max) -%>
       <div class="t-card form-field" data-field="<%= id %>" data-type="<%= type %>">
         <div class="t-card-header form-field-header">
-          <span class="form-field-label"><%= fv.(f, :label) %><% if required %> <span class="form-required" title="Required">*</span><% end %></span>
+          <span class="form-field-label"><%= fv.(f, :label) %><% if required %> <span class="form-required" data-tip="Required">*</span><% end %></span>
           <% if help && !help.to_s.empty? %><span class="t-hint form-field-help"><%= help %></span><% end %>
         </div>
         <div class="t-card-body">
@@ -44,9 +44,9 @@
               <span class="t-input-addon"><%== icon("funnel") %></span>
               <input type="search" class="t-input" placeholder="Filter…" aria-label="Filter options" data-filter>
             </div>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="all" title="Check every visible row"><%== icon("check2-all") %>Check all</button>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="none" title="Uncheck every visible row"><%== icon("x-lg") %>Uncheck all</button>
-            <button type="button" class="t-btn" data-size="sm" data-bulk="invert" title="Invert every visible row"><%== icon("arrow-left-right") %>Invert</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="all" data-tip="Check every visible row"><%== icon("check2-all") %>Check all</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="none" data-tip="Uncheck every visible row"><%== icon("x-lg") %>Uncheck all</button>
+            <button type="button" class="t-btn" data-size="sm" data-bulk="invert" data-tip="Invert every visible row"><%== icon("arrow-left-right") %>Invert</button>
             <span class="t-badge opt-count" data-tone="accent" data-count><%= selected.size %> of <%= opts.size %> selected</span>
           </div>
           <% end -%>
@@ -108,12 +108,12 @@
 
     <div class="form-bar" id="form-bar">
       <div class="form-bar-status">
-        <span class="form-status" id="bar-progress" title="Fields answered"><%== icon("list-check") %> <span>…</span></span>
-        <span class="form-status" id="bar-draft" data-state="saved" title="Draft autosave"><%== icon("cloud-check") %> <span>Saved</span></span>
-        <span class="form-status" id="bar-submit" title="Submission state"><%== icon("send") %> <span>Not submitted yet</span></span>
+        <span class="form-status" id="bar-progress" data-tip="Fields answered"><%== icon("list-check") %> <span>…</span></span>
+        <span class="form-status" id="bar-draft" data-state="saved" data-tip="Draft autosave"><%== icon("cloud-check") %> <span>Saved</span></span>
+        <span class="form-status" id="bar-submit" data-tip="Submission state"><%== icon("send") %> <span>Not submitted yet</span></span>
       </div>
       <div class="form-bar-actions">
-        <button type="button" class="t-btn serve-action" data-dialog-open="reset-modal" title="Restore the defaults"><%== icon("arrow-counterclockwise") %>Reset</button>
+        <button type="button" class="t-btn serve-action" data-dialog-open="reset-modal" data-tip="Restore the defaults"><%== icon("arrow-counterclockwise") %>Reset</button>
         <button type="button" class="t-btn serve-action" data-variant="primary" id="submit-btn"><%== icon("send") %>Submit</button>
       </div>
     </div>

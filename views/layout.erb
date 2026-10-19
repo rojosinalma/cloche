@@ -28,7 +28,7 @@
   <footer class="t-footer t-shell-foot">
     <div class="t-footer-end">
       <div data-tailor-pickers></div>
-      <span class="t-footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" title="This share stays up until it is stopped"><%== icon("infinity") %> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" title="Time left before this share ends if nobody touches it"><%== icon("hourglass-split") %> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
+      <span class="t-footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" data-tip="This share stays up until it is stopped"><%== icon("infinity") %> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" data-tip="Time left before this share ends if nobody touches it"><%== icon("hourglass-split") %> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
     </div>
   </footer>
 </div>
@@ -61,7 +61,7 @@
       const setPermanent = (on) => {
         permanent = on;
         iconUse.setAttribute('href', `/tailor/icons.svg#bi-${on ? 'infinity' : 'hourglass-split'}`);
-        el.title = on ? 'This share stays up until it is stopped' : 'Time left before this share ends if nobody touches it';
+        el.dataset.tip = on ? 'This share stays up until it is stopped' : 'Time left before this share ends if nobody touches it';
         if (on) { left.textContent = 'until stopped'; delete el.dataset.soon; }
       };
       const sync = async () => {

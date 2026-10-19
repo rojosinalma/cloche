@@ -5,17 +5,17 @@
         <% action = f.kind == :dir ? 'Open' : opens ? 'View' : 'Download' -%>
         <tr>
           <td class="t-col-icon"><%== icon(f.icon, css: f.kind == :dir ? 'kind-dir' : 'kind-file') %></td>
-          <td><a class="file-name file-name-block" href="<%= opens ? f.view_href : f.href %>" title="<%= action %>" <%== preview_attrs(f) %>><%= f.name %><%= '/' if f.kind == :dir %></a></td>
+          <td><a class="file-name file-name-block" href="<%= opens ? f.view_href : f.href %>" data-tip="<%= action %>" <%== preview_attrs(f) %>><%= f.name %><%= '/' if f.kind == :dir %></a></td>
           <td class="t-col-shrink file-size"><%= f.kind == :dir ? '' : Listing.human_size(f.size) %></td>
           <td class="t-col-shrink file-size t-hide"><%= f.mtime&.strftime('%Y-%m-%d %H:%M') %></td>
           <td class="t-col-actions">
             <% if f.kind == :dir -%>
-            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.zip_href %>" title="Download folder as zip" aria-label="Download folder as zip"><%== icon("file-earmark-zip") %></a>
+            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.zip_href %>" data-tip="Download folder as zip" aria-label="Download folder as zip"><%== icon("file-earmark-zip") %></a>
             <% else -%>
             <% if opens -%>
-            <a class="t-btn" data-size="sm" data-icon="only" href="<%= f.view_href %>" title="View" aria-label="View" <%== preview_attrs(f) %>><%== icon("eye") %></a>
+            <a class="t-btn" data-size="sm" data-icon="only" href="<%= f.view_href %>" data-tip="View" aria-label="View" <%== preview_attrs(f) %>><%== icon("eye") %></a>
             <% end -%>
-            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.href %>" title="Download" aria-label="Download"><%== icon("download") %></a>
+            <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" href="<%= f.href %>" data-tip="Download" aria-label="Download"><%== icon("download") %></a>
             <% end -%>
           </td>
         </tr>

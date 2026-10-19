@@ -7,22 +7,22 @@
       <span class="file-size"><span id="preview-size"></span><span id="preview-model-stats"></span></span>
       <span class="preview-count" id="preview-count"></span>
       <div class="t-cluster preview-tools">
-        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="image" id="preview-zoom" title="Toggle fit / actual size (or click the image)"><%== icon("zoom-in") %></button>
+        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="image" id="preview-zoom" data-tip="Toggle fit / actual size (or click the image)" aria-label="Toggle fit / actual size"><%== icon("zoom-in") %></button>
         <div class="t-btn-group preview-tool" data-role="filter" data-for="text" id="text-panes" role="group" aria-label="Pretty or raw" hidden>
-          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="true" data-pane="pretty" title="Rendered view">Pretty</button>
-          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="false" data-pane="source" title="Exact file content">Raw</button>
+          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="true" data-pane="pretty" data-tip="Rendered view">Pretty</button>
+          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="false" data-pane="source" data-tip="Exact file content">Raw</button>
         </div>
-        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="text" id="text-copy" title="Copy file content" hidden><%== icon("clipboard") %></button>
+        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="text" id="text-copy" data-tip="Copy file content" aria-label="Copy file content" hidden><%== icon("clipboard") %></button>
         <div class="t-btn-group preview-tool" data-for="model" role="group" aria-label="Model view options">
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-reset" title="Reset view" aria-label="Reset view" disabled><%== icon("arrows-fullscreen") %></button>
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-grid" title="Toggle grid" aria-label="Toggle grid" aria-pressed="true" disabled><%== icon("grid-3x3") %></button>
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-wire" title="Toggle wireframe" aria-label="Toggle wireframe" aria-pressed="false" disabled><%== icon("bounding-box") %></button>
+          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-reset" data-tip="Reset view" aria-label="Reset view" disabled><%== icon("arrows-fullscreen") %></button>
+          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-grid" data-tip="Toggle grid" aria-label="Toggle grid" aria-pressed="true" disabled><%== icon("grid-3x3") %></button>
+          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-wire" data-tip="Toggle wireframe" aria-label="Toggle wireframe" aria-pressed="false" disabled><%== icon("bounding-box") %></button>
         </div>
-        <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" id="preview-download" href="#" title="Download" aria-label="Download"><%== icon("download") %></a>
-        <button class="t-btn" data-size="sm" data-icon="only" type="button" id="preview-close" title="Close (Esc)" aria-label="Close"><%== icon("x-lg") %></button>
+        <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" id="preview-download" href="#" data-tip="Download" aria-label="Download"><%== icon("download") %></a>
+        <button class="t-btn" data-size="sm" data-icon="only" type="button" id="preview-close" data-tip="Close (Esc)" aria-label="Close"><%== icon("x-lg") %></button>
       </div>
     </div>
-    <button class="preview-nav preview-prev" id="preview-prev" title="Previous (←)"><%== icon("chevron-left") %></button>
+    <button class="preview-nav preview-prev" id="preview-prev" data-tip="Previous (←)" aria-label="Previous"><%== icon("chevron-left") %></button>
     <div class="preview-stage" id="preview-stage">
       <img id="preview-img" alt="" hidden>
       <div class="preview-text" id="preview-text" hidden>
@@ -51,19 +51,19 @@
           </div>
           <aside class="model-rail" aria-label="Colours">
             <div class="model-rail-group">
-              <div class="model-colors-label" title="Model colour"><%== icon("box") %></div>
+              <div class="model-colors-label" data-tip="Model colour"><%== icon("box") %></div>
               <div class="model-swatches" data-target="mesh">
                 <% %w[purple cyan green orange pink red yellow fg comment].each do |c| -%>
-                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" title="Model: <%= c %>"></button>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Model: <%= c %>" aria-label="Model: <%= c %>"></button>
                 <% end -%>
-                <button type="button" class="model-swatch model-swatch-file" data-color="file" title="Model: colours from the file" hidden><%== icon("file-earmark") %></button>
+                <button type="button" class="model-swatch model-swatch-file" data-color="file" data-tip="Model: colours from the file" aria-label="Model: colours from the file" hidden><%== icon("file-earmark") %></button>
               </div>
             </div>
             <div class="model-rail-group">
-              <div class="model-colors-label" title="Background colour"><%== icon("square-fill") %></div>
+              <div class="model-colors-label" data-tip="Background colour"><%== icon("square-fill") %></div>
               <div class="model-swatches" data-target="bg">
                 <% %w[bg bg-dark bg-darker selection comment fg].each do |c| -%>
-                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" title="Background: <%= c %>"></button>
+                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Background: <%= c %>" aria-label="Background: <%= c %>"></button>
                 <% end -%>
               </div>
             </div>
@@ -71,7 +71,7 @@
         </div>
       </div>
     </div>
-    <button class="preview-nav preview-next" id="preview-next" title="Next (→)"><%== icon("chevron-right") %></button>
+    <button class="preview-nav preview-next" id="preview-next" data-tip="Next (→)" aria-label="Next"><%== icon("chevron-right") %></button>
   </div>
 
   <script type="importmap">
