@@ -1,0 +1,16 @@
+# Two documents
+services:
+  web:
+    image: ghcr.io/example/web:1.2.3
+    ports: ["8080:80"]
+    environment:
+      RACK_ENV: production
+      STARTED: 2026-10-21
+  db:
+    image: postgres:17
+    healthcheck:
+      test: [CMD, pg_isready]
+      interval: 10s
+---
+volumes:
+  data: {}

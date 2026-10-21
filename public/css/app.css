@@ -217,6 +217,32 @@ body.preview-open { overflow: hidden; }
 /* viewer: diagram */
 
 /* viewer: tree */
+.preview-tree .tree-view { flex: 1; min-height: 0; overflow: auto; padding: .6rem 1rem 1rem; font-family: var(--t-font-mono); font-size: .82rem; line-height: 1.55; color: var(--t-text); }
+.tree-search { width: 14rem; }
+.tree-hint { padding: .3rem 1rem; font-size: var(--t-text-xs); color: var(--t-muted); border-bottom: var(--t-border-w) solid var(--t-border); }
+.tree-hint kbd { font-family: var(--t-font-mono); padding: 0 .3rem; border: var(--t-border-w) solid var(--t-border); border-radius: var(--t-radius-sm); }
+.tree-kids { margin-left: .5rem; padding-left: .85rem; border-left: var(--t-border-w) solid var(--t-border); }
+.tree-line { display: flex; align-items: baseline; gap: .4rem; padding: 0 .3rem; border-radius: var(--t-radius-sm); cursor: pointer; }
+.tree-line:hover { background: var(--t-selection); }
+.tree-toggle, .tree-key { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.tree-toggle { flex: 0 0 1rem; display: inline-flex; align-items: center; justify-content: center; align-self: center; color: var(--t-muted); }
+.tree-toggle:disabled { visibility: hidden; }
+.tree-toggle .t-icon { transition: transform var(--t-duration); }
+.tree-item[aria-expanded="true"] > .tree-line .tree-toggle .t-icon { transform: rotate(90deg); }
+.tree-key { color: var(--t-hue-cyan); white-space: nowrap; }
+.tree-key::after { content: ":"; color: var(--t-muted); }
+.tree-key[data-index] { color: var(--t-muted); }
+.tree-val { white-space: pre-wrap; word-break: break-word; min-width: 0; }
+.tree-val[data-type="s"] { color: var(--t-hue-yellow); }
+.tree-val[data-type="n"] { color: var(--t-hue-purple); }
+.tree-val[data-type="b"] { color: var(--t-hue-pink); }
+.tree-val[data-type="z"] { color: var(--t-disabled); font-style: italic; }
+.tree-val[data-type="d"] { color: var(--t-hue-orange); }
+.tree-val[data-type="x"] { color: var(--t-danger); }
+.tree-sum { color: var(--t-muted); font-size: var(--t-text-xs); }
+.tree-sum:hover { color: var(--t-text); }
+.tree-more, .tree-none { color: var(--t-muted); font-style: italic; }
+.tree-mark { background: color-mix(in srgb, var(--t-accent) 35%, transparent); color: inherit; border-radius: 2px; }
 
 /* viewer: archive */
 
