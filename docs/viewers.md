@@ -228,6 +228,23 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 
 ### html
 
+HTML pages (`.html`, `.htm`, `.xhtml`), priority 20. Views: Rendered; the text viewer adds Raw (the
+source). Data: `?data=html`, the page; counts once.
+
+The page loads in an `<iframe sandbox="allow-scripts">` and the response carries
+`Content-Security-Policy: sandbox allow-scripts`, so its scripts run in an opaque origin: no cookies, no
+storage, no access to the gallery, no top navigation, also when the URL is opened on its own. Relative
+references in the page and in its stylesheets (`src`, `href`, `srcset`, `poster`, `url()`, `@import`) are
+rewritten to `?data=html&part=<path in the share entry>`: each part goes through `PathGuard`, is served with
+the same CSP and `Access-Control-Allow-Origin: *` (module scripts and fonts are CORS requests from the
+opaque origin) and never counts. Linked pages and stylesheets are rewritten in turn. A URL a script builds
+at run time is not rewritten and reaches the plain file route. A page without a background shows on the
+browser's white canvas in both modes.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `html_view_max_bytes` | `5242880` | Larger pages are not rendered (Raw keeps its own cap); linked pages and stylesheets above it are sent without rewriting |
+
 ### pdf
 
 ### notebook
