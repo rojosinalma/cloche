@@ -1,0 +1,18 @@
+<div data-slot="body">
+  <div class="preview-panel preview-pdf">
+    <div class="pdf-pane" data-pane="document">
+      <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+      <div class="preview-overlay" data-role="doc-notice" hidden>
+        <%== icon("file-earmark-x") %>
+        <span data-role="doc-message"></span>
+        <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
+      </div>
+      <iframe class="pdf-frame" data-role="frame" title="PDF document" referrerpolicy="no-referrer"></iframe>
+    </div>
+    <div class="pdf-pane pdf-info" data-pane="info" hidden>
+      <div class="file-view-notice" data-role="info-notice" hidden><%== icon("info-circle") %><span></span></div>
+      <div class="preview-overlay" data-role="info-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+      <div class="t-table-wrap pdf-info-wrap"><table class="t-table pdf-info-table"><tbody data-role="info-rows"></tbody></table></div>
+    </div>
+  </div>
+</div>

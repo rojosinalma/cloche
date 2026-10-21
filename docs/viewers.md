@@ -247,6 +247,26 @@ browser's white canvas in both modes.
 
 ### pdf
 
+PDFs, priority 20, binary. Views: Document and Info. Data: `?data=pdf`, the file (counts once);
+`?data=pdf&part=info`, the details as JSON (never counts).
+
+Document is the browser's built-in viewer (Chromium's, Firefox's pdf.js) in a plain `<iframe>`: a
+`sandbox` attribute on the frame blocks the built-in viewer in Chromium, while the response header
+`Content-Security-Policy: sandbox` does not, in Chromium or Firefox. The response is `application/pdf` with
+`nosniff`, so the bytes never run as a page on this origin. Headless Chromium needs the full build
+(`channel: 'chromium'` in Playwright); the headless shell downloads PDFs instead.
+
+Info reads the header, the trailer's `/Info` and the page tree with the standard library: object streams
+(PDF 1.5+) are inflated with Zlib within the scan limit. Encrypted files show no title or author (their
+strings are encrypted).
+The viewer has no modal-level cap so Info stays available for any size; above `pdf_view_max_bytes` the
+Document tab shows the limit notice and never fetches the file.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `pdf_view_max_bytes` | `104857600` | Larger PDFs show Info only |
+| `pdf_view_info_max_bytes` | `16777216` | Larger files show the version only in Info; also the most bytes inflated per file |
+
 ### notebook
 
 ### diagram
