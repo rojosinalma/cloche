@@ -17,6 +17,7 @@ GEM
     nio4r (2.7.5)
     puma (8.0.2)
       nio4r (~> 2.0)
+    racc (1.8.1)
     rack (3.2.7)
     rack-unreloader (2.1.0)
     redcarpet (3.6.1)
@@ -32,6 +33,8 @@ GEM
     sqlite3 (2.9.6-x86_64-linux-gnu)
     strscan (3.1.8)
     tilt (2.9.0)
+    tomlrb (2.0.5)
+      racc (~> 1.4)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -52,6 +55,7 @@ DEPENDENCIES
   sequel
   sqlite3
   tilt
+  tomlrb (~> 2.0)
 
 BUNDLED WITH
    2.5.22
