@@ -297,6 +297,25 @@ body.preview-open { overflow: hidden; }
 .diff-note { color: var(--t-muted); font-style: italic; }
 
 /* viewer: ansi */
+.ansi-content { flex: 1; min-height: 0; overflow: auto; }
+.ansi-lines .line { white-space: pre-wrap; word-break: break-word; }
+/* 16 colours by name; 256 and truecolour arrive as the nearest name (public/js/viewers/ansi.js) */
+.ansi-f-black { color: var(--t-muted); } .ansi-b-black { background: color-mix(in srgb, var(--t-overlay-bg) 30%, transparent); } .ansi-i-black { background: var(--t-muted); }
+.ansi-f-red { color: var(--t-hue-red); } .ansi-b-red { background: color-mix(in srgb, var(--t-hue-red) 30%, transparent); } .ansi-i-red { background: var(--t-hue-red); }
+.ansi-f-green { color: var(--t-hue-green); } .ansi-b-green { background: color-mix(in srgb, var(--t-hue-green) 30%, transparent); } .ansi-i-green { background: var(--t-hue-green); }
+.ansi-f-yellow { color: var(--t-hue-yellow); } .ansi-b-yellow { background: color-mix(in srgb, var(--t-hue-yellow) 30%, transparent); } .ansi-i-yellow { background: var(--t-hue-yellow); }
+.ansi-f-blue { color: var(--t-hue-blue, var(--t-link)); } .ansi-b-blue { background: color-mix(in srgb, var(--t-hue-blue, var(--t-link)) 30%, transparent); } .ansi-i-blue { background: var(--t-hue-blue, var(--t-link)); }
+.ansi-f-magenta { color: var(--t-hue-magenta, var(--t-hue-purple)); } .ansi-b-magenta { background: color-mix(in srgb, var(--t-hue-magenta, var(--t-hue-purple)) 30%, transparent); } .ansi-i-magenta { background: var(--t-hue-magenta, var(--t-hue-purple)); }
+.ansi-f-cyan { color: var(--t-hue-cyan); } .ansi-b-cyan { background: color-mix(in srgb, var(--t-hue-cyan) 30%, transparent); } .ansi-i-cyan { background: var(--t-hue-cyan); }
+.ansi-f-white { color: var(--t-text); } .ansi-b-white { background: color-mix(in srgb, var(--t-text) 30%, transparent); } .ansi-i-white { background: var(--t-text); }
+.ansi-f-grey { color: var(--t-muted); } .ansi-b-grey { background: color-mix(in srgb, var(--t-disabled) 30%, transparent); } .ansi-i-grey { background: var(--t-muted); }
+.ansi-f-bright { color: var(--t-text); } .ansi-b-bright { background: color-mix(in srgb, var(--t-text) 30%, transparent); } .ansi-i-bright { background: var(--t-text); }
+.ansi-f-orange { color: var(--t-hue-orange); } .ansi-b-orange { background: color-mix(in srgb, var(--t-hue-orange) 30%, transparent); } .ansi-i-orange { background: var(--t-hue-orange); }
+.ansi-f-purple { color: var(--t-hue-purple); } .ansi-b-purple { background: color-mix(in srgb, var(--t-hue-purple) 30%, transparent); } .ansi-i-purple { background: var(--t-hue-purple); }
+.ansi-f-pink { color: var(--t-hue-pink); } .ansi-b-pink { background: color-mix(in srgb, var(--t-hue-pink) 30%, transparent); } .ansi-i-pink { background: var(--t-hue-pink); }
+.ansi-f-canvas { color: var(--t-canvas); } .ansi-i-default { background: var(--t-text); }
+.ansi-bold { font-weight: 700; } .ansi-dim { opacity: .7; } .ansi-italic { font-style: italic; } .ansi-hidden { color: transparent; }
+.ansi-u { text-decoration-line: underline; } .ansi-s { text-decoration-line: line-through; } .ansi-u.ansi-s { text-decoration-line: underline line-through; }
 
 /* viewer: gcode */
 

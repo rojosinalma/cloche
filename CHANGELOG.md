@@ -32,6 +32,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   without extracting anything.
 - Diff viewer for `.diff` and `.patch` files: Unified and Side by side tabs with file and hunk headers and
   per-file folding.
+- ANSI viewer for terminal output: a Coloured tab with SGR colours from the palette, for `.ansi` files and
+  any text file with escapes.
 
 ### Changed
 
