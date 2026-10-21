@@ -269,6 +269,22 @@ Document tab shows the limit notice and never fetches the file.
 
 ### notebook
 
+Jupyter notebooks (`.ipynb`, nbformat 4), priority 20. Views: Notebook; the text viewer adds Raw (the
+JSON). Data: `?data=notebook`, the rendered cells; counts once. Nothing in the notebook runs.
+
+Markdown cells use the text viewer's renderer (raw HTML escaped, links through the share, diagrams handed
+to the diagram module). Code cells are highlighted with Rouge in the kernel's language. Saved outputs:
+streams (stderr in the warning colour), errors with the ANSI codes stripped, and per rich output the
+first of `text/html`, `text/markdown`, `image/svg+xml`, `image/png`/`jpeg`/`gif`, `application/json`,
+`text/plain`. Images are `data:` URLs in `<img>`, so an SVG runs nothing. HTML outputs sit in an
+`<iframe sandbox="allow-scripts">` built from `srcdoc`, with a CSP that allows only a per-render nonce
+script reporting the height and `data:` images: the notebook's scripts and remote resources stay
+blocked. The frame takes the page's colour scheme.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `notebook_view_max_bytes` | `20971520` | Larger notebooks show Raw only (within the text viewer's cap) |
+
 ### diagram
 
 ### tree
