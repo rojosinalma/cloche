@@ -1,0 +1,13 @@
+// JSON5: unquoted keys, single quotes, hex, Infinity, trailing commas
+{
+  extends: ['config:recommended'],
+  schedule: ["before 6am on monday"],
+  prHourlyLimit: 0x0A,
+  ratio: .5,
+  ceiling: +Infinity,
+  note: 'line one \
+line two',
+  packageRules: [
+    { matchPackageNames: ['rack'], automerge: true, },
+  ],
+}

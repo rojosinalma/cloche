@@ -1,0 +1,18 @@
+{
+  "name": "cloche",
+  "version": 3,
+  "ratio": 0.75,
+  "enabled": true,
+  "owner": null,
+  "2": "numeric keys keep their place",
+  "1": "after the one above",
+  "key with space": "needs brackets in the path",
+  "tags": ["share", "gallery", "forms"],
+  "servers": [
+    { "host": "alpha", "ports": [80, 443], "tls": { "enabled": true, "cert": "/etc/ssl/alpha.pem" } },
+    { "host": "beta", "ports": [8080], "tls": { "enabled": false } }
+  ],
+  "limits": { "idle": 1800, "max": 86400, "nested": { "deeper": { "deepest": "hidden by default" } } },
+  "html": "<script>alert('not run')</script>",
+  "big": 123456789012345678901234567890
+}

@@ -236,6 +236,27 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 
 ### tree
 
+JSON, JSONC, JSON5, YAML (`.yaml`, `.yml`), TOML and JSON Lines (`.jsonl`, `.ndjson`, one tree per line).
+Priority 15, so Tree is the first tab, before the text viewer's Pretty and Raw. The server parses the file
+and sends a capped node list (`?data=tree`, counts once; a file that does not parse answers
+`{ok: false, message}` and does not count): stdlib JSON (comments and trailing commas for JSONC), Psych's
+safe loader for YAML (plain data, dates and symbols only), `tomlrb` for TOML and a small reader in the module
+for JSON5. Parsing on the server keeps the node cap ahead of the browser and needs no client library.
+Keys keep the file order; numbers travel as text, so large integers keep every digit.
+
+The browser renders lazily (a folded branch has no DOM), filters keys and values (`/` focuses the filter),
+expands or collapses everything, and copies a node's path (`.servers[1].host`, `["key with space"]`) on
+click. A file that does not parse drops the Tree tab and names the reason in a toast; a JSON Lines line that
+does not parse is an error node.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `tree_view_max_bytes` | `2097152` | Larger files get no tree (Raw still works up to the text limit) |
+| `tree_view_max_nodes` | `20000` | Nodes sent; the tree is cut there with a notice |
+| `tree_view_max_depth` | `100` | Deeper nesting is refused |
+| `tree_view_expand_depth` | `2` | Levels open when the tree loads |
+| `tree_view_yaml_aliases` | `false` | Expand YAML aliases and merge keys; off, such a file gets no tree |
+
 ### archive
 
 ### diff

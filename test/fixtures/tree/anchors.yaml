@@ -1,0 +1,6 @@
+base: &base
+  image: example
+  restart: always
+web:
+  <<: *base
+  port: 80
