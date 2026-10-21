@@ -229,8 +229,9 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 Other viewers reuse the 3D view: their template renders `viewers/model`, and their module calls
 `(await ctx.load('model')).mount(ctx, hooks)`. `hooks.object` is an `Object3D` the viewer parsed itself
 (Z up, millimetres; nothing is fetched then), `hooks.keepMaterials` keeps the file's own materials and
-textures behind the "colours from the file" swatch, and `hooks.setup({ scene, renderer, THREE })` runs once
-the renderer exists and may return a cleanup function.
+textures behind the "colours from the file" swatch, `hooks.setup({ scene, renderer, THREE })` runs once
+the renderer exists and may return a cleanup function, and `hooks.notice` is a line of text shown in the
+notice bar over the model once it is on screen (something the file holds that the view leaves out).
 
 ### html
 
