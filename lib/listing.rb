@@ -3,42 +3,35 @@
 require "erb"
 
 module Listing
-  KINDS = {
-    image: %w[png jpg jpeg gif webp svg avif bmp ico].freeze,
-    video: %w[mp4 webm ogv m4v mov].freeze,
-    audio: %w[mp3 ogg oga wav flac m4a opus aac].freeze,
-    model: %w[stl 3mf obj].freeze
-  }.freeze
-  ICONS = { dir: "folder-fill", image: "file-earmark-image", video: "file-earmark-play",
-            audio: "file-earmark-music", text: "file-earmark-text", model: "box", file: "file-earmark" }.freeze
+  ICONS = { dir: "folder-fill", file: "file-earmark" }.freeze
   MEDIA_KINDS = %i[image video audio].freeze
-  # Kinds that open in the preview modal on the gallery page; nothing in a
-  # share has a page of its own.
-  PREVIEW_KINDS = %i[text image video audio model].freeze
   SIZE_UNITS = %w[B KB MB GB TB].freeze
 
-  Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, :preview_src, :format,
+  # viewers: per matching viewer its id, data URL and views (the preview
+  # modal's data-viewers), empty when nothing can show the file.
+  Item = Struct.new(:name, :kind, :size, :mtime, :href, :view_href, :zip_href, :icon, :preview_src, :format, :viewers,
                     keyword_init: true) do
     def previewable? = Listing.previewable?(kind)
   end
 
   module_function
 
-  # :text is any file the viewer can show (see TextView.text?) and :model a
-  # 3D file for the model viewer; both are still served as attachments like
-  # every other non-media file. Extensions win, so an ASCII STL is :model.
+  # The kind of the file's primary viewer (:text, :image, :model, …), :file
+  # when no viewer matches. Only media kinds are served inline; everything
+  # else stays an attachment outside the viewers' own data routes.
   def kind_of(path)
     return :dir if File.directory?(path)
 
-    ext = File.extname(path).delete(".").downcase
-    KINDS.find { |_, exts| exts.include?(ext) }&.first || (TextView.text?(path) ? :text : :file)
+    Preview.matching(path).first&.kind || :file
   end
 
   def media?(item) = MEDIA_KINDS.include?(item.kind)
 
   def media_kind?(kind) = MEDIA_KINDS.include?(kind)
 
-  def previewable?(kind) = PREVIEW_KINDS.include?(kind)
+  # Every file a viewer matches opens in the preview modal on the gallery
+  # page; nothing in a share has a page of its own.
+  def previewable?(kind) = !%i[dir file].include?(kind)
 
   def icon_for(kind) = ICONS.fetch(kind, ICONS[:file])
 
@@ -68,29 +61,26 @@ module Listing
   end
 
   def item(share, index, rel, real, name)
-    kind = kind_of(real)
     stat = File.stat(real)
-    if kind == :dir
+    if File.directory?(real)
       link = href(share, index, rel, dir: true)
-      Item.new(name: name, kind: kind, mtime: stat.mtime, href: link, view_href: link,
-               zip_href: "#{link}?zip=1", icon: icon_for(kind))
-    else
-      link = href(share, index, rel)
-      Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
-               view_href: previewable?(kind) ? "#{link}?view=1" : link,
-               preview_src: preview_src(link, kind), format: File.extname(real).delete(".").downcase, icon: icon_for(kind))
+      return Item.new(name: name, kind: :dir, mtime: stat.mtime, href: link, view_href: link,
+                      zip_href: "#{link}?zip=1", icon: icon_for(:dir), viewers: [])
     end
+
+    link = href(share, index, rel)
+    target = Preview::Target.new(real)
+    viewers = Preview.matching(real, target: target)
+    kind = viewers.first&.kind || :file
+    Item.new(name: name, kind: kind, size: stat.size, mtime: stat.mtime, href: "#{link}?dl=1",
+             view_href: viewers.empty? ? link : "#{link}?view=1", preview_src: preview_src(link, kind),
+             format: File.extname(real).delete(".").downcase, icon: viewers.first&.icon || icon_for(:file),
+             viewers: viewers.map { |v| v.to_item(target, link) })
   end
 
-  # Where the preview modal fetches its content: media loads do not count
-  # (thumbnails already use them); a model (?model=1) or the rendered text
-  # fragment (?text=1) counts once.
-  def preview_src(link, kind)
-    return "#{link}?model=1" if kind == :model
-    return "#{link}?text=1" if kind == :text
-
-    "#{link}?preview=1" if media_kind?(kind)
-  end
+  # Gallery thumbnails and inline players load media from ?preview=1, which
+  # does not count; each viewer's own fetch is in Item#viewers.
+  def preview_src(link, kind) = media_kind?(kind) ? "#{link}?preview=1" : nil
 
   # The gallery page that lists the item at rel; a ?view=1 deep link to a
   # previewable file lands there with the modal open.

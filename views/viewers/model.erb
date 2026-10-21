@@ -1,0 +1,46 @@
+<% swatch_token = ->(c) { { "fg" => "--t-text", "comment" => "--t-disabled", "bg" => "--t-canvas", "bg-dark" => "--t-inset", "bg-darker" => "--t-overlay-bg", "selection" => "--t-selection" }.fetch(c) { "--t-hue-#{c}" } } -%>
+<div data-slot="tools">
+  <div class="t-btn-group" role="group" aria-label="Model view options">
+    <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="reset" data-tip="Reset view" aria-label="Reset view" disabled><%== icon("arrows-fullscreen") %></button>
+    <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="grid" data-tip="Toggle grid" aria-label="Toggle grid" aria-pressed="true" disabled><%== icon("grid-3x3") %></button>
+    <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="wire" data-tip="Toggle wireframe" aria-label="Toggle wireframe" aria-pressed="false" disabled><%== icon("bounding-box") %></button>
+  </div>
+</div>
+<div data-slot="body">
+  <div class="preview-panel preview-model">
+    <div class="file-view-notice" data-role="notice" hidden><%== icon("info-circle") %><span></span></div>
+    <div class="model-body">
+      <div class="model-stage" data-role="stage">
+        <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+        <div class="preview-overlay" data-role="error" hidden>
+          <%== icon("exclamation-triangle") %>
+          <span data-role="error-text"></span>
+          <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
+        </div>
+        <div class="preview-overlay model-fallback" data-role="fallback" hidden>
+          <img data-role="fallback-img" alt="Plate thumbnail">
+          <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
+        </div>
+      </div>
+      <aside class="model-rail" aria-label="Colours">
+        <div class="model-rail-group">
+          <div class="model-colors-label" data-tip="Model colour"><%== icon("box") %></div>
+          <div class="model-swatches" data-target="mesh">
+            <% %w[purple cyan green orange pink red yellow fg comment].each do |c| -%>
+            <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Model: <%= c %>" aria-label="Model: <%= c %>"></button>
+            <% end -%>
+            <button type="button" class="model-swatch model-swatch-file" data-color="file" data-tip="Model: colours from the file" aria-label="Model: colours from the file" hidden><%== icon("file-earmark") %></button>
+          </div>
+        </div>
+        <div class="model-rail-group">
+          <div class="model-colors-label" data-tip="Background colour"><%== icon("square-fill") %></div>
+          <div class="model-swatches" data-target="bg">
+            <% %w[bg bg-dark bg-darker selection comment fg].each do |c| -%>
+            <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Background: <%= c %>" aria-label="Background: <%= c %>"></button>
+            <% end -%>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>

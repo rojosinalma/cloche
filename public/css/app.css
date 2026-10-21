@@ -67,42 +67,59 @@
 #expiry.in-flight { color: var(--t-info); }
 #expiry[data-soon] { color: var(--t-warning); }
 
-/* ─── Preview overlay: image / video / audio / text / 3D over the gallery ─── */
+/* ─── Preview overlay: the modal shell every viewer mounts into (docs/viewers.md) ─── */
 .preview { position: fixed; inset: 0; z-index: var(--t-z-dialog); display: flex; flex-direction: column; background: color-mix(in srgb, var(--t-overlay-bg) 96%, transparent); }
 body.preview-open { overflow: hidden; }
 .preview-bar { display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; background: var(--t-inset); border-bottom: var(--t-border-w) solid var(--t-border); }
 .preview-tools { margin-left: auto; flex-wrap: nowrap; }
+.preview-viewer-tools { display: contents; }
 .preview-icon { color: var(--t-accent); font-size: 1.1rem; }
 .preview-name { color: var(--t-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .preview-count { color: var(--t-muted); font-family: var(--t-font-mono); font-size: var(--t-text-sm); }
 .preview-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; }
-.preview-stage img, .preview-stage video { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; }
-.preview-stage img { cursor: zoom-in; }
-.preview-stage video { outline: none; }
-.preview.zoomed .preview-stage { display: block; }
-.preview.zoomed .preview-stage img { max-width: none; max-height: none; cursor: zoom-out; display: block; margin: auto; }
-.preview-audio { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2.5rem 3rem; border-radius: var(--t-radius-xl);
-                 background: var(--t-inset); border: var(--t-border-w) solid var(--t-border); width: min(92vw, 560px); }
-.preview-audio > .t-icon { font-size: 5rem; color: var(--t-accent); }
-.preview-audio audio { width: 100%; }
-.preview-text { position: relative; display: flex; flex-direction: column; width: min(100vw - 9rem, 1500px); height: calc(100% - 2rem); border-radius: var(--t-radius-lg);
-                overflow: hidden; border: var(--t-border-w) solid var(--t-border); background: var(--t-inset); }
-.preview-text-content { flex: 1; min-height: 0; overflow: auto; }
-.preview-text .file-view-body { background: transparent; }
-.preview-text .view-pane .table-wrap:has(.csv-table) { margin: -1.25rem -1.5rem; max-height: none; }
-.preview-text .t-empty { padding: 5rem 1rem; }
-.preview-model { display: flex; flex-direction: column; width: min(100vw - 9rem, 1500px); height: calc(100% - 2rem); border-radius: var(--t-radius-lg); overflow: hidden;
-                 border: var(--t-border-w) solid var(--t-border); background: var(--t-inset); }
+/* a viewer's root adds no box: its body's top elements are the stage's flex items */
+.preview-view { display: contents; }
+/* the standard panel a viewer body sits in (text, 3D, notices) */
+.preview-panel { position: relative; display: flex; flex-direction: column; width: min(100vw - 9rem, 1500px); height: calc(100% - 2rem); border-radius: var(--t-radius-lg);
+                 overflow: hidden; border: var(--t-border-w) solid var(--t-border); background: var(--t-inset); }
+/* loading / error / fallback layer over a panel or a stage */
+.preview-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
+                   color: var(--t-muted); text-align: center; padding: 1.5rem; background: var(--t-canvas); }
+.preview-overlay > .t-icon { font-size: 2.5rem; color: var(--t-warning); }
+.preview-notice { justify-content: center; }
+.preview-notice .t-empty { padding: 5rem 1rem; }
 .preview-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 3rem; height: 5rem; border: none; border-radius: var(--t-radius-lg); z-index: 1; cursor: pointer;
                background: color-mix(in srgb, var(--t-canvas) 70%, transparent); color: var(--t-text); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; }
 .preview-nav:hover { background: var(--t-selection); color: var(--t-accent); }
 .preview-prev { left: .75rem; }
 .preview-next { right: .75rem; }
-.preview:not([data-kind="image"]) .preview-nav { opacity: .55; }
-.preview[data-kind="text"] .preview-nav, .preview[data-kind="model"] .preview-nav { width: 2.5rem; }
-.preview[data-kind="text"] .preview-prev, .preview[data-kind="model"] .preview-prev { left: .5rem; }
-.preview[data-kind="text"] .preview-next, .preview[data-kind="model"] .preview-next { right: .5rem; }
+.preview:not([data-viewer="image"]) .preview-nav { opacity: .55; }
+.preview:has(.preview-view:not([hidden]) > .preview-panel) .preview-nav { width: 2.5rem; }
+.preview:has(.preview-view:not([hidden]) > .preview-panel) .preview-prev { left: .5rem; }
+.preview:has(.preview-view:not([hidden]) > .preview-panel) .preview-next { right: .5rem; }
 .preview .preview-nav:hover { opacity: 1; }
+/* bar buttons that toggle read as pressed (tabs, grid / wireframe) */
+.preview-bar .t-btn[aria-pressed="true"] { background: var(--t-selection); color: var(--t-text); }
+
+/* viewer: image */
+.preview-image { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; cursor: zoom-in; }
+.preview.zoomed .preview-stage { display: block; }
+.preview.zoomed .preview-image { max-width: none; max-height: none; cursor: zoom-out; display: block; margin: auto; }
+
+/* viewer: video */
+.preview-video { max-width: 100%; max-height: 100%; object-fit: contain; outline: none; }
+
+/* viewer: audio */
+.preview-audio { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding: 2.5rem 3rem; border-radius: var(--t-radius-xl);
+                 background: var(--t-inset); border: var(--t-border-w) solid var(--t-border); width: min(92vw, 560px); }
+.preview-audio > .t-icon { font-size: 5rem; color: var(--t-accent); }
+.preview-audio audio { width: 100%; }
+
+/* viewer: text */
+.preview-text-content { flex: 1; min-height: 0; overflow: auto; }
+.preview-text .file-view-body { background: transparent; }
+.preview-text .view-pane .table-wrap:has(.csv-table) { margin: -1.25rem -1.5rem; max-height: none; }
+.preview-text .t-empty { padding: 5rem 1rem; }
 
 /* ─── Text viewer: one card that reads like a file ───────── */
 .file-view-notice { display: flex; align-items: center; gap: .5rem; padding: .45rem .9rem; font-size: var(--t-text-sm); color: var(--t-warning);
@@ -168,13 +185,10 @@ body.preview-open { overflow: hidden; }
 .csv-table tbody tr::before { counter-increment: row; content: counter(row); display: table-cell; padding: .3rem .75rem; text-align: right;
                               color: var(--t-disabled); border-right: var(--t-border-w) solid var(--t-border); border-bottom: var(--t-border-w) solid var(--t-border); user-select: none; }
 
-/* 3D model viewer: a Three.js canvas filling the preview panel */
+/* viewer: model — a Three.js canvas filling the preview panel */
 .model-body { display: flex; align-items: stretch; flex: 1; min-height: 0; overflow: hidden; }
 .model-stage { position: relative; flex: 1 1 auto; min-width: 0; background: var(--t-canvas); overflow: hidden; }
 .model-stage canvas { display: block; width: 100% !important; height: 100% !important; outline: none; touch-action: none; }
-.model-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem;
-                 color: var(--t-muted); text-align: center; padding: 1.5rem; background: var(--t-canvas); }
-.model-overlay > .t-icon { font-size: 2.5rem; color: var(--t-warning); }
 .model-fallback img { max-width: 100%; max-height: calc(100% - 4rem); object-fit: contain; border-radius: var(--t-radius-md); border: var(--t-border-w) solid var(--t-border); background: var(--t-overlay-bg); }
 .model-rail { flex: 0 0 auto; display: flex; flex-direction: column; gap: 1rem; padding: .6rem .5rem; background: var(--t-inset); border-left: var(--t-border-w) solid var(--t-border); overflow-y: auto; }
 .model-rail-group { display: flex; flex-direction: column; align-items: center; gap: .35rem; }
@@ -184,8 +198,6 @@ body.preview-open { overflow: hidden; }
                 display: inline-flex; align-items: center; justify-content: center; color: var(--t-text); font-size: var(--t-text-sm); }
 .model-swatch:hover { border-color: var(--t-text); }
 .model-swatch[aria-pressed="true"] { border-color: var(--t-text); box-shadow: 0 0 0 2px var(--t-inset), 0 0 0 4px var(--t-accent); }
-/* grid / wireframe toggles in the preview bar read as pressed */
-.preview-bar .t-btn[aria-pressed="true"] { background: var(--t-selection); color: var(--t-text); }
 @media (max-width: 767.98px) {
   .model-body { flex-direction: column; }
   .model-stage { flex: 1 1 auto; min-height: 0; }
@@ -193,6 +205,30 @@ body.preview-open { overflow: hidden; }
   .model-rail-group { flex-direction: row; }
   .model-swatches { flex-direction: row; flex-wrap: wrap; }
 }
+
+/* Viewer sections still to come, one per viewer id (docs/viewers.md): each viewer's rules go under its own
+   marker so viewers added in parallel never edit the same lines. */
+/* viewer: html */
+
+/* viewer: pdf */
+
+/* viewer: notebook */
+
+/* viewer: diagram */
+
+/* viewer: tree */
+
+/* viewer: archive */
+
+/* viewer: diff */
+
+/* viewer: ansi */
+
+/* viewer: gcode */
+
+/* viewer: step */
+
+/* viewer: geo */
 
 /* ─── Form shares: one card per field, fixed action bar ─── */
 .share-form { max-width: 64rem; display: flex; flex-direction: column; gap: var(--t-space-3); }

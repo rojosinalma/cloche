@@ -21,9 +21,17 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The download log marks downloads that came through a link (`via` in the share detail,
   `external_downloads` and `links` in the result).
 
+- The preview modal shows tabs when a file has more than one view, and remembers the last tab picked
+  for each kind of file. Keys `1`–`9` pick a tab. SVG files open on Image with a Raw tab for the source.
+- Viewers are modules: one in `lib/viewers/` and one in `public/js/viewers/` per viewer, found by name,
+  with a single data route `?data=<viewer>`. How to add one: `docs/viewers.md`.
+- `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
+
 ### Changed
 
 - The default theme is the luz skin with the Ayu palette (a choice saved in the browser still wins).
+- Text Pretty/Raw is a tab bar like every other viewer; `?text=1` and `?model=1` still work as older
+  spellings of `?data=text` and `?data=model`.
 
 ## [0.2.1] - 2026-10-16
 

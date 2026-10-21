@@ -10,9 +10,8 @@ class Setting < Sequel::Model(:settings)
 
   INTEGER_KEYS = %w[
     idle_timeout result_retention callback_pool_size callback_queue_size callback_history wait_max_timeout
-    callback_open_timeout callback_read_timeout text_view_max_bytes text_view_max_rows text_view_sniff_bytes
-    model_view_max_bytes form_max_fields form_max_options form_text_max_chars form_max_bytes form_bulk_threshold
-    form_idle_timeout external_link_default_ttl external_link_max_ttl external_link_max_live
+    callback_open_timeout callback_read_timeout form_max_fields form_max_options form_text_max_chars form_max_bytes
+    form_bulk_threshold form_idle_timeout external_link_default_ttl external_link_max_ttl external_link_max_live
   ].freeze
   BOOLEAN_KEYS = %w[mcp_debug external_links_enabled].freeze
   LIST_KEYS = %w[allowed_roots].freeze
@@ -21,8 +20,16 @@ class Setting < Sequel::Model(:settings)
   # (seed_defaults! ignores existing rows), so the CLOCHE_ROOTS, PUBLIC_BASE_URL,
   # LAN_BASE_URL and OPENCODE_URL env vars act as first-boot seeds: once a row
   # exists it is the DB value that counts, editable through the settings API.
-  def self.defaults
-    @defaults ||= begin
+  # Each viewer declares its own keys (Preview::Viewer#settings, typed
+  # defaults); they are merged in after the app's own keys.
+  def self.defaults = base_defaults.merge(viewer_defaults)
+
+  def self.viewer_settings = defined?(::Preview) ? ::Preview.settings : {}
+
+  def self.viewer_defaults = viewer_settings.transform_values { |v| v.is_a?(Array) ? v.join(",") : v.to_s }
+
+  def self.base_defaults
+    @base_defaults ||= begin
       home = ENV.fetch("HOST_HOME", Dir.home)
       public_url = url_env("PUBLIC_BASE_URL", "http://localhost:9292")
       {
@@ -41,10 +48,6 @@ class Setting < Sequel::Model(:settings)
         "callback_read_timeout" => "15",
         "wait_max_timeout" => "300",
         "mcp_debug" => "false",
-        "text_view_max_bytes" => (2 * 1024 * 1024).to_s,
-        "text_view_max_rows" => "500",
-        "text_view_sniff_bytes" => "8192",
-        "model_view_max_bytes" => (100 * 1024 * 1024).to_s,
         "form_max_fields" => "50",
         "form_max_options" => "1000",
         "form_text_max_chars" => "4000",
@@ -76,7 +79,9 @@ class Setting < Sequel::Model(:settings)
   end
 
   def self.type_of(key)
-    if INTEGER_KEYS.include?(key) then 0
+    viewer = viewer_settings
+    if viewer.key?(key) then viewer[key]
+    elsif INTEGER_KEYS.include?(key) then 0
     elsif BOOLEAN_KEYS.include?(key) then false
     elsif LIST_KEYS.include?(key) then []
     else ""

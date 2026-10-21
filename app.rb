@@ -13,9 +13,22 @@ require_relative "lib/idle_sweeper"
 # Stateful modules above load once; everything below reloads in development.
 %w[
   models/setting models/share models/download models/link
-  lib/path_guard lib/listing lib/text_view lib/form lib/model_view lib/share_manager lib/link_manager lib/zipper lib/file_server lib/callback lib/mcp_server
+  lib/path_guard lib/listing lib/text_view lib/form lib/share_manager lib/link_manager lib/zipper lib/file_server lib/callback lib/mcp_server
 ].each do |file|
   defined?(Unreloader) ? Unreloader.require(File.expand_path("#{file}.rb", __dir__)) : require_relative(file)
+end
+
+# The viewer registry and every viewer in lib/viewers/ (no list to edit: a new
+# file is a new viewer, picked up live in development). Constants are named
+# explicitly so reloading one viewer never unloads another.
+if defined?(Unreloader)
+  Unreloader.require(File.expand_path("lib/preview.rb", __dir__)) { "Preview" }
+  Unreloader.require(File.expand_path("lib/viewers", __dir__)) do |f|
+    "Viewers::#{File.basename(f, '.rb').split('_').map(&:capitalize).join}"
+  end
+else
+  require_relative "lib/preview"
+  Dir[File.expand_path("lib/viewers/*.rb", __dir__)].each { |f| require f }
 end
 
 class App < Roda
@@ -89,12 +102,14 @@ class App < Roda
     %(<svg #{attrs}>#{title}<use href="/tailor/icons.svg#bi-#{name}"/></svg>)
   end
 
-  # data-* attributes that make an element open the preview modal on an item.
+  # data-* attributes that make an element open the preview modal on an item;
+  # data-viewers lists the viewers (and their tabs) that can show it.
   def preview_attrs(item)
     return "" unless item.previewable?
 
-    attrs = { preview: "", kind: item.kind, src: item.preview_src, name: item.name, download: item.href,
-              href: item.view_href.delete_suffix("?view=1"), format: item.format, size: item.size }
+    attrs = { preview: "", kind: item.kind, icon: item.icon, name: item.name, download: item.href,
+              href: item.view_href.delete_suffix("?view=1"), format: item.format, size: item.size,
+              viewers: JSON.generate(item.viewers) }
     attrs.map { |k, v| %(data-#{k}="#{Rack::Utils.escape_html(v.to_s)}") }.join(" ")
   end
 
@@ -204,21 +219,10 @@ class App < Roda
                                  total_size: items.sum { |i| i.size.to_i }, zip_href: zip_href)
   end
 
-  # The text fragment the preview modal fetches (?text=1) is the one download
-  # of the file; Pretty/Raw and Copy are client-side and add nothing.
-  def text_card(share, index, rel, real)
-    name = rel.empty? ? File.basename(real) : rel
-    view = TextView.build(real, name: File.basename(real), share: share, index: index, rel: rel)
-    FileServer.count(request: request, share: share, name: name) unless view.too_large? || FileServer.skip_count?(request)
-    response["content-type"] = "text/html; charset=utf-8"
-    response["cache-control"] = FileServer::PAGE_CACHE
-    render("text_card", locals: { view: view, download_href: "#{Listing.href(share, index, rel)}?dl=1" })
-  end
-
-  # Previewable files (text, image, video, audio, 3D model) have no page of
-  # their own: a ?view=1 deep link lands on the gallery that lists the file,
-  # with the preview modal opened on it (#v=<href>). The modal's data fetch
-  # for a model is ?model=1 and for text ?text=1; each counts once.
+  # Previewable files (any file a viewer matches) have no page of their own:
+  # a ?view=1 deep link lands on the gallery that lists the file, with the
+  # preview modal opened on it (#v=<href>). A viewer's own fetch is
+  # ?data=<viewer>[&part=<part>] (Preview.data); the main part counts once.
   def preview_redirect(share, index, rel)
     request.redirect("#{Listing.container_href(share, index, rel)}#v=#{Listing.href(share, index, rel)}", 302)
   end
@@ -239,15 +243,12 @@ class App < Roda
     rel = rel.delete_prefix("/").delete_suffix("/")
     real = PathGuard.resolve(entry, rel) or not_found_page!
     return gallery_folder(share, index, rel, real) if File.directory?(real)
-    kind = Listing.kind_of(real)
-    preview_redirect(share, index, rel) if request.params.key?("view") && Listing.previewable?(kind)
-    return text_card(share, index, rel, real) if request.params.key?("text") && kind == :text
-
-    name = rel.empty? ? File.basename(real) : rel
-    if request.params.key?("model") && kind == :model
-      request.halt FileServer.serve(request: request, share: share, real_path: real, name: name, sandbox: false)
+    preview_redirect(share, index, rel) if request.params.key?("view") && Listing.previewable?(Listing.kind_of(real))
+    if (viewer = Preview.requested(request.params))
+      request.halt Preview.data(self, share: share, index: index, rel: rel, real: real, id: viewer)
     end
 
+    name = rel.empty? ? File.basename(real) : rel
     request.halt FileServer.serve(request: request, share: share, real_path: real, name: name,
                                   download: request.params.key?("dl"), preview: request.params.key?("preview"))
   end

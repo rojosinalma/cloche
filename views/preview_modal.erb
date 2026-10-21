@@ -1,77 +1,34 @@
-<% swatch_token = ->(c) { { "fg" => "--t-text", "comment" => "--t-disabled", "bg" => "--t-canvas", "bg-dark" => "--t-inset", "bg-darker" => "--t-overlay-bg", "selection" => "--t-selection" }.fetch(c) { "--t-hue-#{c}" } } -%>
-  <div class="preview" id="preview" hidden data-model-module="<%= asset("js/model-viewer.js") %>" data-model-max="<%= ModelView.max_bytes %>" data-model-max-label="<%= Listing.human_size(ModelView.max_bytes) %>">
+  <div class="preview" id="preview" hidden data-config="<%= JSON.generate(Preview.client_config(self)) %>">
     <div class="preview-bar">
       <%== icon("file-earmark", css: "preview-icon", id: "preview-icon") %>
       <span class="preview-name" id="preview-name"></span>
       <span class="t-badge" data-tone="accent" data-variant="outline" id="preview-badge" hidden></span>
-      <span class="file-size"><span id="preview-size"></span><span id="preview-model-stats"></span></span>
+      <span class="file-size"><span id="preview-size"></span><span id="preview-stats"></span></span>
       <span class="preview-count" id="preview-count"></span>
       <div class="t-cluster preview-tools">
-        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="image" id="preview-zoom" data-tip="Toggle fit / actual size (or click the image)" aria-label="Toggle fit / actual size"><%== icon("zoom-in") %></button>
-        <div class="t-btn-group preview-tool" data-role="filter" data-for="text" id="text-panes" role="group" aria-label="Pretty or raw" hidden>
-          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="true" data-pane="pretty" data-tip="Rendered view">Pretty</button>
-          <button class="t-btn pane-btn" data-size="sm" type="button" aria-pressed="false" data-pane="source" data-tip="Exact file content">Raw</button>
-        </div>
-        <button class="t-btn preview-tool" data-size="sm" data-icon="only" type="button" data-for="text" id="text-copy" data-tip="Copy file content" aria-label="Copy file content" hidden><%== icon("clipboard") %></button>
-        <div class="t-btn-group preview-tool" data-for="model" role="group" aria-label="Model view options">
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-reset" data-tip="Reset view" aria-label="Reset view" disabled><%== icon("arrows-fullscreen") %></button>
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-grid" data-tip="Toggle grid" aria-label="Toggle grid" aria-pressed="true" disabled><%== icon("grid-3x3") %></button>
-          <button class="t-btn" data-size="sm" data-icon="only" type="button" id="model-wire" data-tip="Toggle wireframe" aria-label="Toggle wireframe" aria-pressed="false" disabled><%== icon("bounding-box") %></button>
-        </div>
+        <div class="t-btn-group preview-tabs" data-role="filter" id="preview-tabs" role="group" aria-label="View" hidden></div>
+        <div class="preview-viewer-tools" id="preview-viewer-tools"></div>
         <a class="t-btn" data-size="sm" data-icon="only" data-tone="success" id="preview-download" href="#" data-tip="Download" aria-label="Download"><%== icon("download") %></a>
         <button class="t-btn" data-size="sm" data-icon="only" type="button" id="preview-close" data-tip="Close (Esc)" aria-label="Close"><%== icon("x-lg") %></button>
       </div>
     </div>
     <button class="preview-nav preview-prev" id="preview-prev" data-tip="Previous (←)" aria-label="Previous"><%== icon("chevron-left") %></button>
-    <div class="preview-stage" id="preview-stage">
-      <img id="preview-img" alt="" hidden>
-      <div class="preview-text" id="preview-text" hidden>
-        <div class="model-overlay" id="text-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
-        <div class="preview-text-content" id="preview-text-content"></div>
-      </div>
-      <video id="preview-video" controls playsinline hidden></video>
-      <div class="preview-audio" id="preview-audio" hidden>
-        <%== icon("file-earmark-music") %>
-        <audio id="preview-audio-el" controls></audio>
-      </div>
-      <div class="preview-model" id="preview-model" hidden>
-        <div class="file-view-notice" id="model-notice" hidden><%== icon("info-circle") %><span></span></div>
-        <div class="model-body">
-          <div class="model-stage" id="model-stage">
-            <div class="model-overlay" id="model-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
-            <div class="model-overlay" id="model-error" hidden>
-              <%== icon("exclamation-triangle") %>
-              <span id="model-error-text"></span>
-              <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
-            </div>
-            <div class="model-overlay model-fallback" id="model-fallback" hidden>
-              <img id="model-fallback-img" alt="Plate thumbnail">
-              <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
-            </div>
-          </div>
-          <aside class="model-rail" aria-label="Colours">
-            <div class="model-rail-group">
-              <div class="model-colors-label" data-tip="Model colour"><%== icon("box") %></div>
-              <div class="model-swatches" data-target="mesh">
-                <% %w[purple cyan green orange pink red yellow fg comment].each do |c| -%>
-                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Model: <%= c %>" aria-label="Model: <%= c %>"></button>
-                <% end -%>
-                <button type="button" class="model-swatch model-swatch-file" data-color="file" data-tip="Model: colours from the file" aria-label="Model: colours from the file" hidden><%== icon("file-earmark") %></button>
-              </div>
-            </div>
-            <div class="model-rail-group">
-              <div class="model-colors-label" data-tip="Background colour"><%== icon("square-fill") %></div>
-              <div class="model-swatches" data-target="bg">
-                <% %w[bg bg-dark bg-darker selection comment fg].each do |c| -%>
-                <button type="button" class="model-swatch" data-color="<%= c %>" style="--swatch: var(<%= swatch_token.(c) %>)" data-tip="Background: <%= c %>" aria-label="Background: <%= c %>"></button>
-                <% end -%>
-              </div>
-            </div>
-          </aside>
+    <div class="preview-stage" id="preview-stage"></div>
+    <button class="preview-nav preview-next" id="preview-next" data-tip="Next (→)" aria-label="Next"><%== icon("chevron-right") %></button>
+    <%# Shared states a viewer root shows instead of its own body (too large, could not load). %>
+    <template id="preview-tpl-notice">
+      <div class="preview-panel preview-notice">
+        <div class="t-empty">
+          <%== icon("file-earmark-x", css: "t-empty-icon") %>
+          <span data-role="message"></span>
+          <div class="t-empty-actions"><a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a></div>
         </div>
       </div>
-    </div>
-    <button class="preview-nav preview-next" id="preview-next" data-tip="Next (→)" aria-label="Next"><%== icon("chevron-right") %></button>
+    </template>
+    <%# Per-viewer markup from views/viewers/<id>.erb: [data-slot=tools] goes into the bar, [data-slot=body] into the stage. %>
+    <% Preview.templates(self).each do |id| -%>
+    <template id="preview-tpl-<%= id %>"><%== render("viewers/#{id}") %></template>
+    <% end -%>
   </div>
 
   <script type="importmap">

@@ -144,7 +144,7 @@ module TextView
     ext = File.extname(path).delete_prefix(".").downcase
     base = File.basename(path).downcase
     return true if TEXT_EXTS.include?(ext) || TEXT_NAMES.include?(base) || base.start_with?(".env")
-    return false if BINARY_EXTS.include?(ext) || Listing::KINDS.values.any? { |exts| exts.include?(ext) }
+    return false if BINARY_EXTS.include?(ext) || Preview.binary_ext?(ext)
 
     sniff(path)
   end
