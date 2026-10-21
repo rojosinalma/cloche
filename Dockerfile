@@ -9,6 +9,7 @@ ARG APP_GID=1000
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    7zip \
     libsqlite3-dev \
     zip \
     && rm -rf /var/lib/apt/lists/* \

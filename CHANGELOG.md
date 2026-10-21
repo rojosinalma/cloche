@@ -32,6 +32,14 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - PDF viewer: Document in the browser's own PDF viewer, and Info with pages, title, author and producer.
 - Notebook viewer: Jupyter notebooks with Markdown, highlighted code and saved outputs, never executed.
 - Diagram viewer: Mermaid and Graphviz files drawn in the theme's colours, also inside Markdown code blocks.
+- Tree viewer for JSON, JSONC, JSON5, YAML, TOML and JSON Lines: a Tree tab with folding, a filter, typed
+  values and click-to-copy paths.
+- Archive viewer for ZIP, tar (gz, bz2, xz) and 7z: a Contents tab that lists folders, sizes and dates
+  without extracting anything.
+- Diff viewer for `.diff` and `.patch` files: Unified and Side by side tabs with file and hunk headers and
+  per-file folding.
+- ANSI viewer for terminal output: a Coloured tab with SGR colours from the palette, for `.ansi` files and
+  any text file with escapes.
 
 ### Changed
 

@@ -1,0 +1,1 @@
+A text file with [1mescapes[0m in it.

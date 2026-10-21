@@ -1,0 +1,10 @@
+<div data-slot="tools">
+  <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="expand" data-tip="Unfold every file" aria-label="Unfold every file" hidden><%== icon("arrows-expand") %></button>
+  <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="collapse" data-tip="Fold every file" aria-label="Fold every file" hidden><%== icon("arrows-collapse") %></button>
+</div>
+<div data-slot="body">
+  <div class="preview-panel preview-diff">
+    <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+    <div class="diff-content" data-role="content"></div>
+  </div>
+</div>

@@ -1,0 +1,25 @@
+From 5f2c1e0a9b8d7c6e5f4a3b2c1d0e9f8a7b6c5d4e Mon Sep 17 00:00:00 2001
+From: Sample Author <author@example.com>
+Date: Tue, 20 Oct 2026 18:12:00 +0200
+Subject: [PATCH] Add a punctuation option
+
+Greeter takes the closing punctuation as an option now.
+---
+ lib/greeter.rb | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/greeter.rb b/lib/greeter.rb
+index 3b18e51..a8c2f4d 100644
+--- a/lib/greeter.rb
++++ b/lib/greeter.rb
+@@ -5,6 +5,6 @@ class Greeter
+   end
+ 
+   def greet
+-    "Hello, #{@name}"
++    "Hello, #{@name}!"
+   end
+ end
+-- 
+2.47.0
+
