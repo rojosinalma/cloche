@@ -6,6 +6,10 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The MCP tools tell agents to set `idle_timeout` to 0 (a share that never ends) only when you ask for it.
+
 ## [0.3.0] - 2026-10-21
 
 ### Added

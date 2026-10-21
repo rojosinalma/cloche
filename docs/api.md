@@ -41,7 +41,7 @@ curl -s http://localhost:9292/api/shares \
 
 - `paths` are absolute host paths under `allowed_roots`; `~/` expands against `HOST_HOME`.
 - `raw: true` serves exactly one folder as a plain static site; it excludes `form`.
-- `idle_timeout` in seconds overrides the global default for this share; `0` keeps it up until stopped.
+- `idle_timeout` in seconds overrides the global default for this share; `0` keeps it up until stopped. Agents should only send `0` when the person they work for asks for a share that stays up.
 - `session: {"id": "ses_…", "directory": "/path"}` binds the share to an opencode session for the
   callback; `directory` is optional and looked up from opencode when missing.
 - `form` is a form spec (`{intro?, fields[]}`); field kinds are `checklist`, `radio`, `select`,
