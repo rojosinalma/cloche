@@ -26,6 +26,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Viewers are modules: one in `lib/viewers/` and one in `public/js/viewers/` per viewer, found by name,
   with a single data route `?data=<viewer>`. How to add one: `docs/viewers.md`.
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
+- Map viewer for GeoJSON, GPX and KML (and `.json` files that hold GeoJSON): the shapes on OpenStreetMap
+  tiles, with their properties on a click; settings `geo_view_*` set the tile server, the caps and more.
 
 ### Changed
 

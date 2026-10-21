@@ -1,0 +1,4 @@
+{"name": "places", "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}, "type": "FeatureCollection", "features": [
+  {"type": "Feature", "properties": {"name": "Valparaíso"}, "geometry": {"type": "Point", "coordinates": [-71.6127, -33.0472]}},
+  {"type": "Feature", "properties": {"name": "Viña del Mar"}, "geometry": {"type": "Point", "coordinates": [-71.5518, -33.0245]}}
+]}
