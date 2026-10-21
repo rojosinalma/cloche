@@ -286,6 +286,19 @@ views. A file with no file header or hunk drops both tabs and says so in a toast
 
 ### ansi
 
+Terminal output with ANSI escapes. `.ansi` files always match; any other text file (`.log`, `.out`, …)
+matches when its first `ansi_view_sniff_bytes` hold an escape sequence (`ESC [`), so a log without colours
+keeps Raw alone. View Coloured, first, next to the text viewer's Raw. The browser reads the text from
+`?data=ansi` (counts once) and applies SGR: the 16 colours map to palette tokens, 256-colour and truecolour
+values to the nearest palette hue or grey (so every palette and both modes stay readable); bold, dim,
+italic, underline, strike, inverse and hidden. Other escapes (cursor moves, titles, OSC links) are dropped;
+a lone carriage return starts the line again. Text goes into the page as text nodes only.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `ansi_view_max_bytes` | `2097152` | Larger files show Raw only |
+| `ansi_view_sniff_bytes` | `4096` | Bytes read to look for escapes in files that are not `.ansi` |
+
 ### gcode
 
 ### step
