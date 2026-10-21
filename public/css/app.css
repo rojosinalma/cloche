@@ -244,6 +244,18 @@ body.preview-open { overflow: hidden; }
 }
 
 /* viewer: diagram */
+.preview-diagram .diagram-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: safe center; padding: 1.5rem;
+                                  background: var(--t-canvas); color: var(--t-text); }
+.diagram-stage svg, .md-diagram-svg svg { max-width: 100%; height: auto; }
+.md-diagram { margin-bottom: 1rem; }
+.md-diagram-svg { display: flex; justify-content: center; padding: 1rem; border-radius: var(--t-radius-md); border: var(--t-border-w) solid var(--t-border); background: var(--t-canvas); color: var(--t-text); }
+.md-diagram-svg:empty { display: none; }
+.md-diagram-error { border: 0; border-radius: var(--t-radius-sm); margin-bottom: .35rem; }
+/* Graphviz draws black on white unless told otherwise: those defaults follow the theme, colours set in the file stay */
+[data-diagram="dot"] svg > g > polygon[fill="white"] { fill: transparent; }
+[data-diagram="dot"] [stroke="black"] { stroke: var(--t-text); }
+[data-diagram="dot"] [fill="black"], [data-diagram="dot"] text:not([fill]) { fill: var(--t-text); }
+[data-diagram="dot"] a text { fill: var(--t-link); }
 
 /* viewer: tree */
 

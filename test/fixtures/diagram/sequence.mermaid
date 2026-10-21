@@ -1,0 +1,9 @@
+sequenceDiagram
+  participant Agent
+  participant Cloche
+  participant Browser
+  Agent->>Cloche: create_share
+  Cloche-->>Agent: url
+  Browser->>Cloche: GET /s/<id>/
+  Cloche-->>Browser: gallery
+  Note over Browser: picks a file

@@ -1,0 +1,5 @@
+graph colours {
+  a [style=filled, fillcolor="#d79921", label="filled"];
+  b [label="plain"];
+  a -- b;
+}

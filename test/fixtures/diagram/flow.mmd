@@ -1,0 +1,5 @@
+flowchart LR
+  share[Create a share] --> open{Open the gallery}
+  open -->|file| modal[Preview modal]
+  open -->|folder| gallery[Folder view]
+  modal --> tabs[Tabs per viewer]
