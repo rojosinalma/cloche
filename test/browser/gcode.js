@@ -120,6 +120,31 @@ const api = async (method, path, body) => {
   check(/^1 of 1/.test(await infoRow('Plate') || ''), 'gcode.3mf Info: plate');
   check(await visible('[data-role="thumb"]'), 'gcode.3mf Info: plate thumbnail');
   await page.screenshot({ path: `${SHOTS}/gcode-3mf-info-dark.png` });
+  // Switching to the model viewer's 3D tab and back keeps both mounted.
+  await page.locator('#preview-tabs [data-tab="model:model"]').click();
+  await page.waitForFunction(() => /triangles/.test(document.getElementById('preview-stats').textContent) ||
+    !document.querySelector('.preview-view:not([hidden]) [data-role="fallback"]')?.hidden, null, { timeout: 20000 }).catch(() => {});
+  check(await page.locator('.preview-view[data-viewer="model"]:not([hidden]) canvas').count() === 1, 'gcode.3mf: 3D tab mounts the model viewer');
+  await page.screenshot({ path: `${SHOTS}/gcode-3mf-model-dark.png` });
+  await tab('toolpath');
+  check(/46 layers/.test(await stats()) && await page.locator(`${root} canvas`).count() === 1, 'gcode.3mf: back on Toolpath, stats and canvas kept');
+
+  // Two plates: a picker; every tab follows it.
+  await open('two-plates.gcode.3mf');
+  await toolpath();
+  const plate = page.locator('.viewer-tools:not([hidden]) select[data-role="plate"]');
+  check(JSON.stringify(await plate.locator('option').allTextContents()) === '["Plate 1","Plate 2"]', 'two plates: picker');
+  check(/External perimeter/.test(await text('[data-role="legend"]')), 'plate 1 is the Prusa toolpath');
+  await plate.evaluate((el) => { el.value = '2'; el.dispatchEvent(new Event('change')); });
+  await page.waitForFunction(() => /WALL-OUTER|Wall outer/.test(document.querySelector('.preview-view:not([hidden]) [data-role="legend"]')?.textContent || ''), null, { timeout: 20000 }).catch(() => {});
+  check(/Wall outer/.test(await text('[data-role="legend"]')), 'plate 2: the Cura toolpath');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${SHOTS}/gcode-plates-dark.png` });
+  await tab('info');
+  check(await page.locator('.viewer-tools:not([hidden]) .t-select-btn').isVisible(), 'plate picker stays on Info');
+  await infoReady();
+  await page.waitForFunction(() => /2 of 2/.test(document.querySelector('.preview-view:not([hidden]) .viewer-info-table')?.textContent || ''), null, { timeout: 5000 }).catch(() => {});
+  check(/^2 of 2/.test(await infoRow('Plate') || '') && /Cura/.test(await infoRow('Slicer') || ''), 'plate 2: Info follows');
   await tab('toolpath');
 
   // Broken files: notices, no page errors.
