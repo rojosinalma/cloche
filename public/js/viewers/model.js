@@ -2,6 +2,13 @@
 // renderer on the viewer's stage, loads the file from ctx.src and returns a
 // handle whose dispose() tears everything down (WebGL context, listeners,
 // observers) when the modal moves on or closes.
+//
+// Other viewers reuse it with mount(ctx, hooks) on the same markup (their
+// template renders viewers/model): hooks.object is an Object3D they parsed
+// themselves (Z up, millimetres; no fetch then), hooks.keepMaterials keeps
+// the file's own materials (textures) as the "colours from the file"
+// swatch, hooks.setup({ scene, renderer, THREE }) runs once the renderer
+// exists and may return a cleanup function.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
@@ -22,6 +29,14 @@ function standardMaterial(color) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.08, side: THREE.DoubleSide });
 }
 
+// Every material a mesh uses: its current one, and the file's own and the themed one when both are kept.
+const materialsOf = (m) => [...new Set([m.material, m.userData.fileMaterial, m.userData.themeMaterial].flat().filter(Boolean))];
+
+function disposeMaterial(material) {
+  Object.values(material).forEach((v) => { if (v && v.isTexture) v.dispose(); });
+  material.dispose();
+}
+
 function parse(format, buffer) {
   if (format === 'stl') return new THREE.Mesh(new STLLoader().parse(buffer));
   if (format === 'obj') return new OBJLoader().parse(new TextDecoder().decode(buffer));
@@ -40,7 +55,7 @@ function plateThumbnail(buffer) {
 }
 
 // The markup comes from views/viewers/model.erb (stage, overlays, colour rail, tool buttons).
-export function mount(ctx) {
+export function mount(ctx, hooks = {}) {
   const pick = (role) => ctx.$(`[data-role="${role}"]`);
   const els = {
     stage: pick('stage'), loading: pick('loading'), errorBox: pick('error'), errorText: pick('error-text'),
@@ -88,6 +103,7 @@ export function mount(ctx) {
     return { dispose() { ac.abort(); } };
   }
 
+  const cleanup = hooks.setup ? hooks.setup({ scene, renderer, THREE }) : null;
   const controls = new OrbitControls(camera, renderer.domElement);
   const model = new THREE.Group();
   model.rotation.x = -Math.PI / 2;
@@ -112,6 +128,9 @@ export function mount(ctx) {
     const useFile = choice.mesh === 'file' && hasFileColors;
     const tint = useFile ? null : cssColor(token(choice.mesh));
     meshes.forEach((m) => {
+      const kept = m.userData.fileMaterial;
+      if (kept) m.material = useFile ? kept : m.userData.themeMaterial;
+      if (useFile && kept) return;
       if (useFile && m.userData.fileColor) m.material.color.copy(m.userData.fileColor);
       else m.material.color.copy(tint || cssColor(token('purple')));
     });
@@ -160,12 +179,19 @@ export function mount(ctx) {
     const purple = cssColor(token('purple'));
     object.traverse((node) => {
       if (!node.isMesh) return;
+      if (!node.geometry.attributes.normal) node.geometry.computeVertexNormals();
+      if (hooks.keepMaterials && node.material) {
+        node.userData.fileMaterial = node.material;
+        node.userData.themeMaterial = node.material = standardMaterial(purple);
+        hasFileColors = true;
+        meshes.push(node);
+        return;
+      }
       const source = Array.isArray(node.material) ? node.material[0] : node.material;
       const isDefault = !source || source.name === THREE.Loader.DEFAULT_MATERIAL_NAME || source.name === '' || !source.color;
       const own = !isDefault && !source.color.equals(new THREE.Color(0xffffff));
       node.material = standardMaterial(own ? source.color.clone() : purple);
       if (own) { node.userData.fileColor = source.color.clone(); hasFileColors = true; }
-      if (!node.geometry.attributes.normal) node.geometry.computeVertexNormals();
       meshes.push(node);
     });
     model.add(object);
@@ -206,6 +232,7 @@ export function mount(ctx) {
   };
 
   const load = async () => {
+    if (hooks.object) { show(hooks.object); return; }
     const response = await fetch(opts.src, { signal });
     if (!response.ok) throw new Error(`The file could not be fetched (HTTP ${response.status})`);
     const buffer = await response.arrayBuffer();
@@ -234,7 +261,10 @@ export function mount(ctx) {
   on(buttons.reset, 'click', () => fit && fit());
   const toggle = (b) => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', String(on)); return on; };
   on(buttons.grid, 'click', () => { const g = toggle(buttons.grid); if (grid) grid.visible = g; });
-  on(buttons.wire, 'click', () => { const w = toggle(buttons.wire); meshes.forEach((m) => { m.material.wireframe = w; }); });
+  on(buttons.wire, 'click', () => {
+    const w = toggle(buttons.wire);
+    meshes.forEach((m) => materialsOf(m).forEach((mat) => { mat.wireframe = w; }));
+  });
   swatches.forEach((s) => on(s, 'click', () => {
     choice[s.closest('.model-swatches').dataset.target] = s.dataset.color;
     remember();
@@ -260,7 +290,8 @@ export function mount(ctx) {
       ro.disconnect();
       mo.disconnect();
       controls.dispose();
-      meshes.forEach((m) => { m.geometry.dispose(); m.material.dispose(); });
+      meshes.forEach((m) => { m.geometry.dispose(); materialsOf(m).forEach(disposeMaterial); });
+      if (typeof cleanup === 'function') cleanup();
       if (grid) { grid.geometry.dispose(); grid.material.dispose(); }
       if (thumbUrl) URL.revokeObjectURL(thumbUrl);
       renderer.dispose();
