@@ -136,7 +136,7 @@ module McpServer
 
   def instructions
     [
-      "Shares files, folders and question forms from this host with the user's browser; hand the user the returned `url` as a Markdown link (never lan_url).",
+      "Shares files, folders and question forms from this host with the user's browser; hand the user the returned `url` as a Markdown link (never lan_url). The user never sees host files, so a reply that refers to one (plan, brief, log, image, HTML) shares it, never a bare path.",
       "The calling session is detected from the MCP request: when a share ends or a form is submitted, the result lands in your session automatically (no waiting).",
       "Shares end after #{Listing.human_duration(Setting.get('idle_timeout'))} idle by default; idle_timeout (seconds, 0 = never) on create_share/create_form/update_share changes that."
     ].join("\n")
