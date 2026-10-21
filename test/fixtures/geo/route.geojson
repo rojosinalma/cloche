@@ -1,0 +1,16 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "name": "Plaza de Armas", "kind": "square", "note": "<img src=x onerror=alert(1)><b>bold</b>" },
+      "geometry": { "type": "Point", "coordinates": [-70.6506, -33.4378] } },
+    { "type": "Feature", "properties": { "name": "Walk to the hill", "length_km": 2.1 },
+      "geometry": { "type": "LineString", "coordinates": [[-70.6506, -33.4378], [-70.6455, -33.4370], [-70.6380, -33.4320], [-70.6330, -33.4295]] } },
+    { "type": "Feature", "properties": { "name": "Cerro Santa Lucía", "tags": ["park", "hill"] },
+      "geometry": { "type": "Polygon", "coordinates": [[[-70.6450, -33.4390], [-70.6420, -33.4385], [-70.6415, -33.4410], [-70.6448, -33.4415], [-70.6450, -33.4390]]] } },
+    { "type": "Feature", "properties": {},
+      "geometry": { "type": "GeometryCollection", "geometries": [
+        { "type": "Point", "coordinates": [-70.6300, -33.4250] },
+        { "type": "LineString", "coordinates": [[-70.6300, -33.4250], [-70.6250, -33.4230]] } ] } },
+    { "type": "Feature", "properties": { "name": "No geometry" }, "geometry": null }
+  ]
+}

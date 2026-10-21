@@ -228,7 +228,34 @@ body.preview-open { overflow: hidden; }
 
 /* viewer: step */
 
-/* viewer: geo */
+/* viewer: geo — Leaflet map; selectors start at .preview-geo to win over leaflet.css, which loads later */
+.preview-geo { overflow: hidden; }
+.preview-geo .geo-map { flex: 1; min-height: 0; background: var(--t-canvas); font: inherit; font-size: var(--t-text-sm); outline: none; }
+.preview-geo .geo-map:focus-visible { box-shadow: inset 0 0 0 2px var(--t-accent); }
+html[data-mode="dark"] .preview-geo .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
+.preview-geo .geo-line { stroke: var(--t-accent); stroke-width: 4; }
+.preview-geo .geo-area { stroke: var(--t-hue-cyan); stroke-width: 2; fill: var(--t-hue-cyan); fill-opacity: .22; }
+.preview-geo .geo-point { stroke: var(--t-canvas); stroke-width: 2; stroke-opacity: 1; fill: var(--t-hue-orange); fill-opacity: 1; }
+.preview-geo .geo-shape:hover { stroke-width: 6; }
+.preview-geo .geo-point:hover { stroke-width: 3; fill: var(--t-hue-red); }
+.preview-geo .leaflet-bar { border: var(--t-border-w) solid var(--t-border); box-shadow: none; }
+.preview-geo .leaflet-bar a { background: var(--t-surface); color: var(--t-text); border-bottom-color: var(--t-border); }
+.preview-geo .leaflet-bar a:hover, .preview-geo .leaflet-bar a:focus { background: var(--t-inset); color: var(--t-text); }
+.preview-geo .leaflet-bar a.leaflet-disabled { background: var(--t-surface); color: var(--t-disabled); }
+.preview-geo .geo-map .leaflet-control-attribution { background: color-mix(in srgb, var(--t-surface) 85%, transparent); color: var(--t-muted); }
+.preview-geo .geo-map .leaflet-control-attribution a { color: var(--t-accent); }
+.preview-geo .leaflet-popup-content-wrapper, .preview-geo .leaflet-popup-tip { background: var(--t-surface); color: var(--t-text);
+                                                                              box-shadow: 0 2px 10px color-mix(in srgb, var(--t-text) 25%, transparent); }
+.preview-geo .leaflet-popup-content-wrapper { border: var(--t-border-w) solid var(--t-border); border-radius: var(--t-radius-md); }
+.preview-geo .leaflet-popup-content { margin: .7rem 1rem; font-size: var(--t-text-sm); line-height: 1.4; }
+.preview-geo .leaflet-container a.leaflet-popup-close-button { color: var(--t-muted); }
+.preview-geo .leaflet-container a.leaflet-popup-close-button:hover { color: var(--t-text); }
+.geo-popup { max-height: 18rem; overflow: auto; }
+.geo-popup-title { font-weight: 600; margin-bottom: .4rem; padding-right: 1rem; overflow-wrap: anywhere; }
+.geo-popup-empty { color: var(--t-muted); }
+.geo-props { margin: 0; font-size: inherit; }
+.geo-props th, .geo-props td { padding: .2rem .5rem; vertical-align: top; overflow-wrap: anywhere; }
+.geo-props th { color: var(--t-muted); font-weight: 500; white-space: nowrap; }
 
 /* ─── Form shares: one card per field, fixed action bar ─── */
 .share-form { max-width: 64rem; display: flex; flex-direction: column; gap: var(--t-space-3); }
