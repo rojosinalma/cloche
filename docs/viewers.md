@@ -287,6 +287,24 @@ blocked. The frame takes the page's colour scheme.
 
 ### diagram
 
+Mermaid (`.mmd`, `.mermaid`) and Graphviz (`.dot`, `.gv`) sources, priority 20. Views: Diagram; the text
+viewer adds Raw (the source). Data: `?data=diagram`, the source as plain text; counts once.
+
+Mermaid (`mermaid@12.2.0`) runs with `securityLevel: "strict"` and the `base` theme, its colours taken
+from the `--t-*` tokens; it redraws when tailor switches mode, palette or skin. Graphviz
+(`@viz-js/viz@3.31.0`, WebAssembly) output loses scripts, `foreignObject`, images, event handlers and
+any link that is not http(s); kept links open in a new tab. Graphviz's default black and white follow
+the theme in CSS, colours set in the file stay. A source that does not parse shows a notice with the
+parser's reason; Raw still shows the source.
+
+The module also exports `enhance(nodes, ctx)`: TextView wraps fenced ` ```mermaid `, ` ```dot ` and
+` ```graphviz ` blocks in `<div data-enhance="diagram" data-diagram="mermaid|dot">`, so Markdown files and
+notebook Markdown cells draw them. A block that does not draw keeps its code, with a notice above it.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `diagram_view_max_bytes` | `1048576` | Larger diagram sources show Raw only |
+
 ### tree
 
 ### archive

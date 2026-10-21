@@ -29,6 +29,7 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - HTML viewer: pages render in a sandboxed frame with their stylesheets, scripts and images, next to Raw.
 - PDF viewer: Document in the browser's own PDF viewer, and Info with pages, title, author and producer.
 - Notebook viewer: Jupyter notebooks with Markdown, highlighted code and saved outputs, never executed.
+- Diagram viewer: Mermaid and Graphviz files drawn in the theme's colours, also inside Markdown code blocks.
 
 ### Changed
 
