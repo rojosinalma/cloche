@@ -299,4 +299,29 @@ and MeatPack decoders.
 
 ### step
 
+STEP (`.step`, `.stp`) as a mesh in the 3D view, converted on the server by cad-render
+(`POST <url>/convert`, `file` + `format=stl`). Views: 3D and Info. The conversion starts when the 3D tab
+is first shown: `?data=step&part=convert` (JSON) converts or finds the cached STL, and answers with
+cad-render's reason on a failure; `?data=step` then sends the STL and counts once; `&part=info` (JSON:
+file size, the STEP header, the conversion) never counts. Without a cad-render URL, or above
+`step_view_max_bytes`, the file has Info only, with a notice and a download button.
+
+The STL cache lives in the container's temp directory (`$TMPDIR/cloche-step`), keyed by real path, mtime
+and size, and is bounded by `step_view_cache_max_bytes` and `step_view_cache_max_files`: the least
+recently used entries go first. At most `step_view_max_jobs` conversions run at once (another file gets a
+"try again" notice); a second request for a file that is converting waits for it, up to
+`step_view_timeout`. The 3D markup is the model viewer's (`viewers/model` in a nested template), mounted
+with `hooks.object` once the STL is there. Info rows share `info-table.js` and the `.viewer-info` styles
+with gcode.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `step_view_cad_render_url` | `""` | cad-render base URL; empty = no 3D view for STEP |
+| `step_view_cad_render_ca_file` | `""` | Extra CA certificate (PEM path inside the container) for an HTTPS cad-render with a private CA |
+| `step_view_timeout` | `120` | Seconds to wait for cad-render (connect, send, answer) |
+| `step_view_max_bytes` | `52428800` | Larger STEP files are not sent for conversion (Info only) |
+| `step_view_max_jobs` | `2` | Conversions running at once |
+| `step_view_cache_max_bytes` | `524288000` | Size of the STL cache; also the largest STL accepted |
+| `step_view_cache_max_files` | `200` | Entries in the STL cache |
+
 ### geo
