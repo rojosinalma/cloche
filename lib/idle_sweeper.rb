@@ -61,7 +61,8 @@ module IdleSweeper
     return if share.permanent?
 
     limit = share.effective_idle_timeout
-    if in_flight?(share.id)
+    # A live external link holds the share: its idle clock restarts when the last link ends.
+    if in_flight?(share.id) || ::LinkManager.holds?(share)
       share.touch!
     elsif share.last_activity_at < now - limit
       require_relative "listing" unless defined?(::Listing)

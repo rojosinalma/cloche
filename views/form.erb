@@ -12,7 +12,7 @@
          option_values: (fv.(f, :options) || []).map { |o| fv.(o, :value) } }
      end
    } -%>
-<%== render("share_nav", locals: { share: share, base: base, zip_href: zip_href }) %>
+<%== render("share_nav", locals: { share: share, base: base, zip_href: zip_href, external: false, links: nil }) %>
 
   <main class="t-shell-main t-page has-form-bar" id="content">
     <form class="share-form" id="share-form" novalidate autocomplete="off">

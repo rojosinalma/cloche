@@ -4,6 +4,11 @@
       <% if zip_href -%>
       <a class="t-btn serve-action" data-variant="primary" data-size="sm" href="<%= zip_href %>"><%== icon("file-earmark-zip") %>Download all</a>
       <% end -%>
+      <% if links -%>
+      <button class="t-btn serve-action" data-size="sm" type="button" data-dialog-open="link-modal"><%== icon("link-45deg") %>Share link</button>
+      <% end -%>
+      <% unless external -%>
       <button class="t-btn serve-action" data-variant="ghost" data-tone="danger" data-size="sm" type="button" data-dialog-open="stop-modal"><%== icon("stop-circle") %>Stop serving</button>
+      <% end -%>
     </div>
   </header>

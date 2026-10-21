@@ -8,6 +8,13 @@ class Share < Sequel::Model(:shares)
 
   unrestrict_primary_key
   one_to_many :downloads, key: :share_id
+  one_to_many :links, key: :share_id
+
+  # Per request: an external link (/x/<token>) serves the same gallery under its
+  # own prefix and records its downloads against the link; never persisted.
+  attr_accessor :via_link
+
+  def base_path = via_link ? "/x/#{via_link.token}" : "/s/#{id}"
 
   def paths_list
     JSON.parse(paths.to_s)

@@ -244,3 +244,11 @@ body.preview-open { overflow: hidden; }
 
 /* field header: label left, help beside it (tailor pushes a card header's last non-title child right) */
 .t-card.form-field > .form-field-header > :last-child { margin-left: 0; }
+
+/* share link dialog */
+.link-note { margin-top: 0; }
+#link-modal .t-field + .t-field { margin-top: var(--t-space-3); }
+.link-list-label { margin-top: var(--t-space-4); }
+.link-cell { min-width: 0; max-width: 0; width: 100%; }
+.link-url { display: block; font-size: var(--t-text-sm); }
+.link-meta { display: block; }

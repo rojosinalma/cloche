@@ -12,9 +12,9 @@ class Setting < Sequel::Model(:settings)
     idle_timeout result_retention callback_pool_size callback_queue_size callback_history wait_max_timeout
     callback_open_timeout callback_read_timeout text_view_max_bytes text_view_max_rows text_view_sniff_bytes
     model_view_max_bytes form_max_fields form_max_options form_text_max_chars form_max_bytes form_bulk_threshold
-    form_idle_timeout
+    form_idle_timeout external_link_default_ttl external_link_max_ttl external_link_max_live
   ].freeze
-  BOOLEAN_KEYS = %w[mcp_debug].freeze
+  BOOLEAN_KEYS = %w[mcp_debug external_links_enabled].freeze
   LIST_KEYS = %w[allowed_roots].freeze
 
   # Defaults are seeded into the settings table on first boot only
@@ -51,6 +51,10 @@ class Setting < Sequel::Model(:settings)
         "form_max_bytes" => (512 * 1024).to_s,
         "form_bulk_threshold" => "8",
         "form_idle_timeout" => "86400",
+        "external_links_enabled" => "true",
+        "external_link_default_ttl" => "86400",
+        "external_link_max_ttl" => "0",
+        "external_link_max_live" => "20",
         "instance_name" => ENV.fetch("HOSTNAME") { Socket.gethostname }
       }.freeze
     end

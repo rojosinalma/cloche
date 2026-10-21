@@ -57,7 +57,8 @@ module Listing
     "#{seconds / 3600}h#{format('%02d', seconds % 3600 / 60)}m"
   end
 
-  def base(share) = "/s/#{share.id}"
+  # /s/<id>, or /x/<token> when the request came through an external link.
+  def base(share) = share.base_path
 
   def encode(rel) = rel.to_s.split("/").reject(&:empty?).map { |s| ERB::Util.url_encode(s) }.join("/")
 

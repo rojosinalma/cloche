@@ -15,8 +15,9 @@ One container, one Ruby process:
 
 | Component | Files | Role |
 |---|---|---|
-| HTTP app | `app.rb`, `config.ru`, `config/puma.rb` | Roda routes for `/api`, `/mcp`, `/health`, `/s/<id>/…`; JSON helpers `json_ok`/`json_err`; ERB pages in `views/` |
+| HTTP app | `app.rb`, `config.ru`, `config/puma.rb` | Roda routes for `/api`, `/mcp`, `/health`, `/s/<id>/…`, `/x/<token>/…`; JSON helpers `json_ok`/`json_err`; ERB pages in `views/` |
 | Share manager | `lib/share_manager.rb` | Create/update/stop shares, validation, result and summary documents, `wait`, retention purge |
+| Link manager | `lib/link_manager.rb`, `models/link.rb` | External links: create/revoke with TTL validation and caps, token lookup for `/x`, link documents and footer status |
 | Path guard | `lib/path_guard.rb` | `realpath` + containment against `allowed_roots` on create and on every request |
 | File server | `lib/file_server.rb`, `lib/zipper.rb` | Rack::Files-based delivery with range support, download counting, CSP sandbox; streamed zip from a symlink mirror (`zip -r -`) |
 | Viewers | `lib/listing.rb`, `lib/text_view.rb`, `lib/model_view.rb`, `public/js/*.js` | Directory listings and MIME kinds; text rendering (Rouge, Redcarpet, CSV); 3D model gating; browser-side preview modal, form UI, three.js viewer |
@@ -27,7 +28,7 @@ One container, one Ruby process:
 | Models | `models/database.rb`, `models/share.rb`, `models/download.rb`, `models/setting.rb` | Sequel models over SQLite; `Setting` is the typed runtime config |
 
 How they talk: the browser hits `/s/<id>/…` (no auth; the id is the key) and `/s/<id>/status` for the
-live footer. Agents hit `/api/*` or `/mcp` with a bearer token. cloche calls out only to the opencode
+live footer; people the share is passed on to hit `/x/<token>/…`, the same gallery read-only. Agents hit `/api/*` or `/mcp` with a bearer token. cloche calls out only to the opencode
 server (`opencode_url`) with HTTP Basic auth. Everything else is in-process method calls; there is no
 message bus and no second process.
 
@@ -40,8 +41,11 @@ run on every boot and are additive only.
   real paths), `session_id`, `session_directory`, `started_at`, `last_activity_at`, `ended_at`,
   `end_reason`, `idle_timeout` (nil = follow the setting, 0 = permanent), and the form columns
   `form`, `draft`, `answers`, `submitted_at`, `submissions`, `draft_saved_at` (JSON text).
-- `downloads` — `share_id` (cascade delete), `name`, `ip`, timestamp. Previews and resumed range
-  requests are not counted.
+- `downloads` — `share_id` (cascade delete), `link_id` (set when the download came through an
+  external link), `name`, `ip`, timestamp. Previews and resumed range requests are not counted.
+- `links` — `id`, `token` (32 random bytes, URL-safe base64, unique), `share_id` (cascade delete),
+  `created_at`, `expires_at` (nil = until revoked), `revoked_at`. A link is live while it is neither
+  revoked nor expired and its share is live.
 - `settings` — `key`/`value` text; types are declared in `Setting` (`INTEGER_KEYS`, `BOOLEAN_KEYS`,
   `LIST_KEYS`), defaults in `Setting.defaults`, env seeds copied in by `Setting.seed_defaults!` on
   first boot only.
@@ -70,8 +74,16 @@ symlinks that is removed when the stream closes.
 5. **Forms** — `PUT /s/<id>/draft` saves partial answers (lenient), `POST /s/<id>/submit` validates
    strictly, bumps `submissions`, fires a `:submitted` callback and keeps the share open so the
    answers can be revised; `wait` with `since` returns on the next submit.
-6. **Retention** — ended shares and their download logs are deleted once `ended_at` is older than
-   `result_retention`.
+6. **Retention** — ended shares, their download logs and their links are deleted once `ended_at` is
+   older than `result_retention`.
+7. **External link** — `POST /s/<id>/links` (the page's Share link dialog), `POST /api/shares/<id>/links`
+   or `create_link`: `LinkManager.create` refuses forms, ended shares, a switched-off feature, a `ttl`
+   over `external_link_max_ttl` and more than `external_link_max_live` live links, then stores a new
+   token. `GET /x/<token>/…` looks the token up, answers 410 when the link or the share has ended, sets
+   the request's URL prefix on the share (`Share#base_path`, read by `Listing.base`) and the link
+   (`Share#via_link`, read by the download counter), and runs the same gallery routes as `/s` minus
+   stop, draft, submit and links. The sweeper treats a live link like a transfer in flight, so the
+   share does not idle out while one exists.
 
 ## Configuration surface
 
@@ -98,6 +110,18 @@ request without a restart. Four env vars act as first-boot seeds for settings.
   needs certainty calls `wait_share`.
 - **Settings in the database, env as seeds.** Changing a timeout should not require a restart or a
   compose edit.
+- **External links in their own table, with their own token** (2026-10-21). A second, revocable and
+  expiring key lets a share reach people outside the gateway without ending the share to cut them off
+  and without ever handing out the `/s` id, which also grants Stop. The gateway exempts `/x` and the
+  static assets only.
+- **URL prefix per request, not per view** (2026-10-21). The route sets `Share#base_path` (`/s/<id>` or
+  `/x/<token>`) and every link the views and the text viewer build follows it, so `/x` reuses the
+  gallery, preview and zip code unchanged.
+- **Links live only while the share lives, and hold it** (2026-10-21). Stopping a share ends every link;
+  a live link keeps the share from idling out, so a link handed out for seven days works for seven days.
+  Forms never get links: their answers belong to the agent session.
+- **A cap on live links per share** (`external_link_max_live`, 2026-10-21), so the set a share can carry
+  stays bounded; revoked and expired links go with the share at retention.
 - **Instruction entry as the default callback mode.** It adds context to the agent's next step
   without producing a visible message or forcing a turn; `synthetic` and `prompt` exist for clients
   that want either.
@@ -105,7 +129,7 @@ request without a restart. Four env vars act as first-boot seeds for settings.
 ## Current scope and non-goals
 
 Today cloche serves files from one host over one mount, authenticates agents with one shared bearer
-token, and calls back into opencode. It does not authenticate browsers, write to the shared tree,
+token, and calls back into opencode. It does not authenticate browsers (external links are bearer URLs, not accounts), write to the shared tree,
 accept uploads, or notify anything other than an opencode server. Those are the current boundaries of
 the implementation, not design limits; the callback module and the settings layer are where new
 targets or auth schemes would plug in.

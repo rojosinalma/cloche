@@ -6,6 +6,25 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- External links: a share of files or a raw site can be passed on read-only under `/x/<token>/`, with
+  its own random token that never reveals the share id. Each link expires after 1 hour, 24 hours, 7 days,
+  30 days or when revoked; a share with a live link does not idle out, and stopping the share ends every
+  link. Form shares never get links.
+- A "Share link" button on the gallery opens a dialog to pick the expiry, create a link, copy it and revoke
+  live links.
+- REST `GET`/`POST /api/shares/:id/links`, `DELETE /api/shares/:id/links/:link_id` and the MCP tools
+  `create_link`, `list_links`, `revoke_link`.
+- Settings `external_links_enabled`, `external_link_default_ttl`, `external_link_max_ttl` and
+  `external_link_max_live`.
+- The download log marks downloads that came through a link (`via` in the share detail,
+  `external_downloads` and `links` in the result).
+
+### Changed
+
+- The default theme is the luz skin with the Ayu palette (a choice saved in the browser still wins).
+
 ## [0.2.1] - 2026-10-16
 
 ### Changed

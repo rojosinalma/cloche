@@ -118,8 +118,9 @@ module FileServer
   end
 
   def count(request:, share:, name:)
-    Download.create(share_id: share.id, name: name, ip: request.ip, created_at: Time.now)
-    $log.info "[download] #{share.id} #{name} #{request.ip}"
+    link = share.via_link
+    Download.create(share_id: share.id, link_id: link&.id, name: name, ip: request.ip, created_at: Time.now)
+    $log.info "[download] #{share.id} #{name} #{request.ip}#{" via link #{link.id}" if link}"
   end
 
   def guarded(path, root)

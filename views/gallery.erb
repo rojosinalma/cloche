@@ -1,5 +1,5 @@
 <% items = media + files -%>
-<%== render("share_nav", locals: { share: share, base: base, zip_href: items.empty? ? nil : zip_href }) %>
+<%== render("share_nav", locals: { share: share, base: base, zip_href: items.empty? ? nil : zip_href, external: external, links: links }) %>
 
   <main class="t-shell-main t-page" id="content">
     <% unless crumbs.empty? -%>
@@ -53,4 +53,9 @@
   </main>
 
 <%== render("preview_modal") %>
+<% unless external -%>
 <%== render("stop_modal", locals: { base: base }) %>
+<% end -%>
+<% if links -%>
+<%== render("link_modal", locals: { base: base, links: links }) %>
+<% end -%>

@@ -22,8 +22,9 @@ link. You open a gallery page: images, video, audio, text (highlighted source; M
 and CSV rendered) and 3D models (STL, 3MF, OBJ) preview in one modal, every file downloads on its own
 or as a streamed zip, and a download log records what went out. A share can also be a **form**
 (checklists, radio/select, free text, Markdown task lists) that you answer in the browser, or a **raw**
-static site served from one folder. Shares end after an idle timeout (configurable per share, or
-never). When a share ends or a form is submitted, the agent's [opencode](https://opencode.ai) session
+static site served from one folder. An **external link** passes a share on read-only to people
+outside your gateway: its own expiring, revocable URL, created from the share page or by the agent.
+Shares end after an idle timeout (configurable per share, or never). When a share ends or a form is submitted, the agent's [opencode](https://opencode.ai) session
 gets a silent note saying how it ended, what you downloaded or what you answered. The MCP server
 means agents need no curl and pass no session id. Named after the dome a waiter lifts off the plate.
 
