@@ -1,0 +1,14 @@
+<div data-slot="tools">
+  <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="fit" data-tip="Fit all shapes in view" aria-label="Fit all shapes in view" disabled><%== icon("arrows-fullscreen") %></button>
+</div>
+<div data-slot="body">
+  <div class="preview-panel preview-geo">
+    <div class="geo-map" data-role="map"
+         data-tile-url="<%= Setting.get("geo_view_tile_url") %>"
+         data-tile-attribution="<%= Setting.get("geo_view_tile_attribution") %>"
+         data-tile-max-zoom="<%= Setting.get("geo_view_tile_max_zoom") %>"
+         data-max-features="<%= Setting.get("geo_view_max_features") %>"
+         data-max-points="<%= Setting.get("geo_view_max_points") %>"></div>
+    <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+  </div>
+</div>

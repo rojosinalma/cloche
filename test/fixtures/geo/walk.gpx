@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="cloche fixtures" xmlns="http://www.topografix.com/GPX/1/1">
+  <wpt lat="-33.4489" lon="-70.6693"><name>Start</name><desc>Café &amp; bakery</desc></wpt>
+  <wpt lat="-33.4420" lon="-70.6530"><name>End</name></wpt>
+  <trk>
+    <name>Morning walk</name>
+    <trkseg>
+      <trkpt lat="-33.4489" lon="-70.6693"><ele>560</ele><time>2026-10-01T08:00:00Z</time></trkpt>
+      <trkpt lat="-33.4470" lon="-70.6650"><ele>562</ele><time>2026-10-01T08:05:00Z</time></trkpt>
+      <trkpt lat="-33.4450" lon="-70.6600"><ele>565</ele><time>2026-10-01T08:10:00Z</time></trkpt>
+      <trkpt lat="-33.4420" lon="-70.6530"><ele>570</ele><time>2026-10-01T08:15:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

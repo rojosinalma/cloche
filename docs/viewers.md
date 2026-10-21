@@ -247,3 +247,38 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 ### step
 
 ### geo
+
+GeoJSON (`.geojson`), GPX, KML, and `.json` files whose root object has a GeoJSON `type`
+(`FeatureCollection`, `Feature` or a geometry). The `.json` check reads only the first
+`geo_view_sniff_bytes` and walks the tokens far enough to find the root's `type` key; it never parses
+the whole file. View: Map, before the text viewer's Raw (and Pretty for `.json`). Priority 30, kind
+`geo`, icon `map`. Data: `?data=geo`, the file's bytes; counts once.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `geo_view_max_bytes` | `20971520` | Larger files get no map (Raw follows the text viewer's own cap) |
+| `geo_view_max_features` | `10000` | Files with more features show a notice instead of the map |
+| `geo_view_max_points` | `200000` | Files with more coordinates (every vertex and every point) show a notice instead of the map |
+| `geo_view_sniff_bytes` | `8192` | Bytes of a `.json` file read to look for the root `type` |
+| `geo_view_tile_url` | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | Tile template (`{z}`, `{x}`, `{y}`, `{s}`); empty draws the shapes on the plain background and requests nothing outside |
+| `geo_view_tile_attribution` | `&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors` | Credit line for the tiles; only text and `http(s)` links are kept |
+| `geo_view_tile_max_zoom` | `19` | Deepest zoom the tile server offers |
+
+Notes:
+
+1. Libraries: Leaflet 1.9.4 (`leaflet-src.esm.js` and `leaflet.css`) and @tmcw/togeojson 7.1.3, both
+   from jsDelivr, loaded when a Map tab opens.
+2. GPX and KML become GeoJSON in the browser with togeojson, not on the server: no XML parser runs in
+   cloche, and the file is fetched once either way. The viewer drops any `<!DOCTYPE …>` before it hands
+   the text to `DOMParser`, so no entity is declared or fetched; a file that still uses one is refused
+   as not well-formed.
+3. Tracks and routes are lines, waypoints and placemarks are markers, polygons are filled areas. A
+   `GeometryCollection` splits into its parts. Features without a geometry are skipped. Colours come
+   from `--t-accent` (lines), `--t-hue-cyan` (areas) and `--t-hue-orange` (points); in dark mode the
+   tiles go through a CSS invert filter.
+4. A click on a shape opens its properties: the `name` (or `title`) as the heading, the rest as a table,
+   all as text. Long values are cut at 300 characters.
+5. The tiles load in the viewer's browser, on `/s` and `/x` pages alike, with only the page's origin as
+   the referrer. The settings reach the browser as data attributes in `views/viewers/geo.erb`.
+6. A file that does not parse, or is not GeoJSON, shows a notice with the download button on the Map
+   tab; Raw still shows the source.
