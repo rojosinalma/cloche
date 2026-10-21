@@ -28,6 +28,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
 - glTF files (`.glb`, and `.gltf` with the buffers and textures next to it) open in the 3D view with
   their own materials.
+- G-code and Bambu Studio / Orca `.gcode.3mf` files open on a Toolpath tab (moves coloured by feature or
+  layer, travel moves, a layer range), with Info from the slicer's header and the Source next to it.
 
 ### Changed
 
