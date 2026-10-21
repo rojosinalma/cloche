@@ -18,8 +18,11 @@
 Hand files from an AI coding agent's machine to your browser, and get told when you looked at them.
 
 An agent creates a **share** (REST or MCP) of files and folders by absolute host path and gives you a
-link. You open a gallery page: images, video, audio, text (highlighted source; Markdown, JSON, JSONL
-and CSV rendered) and 3D models (STL, 3MF, OBJ) preview in one modal, every file downloads on its own
+link. You open a gallery page where almost anything previews in one modal, with tabs when a file has
+more than one view: images, video, audio, highlighted text, Markdown, CSV, HTML pages (sandboxed), PDFs,
+Jupyter notebooks, Mermaid and Graphviz diagrams, JSON/YAML/TOML trees, archive listings, diffs,
+coloured terminal logs, maps (GeoJSON, GPX, KML), 3D models (STL, 3MF, OBJ, glTF, STEP) and G-code
+toolpaths. Every file downloads on its own
 or as a streamed zip, and a download log records what went out. A share can also be a **form**
 (checklists, radio/select, free text, Markdown task lists) that you answer in the browser, or a **raw**
 static site served from one folder. An **external link** passes a share on read-only to people
@@ -36,9 +39,11 @@ Configuration, API, MCP tools, operations, security and development notes live i
   published for linux/amd64 and linux/arm64)
 - A browser with ES modules and WebGL (WebGL only for the 3D viewer); the UI is built on
   [tailor](https://github.com/rojosinalma/tailor) (vendored, icons from its Bootstrap Icons sprite) and loads
-  three.js 0.186.1 from jsdelivr
+  the viewer libraries (three.js, Mermaid, Viz.js, Leaflet, togeojson) from jsDelivr at pinned versions
 - For callbacks: an [opencode](https://opencode.ai) 2.0 or later server reachable from the container
-- From source only: Ruby 3.3 or later, Bundler 2, the `zip` binary
+- Optional, for STEP previews: a [cad-render](https://github.com/rojosinalma/cad-render) service
+  (`step_view_cad_render_url`); map tiles come from OpenStreetMap unless you change `geo_view_tile_url`
+- From source only: Ruby 3.3 or later, Bundler 2, and the `zip`, `tar`, `gzip`, `bzip2`, `xz` and `7z` binaries
 
 ## Installation
 

@@ -3,7 +3,7 @@
 | Task | How |
 |---|---|
 | Live reload | `RACK_ENV=development` in `.env` plus a `compose.override.yaml` that mounts the checkout: `services: {cloche: {volumes: [".:/app"]}}`; code changes apply on the next request (`rack-unreloader`) |
-| Run without Docker | `bundle install && bundle exec puma -C config/puma.rb` (Ruby 3.3, system `zip`) |
+| Run without Docker | `bundle install && bundle exec puma -C config/puma.rb` (Ruby 3.3, system `zip`, `tar`, `gzip`, `bzip2`, `xz` and `7z`) |
 | Database | SQLite at `DATABASE_PATH` (`data/cloche.db`); migrations in `db/migrations` are additive and run on every boot |
 | Image | `docker compose up -d --build` builds from the local `Dockerfile` instead of pulling |
 | Syntax check | `ruby -wc app.rb lib/*.rb models/*.rb` |
