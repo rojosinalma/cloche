@@ -259,6 +259,19 @@ does not parse is an error node.
 
 ### archive
 
+ZIP, tar (`.tar`, `.tar.gz`, `.tgz`, `.tar.bz2`, `.tar.xz`) and 7z. One view, Contents: a read-only folder
+tree with sizes, dates, the entry count and the total uncompressed size. Nothing is extracted and no entry is
+served. ZIP is read from its central directory in Ruby (ZIP64 included), with no tool and no decompression,
+so a zip bomb lists like any other zip. Tar goes through GNU `tar --list`, 7z through `7z l` (the `7zip`
+package in the image); both run without stdin, stop at the entry cap and are killed at the time limit.
+`?data=archive` answers the listing as JSON and never counts: the listing is not the file.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `archive_view_max_bytes` | `4294967296` | Larger archives are download-only |
+| `archive_view_max_entries` | `10000` | Entries listed; the rest is cut with a notice (ZIP still reports the total) |
+| `archive_view_timeout` | `10` | Seconds a `tar` or `7z` listing may run |
+
 ### diff
 
 ### ansi

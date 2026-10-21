@@ -245,6 +245,22 @@ body.preview-open { overflow: hidden; }
 .tree-mark { background: color-mix(in srgb, var(--t-accent) 35%, transparent); color: inherit; border-radius: 2px; }
 
 /* viewer: archive */
+.archive-body { flex: 1; min-height: 0; overflow: auto; }
+.archive-body .t-empty { padding: 5rem 1rem; }
+.archive-table { font-size: var(--t-text-sm); }
+.archive-table td { padding-top: .3rem; padding-bottom: .3rem; }
+.archive-table tbody tr[data-type="d"] { cursor: pointer; }
+.archive-table tbody tr[data-type="d"]:hover, .archive-table tbody tr[data-type="d"]:focus-visible { background: var(--t-selection); outline: none; }
+.archive-table td.archive-name { padding-left: calc(.75rem + var(--depth, 0) * 1.1rem); white-space: nowrap; }
+.archive-toggle { display: inline-flex; width: 1rem; color: var(--t-muted); vertical-align: middle; }
+.archive-toggle .t-icon { transition: transform var(--t-duration); }
+.archive-table tr[aria-expanded="true"] .archive-toggle .t-icon { transform: rotate(90deg); }
+.archive-icon { margin: 0 .4rem 0 .15rem; color: var(--t-muted); vertical-align: middle; }
+.archive-table tr[data-type="d"] .archive-icon { color: var(--t-accent); }
+.archive-label { color: var(--t-text); }
+.archive-note { margin-left: .6rem; color: var(--t-muted); font-size: var(--t-text-xs); }
+.archive-table .t-col-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--t-muted); }
+.archive-date { white-space: nowrap; color: var(--t-muted); font-variant-numeric: tabular-nums; width: 11rem; }
 
 /* viewer: diff */
 

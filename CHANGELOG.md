@@ -28,6 +28,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
 - Tree viewer for JSON, JSONC, JSON5, YAML, TOML and JSON Lines: a Tree tab with folding, a filter, typed
   values and click-to-copy paths.
+- Archive viewer for ZIP, tar (gz, bz2, xz) and 7z: a Contents tab that lists folders, sizes and dates
+  without extracting anything.
 
 ### Changed
 
