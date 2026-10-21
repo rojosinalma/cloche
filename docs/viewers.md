@@ -226,6 +226,12 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 |---|---|---|
 | `model_view_max_bytes` | `104857600` | Larger 3D models are download-only |
 
+Other viewers reuse the 3D view: their template renders `viewers/model`, and their module calls
+`(await ctx.load('model')).mount(ctx, hooks)`. `hooks.object` is an `Object3D` the viewer parsed itself
+(Z up, millimetres; nothing is fetched then), `hooks.keepMaterials` keeps the file's own materials and
+textures behind the "colours from the file" swatch, and `hooks.setup({ scene, renderer, THREE })` runs once
+the renderer exists and may return a cleanup function.
+
 ### html
 
 ### pdf
