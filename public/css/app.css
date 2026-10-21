@@ -8,6 +8,8 @@
 /* navbar: the brand truncates on long share titles */
 .t-navbar-brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .t-navbar-brand:hover { color: var(--t-link); }
+/* the flex box centres the icon on the line box; lowercase text sits lower, so the glyph moves down to its x-height centre */
+.t-navbar-brand > .t-icon { translate: 0 .085em; }
 
 /* breadcrumbs + counts */
 .crumbs { margin-bottom: var(--t-space-4); }
@@ -70,12 +72,25 @@
 /* ─── Preview overlay: the modal shell every viewer mounts into (docs/viewers.md) ─── */
 .preview { position: fixed; inset: 0; z-index: var(--t-z-dialog); display: flex; flex-direction: column; background: color-mix(in srgb, var(--t-overlay-bg) 96%, transparent); }
 body.preview-open { overflow: hidden; }
-.preview-bar { display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; background: var(--t-inset); border-bottom: var(--t-border-w) solid var(--t-border); }
-.preview-tools { margin-left: auto; flex-wrap: nowrap; }
-.preview-viewer-tools { display: contents; }
+/* One row: name, badge, size, count, then the tools. The tools never split: every cluster inside them is
+   flattened into one nowrap row. Free space goes to the name first (flex-grow 1000, capped at its text),
+   then to the tree filter (7rem up to 14rem), so on a narrower window the filter shrinks before the name
+   truncates. When the name would go below 6rem the whole tools row wraps under it, right-aligned. */
+.preview-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; padding: .5rem 1rem; background: var(--t-inset); border-bottom: var(--t-border-w) solid var(--t-border); }
+.preview-bar > * { flex: none; }
+.preview-tools { flex: 1 0 auto; flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; }
+.preview-viewer-tools, .preview-tools .t-cluster:not([hidden]) { display: contents; }
+.preview-tools :is(.t-btn, .t-btn-group, .t-segmented, .t-select-wrap) { flex-shrink: 0; }
+/* phone widths: the tools always take a row of their own; a row wider than the screen (gcode) scrolls
+   sideways from its start instead of splitting (padding/margin keep the focus rings inside the clip) */
+@media (max-width: 40rem) {
+  .preview-tools { flex-basis: 100%; justify-content: safe flex-end; overflow-x: auto; padding: 3px; margin: -3px; max-width: calc(100% + 6px); }
+  .preview-tools:has(.t-select-list:not([hidden])) { overflow: visible; }
+  .preview-tools .tree-search { flex-shrink: 1; min-width: 4rem; }
+}
 .preview-icon { color: var(--t-accent); font-size: 1.1rem; }
-.preview-name { color: var(--t-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.preview-count { color: var(--t-muted); font-family: var(--t-font-mono); font-size: var(--t-text-sm); }
+.preview-bar > .preview-name { flex: 1000 1 6rem; max-width: max-content; color: var(--t-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.preview-count { color: var(--t-muted); font-family: var(--t-font-mono); font-size: var(--t-text-sm); white-space: nowrap; }
 .preview-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: center; justify-content: center; }
 /* a viewer's root adds no box: its body's top elements are the stage's flex items */
 .preview-view { display: contents; }
@@ -259,7 +274,8 @@ body.preview-open { overflow: hidden; }
 
 /* viewer: tree */
 .preview-tree .tree-view { flex: 1; min-height: 0; overflow: auto; padding: .6rem 1rem 1rem; font-family: var(--t-font-mono); font-size: .82rem; line-height: 1.55; color: var(--t-text); }
-.tree-search { width: 14rem; }
+/* width sets its share of the bar's hypothetical row (7rem); it grows into free space up to 14rem */
+.tree-search { width: 7rem; flex: 1 0 auto; max-width: 14rem; }
 .tree-hint { padding: .3rem 1rem; font-size: var(--t-text-xs); color: var(--t-muted); border-bottom: var(--t-border-w) solid var(--t-border); }
 .tree-hint kbd { font-family: var(--t-font-mono); padding: 0 .3rem; border: var(--t-border-w) solid var(--t-border); border-radius: var(--t-radius-sm); }
 .tree-kids { margin-left: .5rem; padding-left: .85rem; border-left: var(--t-border-w) solid var(--t-border); }

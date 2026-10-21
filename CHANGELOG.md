@@ -61,6 +61,12 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The tab that shows a file's text is called Source everywhere (it was Raw), the same word the G-code
   viewer uses.
 
+### Fixed
+
+- The preview bar no longer splits its tools over two rows on narrower windows: the JSON filter shrinks
+  first, and on a phone the tools move under the file name as one row. The navbar icon sits level with
+  the title.
+
 ## [0.2.1] - 2026-10-16
 
 ### Changed

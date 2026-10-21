@@ -167,6 +167,56 @@ const api = async (method, path, body) => {
   console.log('downloads', JSON.stringify(counted));
   check(!counted.some((n) => /\.(png|svg|webm|wav)$/.test(n) && !/logo\.svg/.test(n)), 'media previews are not counted');
 
+  // Bar layout: the tools are one row that never splits, every row shares one centre, the counter is one
+  // line; on a phone the tools sit under the name. Busy bars: tree (filter), gcode (most tools), geo, model.
+  const barShare = await api('POST', '/api/shares', { paths: [`${FIXTURES}/tree/config.json`, `${FIXTURES}/gcode/two-plates.gcode.3mf`, `${FIXTURES}/geo/route.geojson`, `${FIXTURES}/core/cube.stl`], title: 'bar layout', idle_timeout: 0 });
+  const bars = [['config.json', '.tree-view .tree-item'], ['two-plates.gcode.3mf', '[data-role="toolpath-tools"]:not([hidden])'], ['route.geojson', '[data-role="fit"]:not([disabled])'], ['cube.stl', '[data-role="reset"]:not([disabled])']];
+  const barLayout = () => page.evaluate(() => {
+    const shown = (e) => e && e.getClientRects().length > 0;
+    const mid = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
+    const rows = (els) => els.map(mid).reduce((out, m) => (out.some((x) => Math.abs(x - m) < 1) ? out : [...out, m]), []);
+    const meta = ['#preview-icon', '#preview-name', '#preview-badge', '.preview-bar > .file-size', '#preview-count'].map((s) => document.querySelector(s)).filter(shown);
+    const tools = [...document.querySelectorAll('.preview-tools :is(.t-btn, .t-input, .t-segmented, .t-select-btn)')].filter((e) => shown(e) && !e.parentElement.closest('.t-segmented'));
+    const rects = tools.map((e) => e.getBoundingClientRect());
+    const count = document.createRange(); count.selectNodeContents(document.getElementById('preview-count'));
+    return { metaRows: rows(meta), toolRows: rows(tools), countLines: new Set([...count.getClientRects()].map((r) => Math.round(r.top))).size,
+             overlap: rects.slice(1).some((r, i) => r.left < rects[i].right - 1.5), left: Math.min(...rects.map((r) => r.left)) };
+  });
+  for (const skin of ['luz', 'bootstrap']) {
+    await page.goto(`${barShare.url}?skin=${skin}&mode=dark`);
+    for (const [name, ready] of bars) {
+      await page.setViewportSize({ width: 1400, height: 900 });
+      await open(name);
+      if (name === 'config.json') await page.locator('#preview-tabs [data-tab="tree:tree"]').click();
+      await page.locator(`.preview-view:not([hidden]) ${ready}, .viewer-tools:not([hidden]) ${ready}`).first().waitFor({ timeout: 20000 });
+      for (const width of [1300, 900, 400]) {
+        await page.setViewportSize({ width, height: 700 });
+        await page.waitForTimeout(100);
+        const l = await barLayout();
+        const one = l.metaRows.length === 1 && l.toolRows.length === 1 && Math.abs(l.metaRows[0] - l.toolRows[0]) < 1;
+        const under = l.toolRows.length === 1 && l.toolRows[0] > Math.max(...l.metaRows) + 10;
+        const ok = l.toolRows.length === 1 && (one || under) && (width > 640 || under) && l.metaRows.length <= (width > 640 ? 1 : 2) && l.countLines === 1 && !l.overlap && l.left >= 0;
+        check(ok, `${skin} ${width}px ${name}: ${one ? 'one row' : under ? 'tools under the name' : 'split'} ${JSON.stringify(l)}`);
+      }
+    }
+  }
+  // 900px: a JSON tree still fits one row (the filter shrinks first); 400px: the gcode plate list opens unclipped.
+  await page.setViewportSize({ width: 900, height: 700 });
+  await open('config.json');
+  await page.locator('.tree-view .tree-item').first().waitFor();
+  const tree900 = await barLayout();
+  check(tree900.metaRows.length === 1 && tree900.toolRows.length === 1 && Math.abs(tree900.metaRows[0] - tree900.toolRows[0]) < 1, `900px JSON tree: one bar row ${JSON.stringify(tree900)}`);
+  await page.setViewportSize({ width: 400, height: 700 });
+  await open('two-plates.gcode.3mf');
+  await page.locator('.viewer-tools:not([hidden]) [data-role="toolpath-tools"]:not([hidden])').waitFor({ timeout: 20000 });
+  await page.locator('.viewer-tools:not([hidden]) .t-select-btn').click();
+  const list = page.locator('.viewer-tools:not([hidden]) .t-select-list');
+  await list.waitFor();
+  check(await list.evaluate((el) => { const r = el.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.height > 20 && el.contains(hit); }), '400px: the plate list opens over the stage, not clipped');
+  await page.screenshot({ path: `${SHOTS}/bar-gcode-400.png` });
+  await page.keyboard.press('Escape');
+  await page.setViewportSize({ width: 1400, height: 900 });
+
   check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
   await browser.close();
   console.log(JSON.stringify({ ok: failures.length === 0, failures }));
