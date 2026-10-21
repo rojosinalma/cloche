@@ -1,0 +1,201 @@
+// Browser check of the G-code viewer: Toolpath / Info / Source on plain
+// G-code (Bambu, Prusa, Cura) and on a .gcode.3mf, the layer range, travel
+// and colour controls, broken files (notices), the caps, /x links, both
+// themes and two skins. Run with: bin/test-instance browser <name> gcode.js
+// Env (set by bin/test-instance): BASE_URL, TOKEN, FIXTURES, SHOTS.
+const { chromium } = require('playwright');
+
+const { BASE_URL, TOKEN, FIXTURES, SHOTS = '/tmp' } = process.env;
+const failures = [];
+const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) failures.push(what); };
+
+const api = async (method, path, body) => {
+  const r = await fetch(`${BASE_URL}${path}`, {
+    method, headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return r.json();
+};
+
+(async () => {
+  const share = await api('POST', '/api/shares', { paths: [`${FIXTURES}/gcode`], title: 'viewers gcode', idle_timeout: 0 });
+  const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
+
+  const open = async (name) => {
+    if (await page.locator('#preview').isVisible()) await page.keyboard.press('Escape');
+    await page.locator(`.file-name[data-name="${name}"]`).first().click();
+    await page.locator('#preview').waitFor({ state: 'visible' });
+  };
+  const tabs = () => page.locator('#preview-tabs:not([hidden]) [data-tab]').allTextContents();
+  const tab = (view) => page.locator(`#preview-tabs [data-tab="gcode:${view}"]`).click();
+  const root = '.preview-view:not([hidden])';
+  const visible = (sel) => page.locator(`${root} ${sel}`).first().isVisible();
+  const text = (sel) => page.locator(`${root} ${sel}`).first().textContent();
+  const toolpath = () => page.waitForFunction(() => {
+    const r = document.querySelector('.preview-view:not([hidden])');
+    return /layers? ·/.test(document.getElementById('preview-stats').textContent) || (r && !r.querySelector('[data-role="error"]').hidden);
+  }, null, { timeout: 30000 }).catch(() => {});
+  const stats = () => page.locator('#preview-stats').textContent();
+  const infoRow = (label) => page.locator(`${root} .viewer-info-table tr`, { has: page.locator(`th:text-is("${label}")`) }).locator('td').textContent().catch(() => null);
+  const infoReady = () => page.locator(`${root} .viewer-info-table tr`).first().waitFor({ timeout: 10000 }).catch(() => {});
+
+  await page.goto(`${share.url}?mode=dark`);
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  // Plain Bambu G-code: Toolpath, layer range, keys, travel, colour by layer.
+  await open('bambu-x2d.gcode');
+  check(JSON.stringify(await tabs()) === '["Toolpath","Info","Source"]', 'gcode tabs are Toolpath, Info, Source');
+  await toolpath();
+  check(/8 layers · [\d,]+ moves/.test(await stats()), `Bambu toolpath: 8 layers (${await stats()})`);
+  check(await page.locator('#preview-badge').textContent() === 'G-code', 'G-code badge');
+  check(await page.locator(`${root} canvas`).count() === 1, 'one canvas');
+  check(/Outer wall/.test(await text('[data-role="legend"]')), 'legend lists the features');
+  check(/Layer 8 of 8 · Z 1\.32 mm/.test(await text('[data-role="layer-label"]')), `layer label at the top (${await text('[data-role="layer-label"]')})`);
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${SHOTS}/gcode-toolpath-dark.png` });
+  await page.locator(`${root} [data-role="to"]`).evaluate((el) => { el.value = '3'; el.dispatchEvent(new Event('input')); });
+  check(/^Layer 4 of 8/.test(await text('[data-role="layer-label"]')), 'To slider picks layer 4');
+  await page.locator('#preview-name').click();
+  await page.keyboard.press('ArrowDown');
+  check(/^Layer 3 of 8/.test(await text('[data-role="layer-label"]')), 'ArrowDown moves the top layer down');
+  check(await page.locator('#preview-name').textContent() === 'bambu-x2d.gcode', 'ArrowDown stays on the file');
+  await page.locator(`${root} [data-role="from"]`).evaluate((el) => { el.value = '1'; el.dispatchEvent(new Event('input')); });
+  check(/^Layers 2–3 of 8/.test(await text('[data-role="layer-label"]')), 'From slider sets the bottom layer');
+  await page.locator('.viewer-tools:not([hidden]) [data-role="travel"]').click();
+  check(await page.locator('.viewer-tools:not([hidden]) [data-role="travel"]').getAttribute('aria-pressed') === 'true', 'travel toggle');
+  await page.locator('.viewer-tools:not([hidden]) .t-segmented-item', { hasText: 'Layer' }).click();
+  check(/Layer 1 · Z/.test(await text('[data-role="legend"]')), 'colour by layer shows the layer legend');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${SHOTS}/gcode-toolpath-range-dark.png` });
+  await page.locator('.viewer-tools:not([hidden]) .t-segmented-item', { hasText: 'Feature' }).click();
+
+  // Info and Source of the same file; switching back keeps the toolpath.
+  await tab('info');
+  await infoReady();
+  check(await infoRow('Printer') === 'Bambu Lab X2D', 'Info: printer');
+  check(await infoRow('Estimated time') === '13m 36s', 'Info: estimated time');
+  check(await infoRow('Filament weight') === '4.21 g', 'Info: filament weight');
+  check(await infoRow('Nozzle temperature') === '220 °C' && await infoRow('Bed temperature') === '55 °C', 'Info: temperatures');
+  check(/8 layers/.test(await infoRow('Toolpath') || ''), 'Info: toolpath summary');
+  check(!(await page.locator('.viewer-tools:not([hidden]) [data-role="fit"]').isVisible()), 'toolpath tools hidden on Info');
+  await page.screenshot({ path: `${SHOTS}/gcode-info-dark.png` });
+  await tab('source');
+  await page.locator(`${root} .code-lines .line`).first().waitFor();
+  check(await page.locator(`${root} .code-lines .line`).count() > 1000, 'Source: lines');
+  check(await page.locator(`${root} .code-lines .k`).count() > 100, 'Source: commands highlighted');
+  await page.screenshot({ path: `${SHOTS}/gcode-source-dark.png` });
+  await tab('toolpath');
+  check(await page.locator(`${root} canvas`).count() === 1, 'back on Toolpath: still one canvas');
+
+  // Remembered tab: the next G-code file opens on Source? No: Toolpath was picked last.
+  await open('prusa-cube.gcode');
+  check(await page.locator('#preview-tabs [aria-pressed="true"]').textContent() === 'Toolpath', 'last tab remembered (Toolpath)');
+  await toolpath();
+  check(/10 layers/.test(await stats()), `Prusa toolpath: 10 layers (${await stats()})`);
+  check(/External perimeter/.test(await text('[data-role="legend"]')), 'Prusa features');
+  await tab('info');
+  await infoReady();
+  check(await infoRow('Printer') === 'MK4S' && /PrusaSlicer 2\.8\.1/.test(await infoRow('Slicer')), 'Prusa info from the end of the file');
+  check(await visible('[data-role="thumb"]'), 'Prusa embedded thumbnail');
+  await tab('toolpath');
+  await open('cura-cube.gcode');
+  await toolpath();
+  check(/10 layers/.test(await stats()), `Cura toolpath, absolute E: 10 layers (${await stats()})`);
+
+  // .gcode.3mf: the plate inside, plus the 3D tab of the model viewer.
+  await open('bambu.gcode.3mf');
+  check(JSON.stringify(await tabs()) === '["Toolpath","Info","Source","3D"]', 'gcode.3mf tabs: Toolpath, Info, Source, 3D');
+  await toolpath();
+  check(/46 layers/.test(await stats()), `gcode.3mf toolpath: 46 layers (${await stats()})`);
+  check(await page.locator('#preview-badge').textContent() === 'G-code 3MF', 'G-code 3MF badge');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${SHOTS}/gcode-3mf-dark.png` });
+  await tab('info');
+  await infoReady();
+  check(/^1 of 1/.test(await infoRow('Plate') || ''), 'gcode.3mf Info: plate');
+  check(await visible('[data-role="thumb"]'), 'gcode.3mf Info: plate thumbnail');
+  await page.screenshot({ path: `${SHOTS}/gcode-3mf-info-dark.png` });
+  await tab('toolpath');
+
+  // Broken files: notices, no page errors.
+  await open('broken.gcode');
+  await toolpath();
+  check(/No extrusion moves/.test(await text('[data-role="error-text"]')), 'broken G-code: notice');
+  await open('broken.gcode.3mf');
+  await toolpath();
+  check(/cannot be read/.test(await text('[data-role="error-text"]')), `broken gcode.3mf: notice (${await text('[data-role="error-text"]')})`);
+  await open('no-plate.gcode.3mf');
+  await toolpath();
+  check(/no sliced plate/.test(await text('[data-role="error-text"]')), 'gcode.3mf without a plate: notice');
+  await tab('info');
+  check(/no sliced plate/.test(await text('[data-role="notice"]')), 'gcode.3mf without a plate: Info notice');
+  await tab('toolpath');
+
+  // Caps: over gcode_view_max_bytes only Info and Source remain, with a notice.
+  await api('PUT', '/api/settings/gcode_view_max_bytes', { value: '1000' });
+  await page.reload();
+  await open('bambu-x2d.gcode');
+  check(JSON.stringify(await tabs()) === '["Info","Source"]', 'over the cap: Info and Source only');
+  await infoReady();
+  check(/above the 1000 B toolpath limit/.test(await text('[data-role="notice"]')), 'over the cap: notice');
+  check(await infoRow('Printer') === 'Bambu Lab X2D', 'over the cap: Info still reads the header');
+  await page.screenshot({ path: `${SHOTS}/gcode-cap.png` });
+  await api('DELETE', '/api/settings/gcode_view_max_bytes');
+  await api('PUT', '/api/settings/gcode_view_source_bytes', { value: '2000' });
+  await page.reload();
+  await open('bambu-x2d.gcode');
+  await tab('source');
+  await page.locator(`${root} .code-lines .line`).first().waitFor();
+  check(/Showing the first/.test(await text('[data-role="notice"]')) && await page.locator(`${root} .code-lines .line`).count() < 200, 'Source cap: notice and a short head');
+  await api('DELETE', '/api/settings/gcode_view_source_bytes');
+  await api('PUT', '/api/settings/gcode_view_max_moves', { value: '500' });
+  await page.reload();
+  await open('bambu-x2d.gcode');
+  await tab('toolpath');
+  await toolpath();
+  check(/move limit/.test(await text('[data-role="notice"]')), 'move cap: notice');
+  await api('DELETE', '/api/settings/gcode_view_max_moves');
+
+  // Light mode, and the bootstrap skin.
+  for (const q of ['mode=light', 'skin=bootstrap&mode=light', 'skin=bootstrap&mode=dark']) {
+    await page.goto(`${share.url}?${q}`);
+    await open('bambu.gcode.3mf');
+    await toolpath();
+    await page.waitForTimeout(300);
+    const tag = q.replace(/[=&]/g, '-');
+    await page.screenshot({ path: `${SHOTS}/gcode-${tag}.png` });
+    await tab('info');
+    await infoReady();
+    await page.screenshot({ path: `${SHOTS}/gcode-info-${tag}.png` });
+    await tab('toolpath');
+  }
+  await page.goto(`${share.url}?skin=luz&mode=dark`);
+
+  // External link.
+  const link = await api('POST', `/api/shares/${share.id}/links`, { ttl: 3600 });
+  await page.goto(link.url);
+  await open('prusa-cube.gcode');
+  await toolpath();
+  check(/10 layers/.test(await stats()), '/x link: toolpath');
+  await tab('info');
+  await infoReady();
+  check(await infoRow('Printer') === 'MK4S', '/x link: info');
+
+  // Downloads: the toolpath fetch counts, Info and Source never.
+  const detail = await api('GET', `/api/shares/${share.id}`);
+  const counted = detail.downloads.map((d) => d.name);
+  console.log('downloads', JSON.stringify(counted));
+  const cubeCount = counted.filter((n) => n === 'prusa-cube.gcode').length;
+  check(cubeCount === 2, `prusa-cube.gcode counted once per toolpath load (${cubeCount})`);
+
+  check(errors.length === 0, `no page errors${errors.length ? ': ' + errors.join(' | ') : ''}`);
+  await api('DELETE', `/api/shares/${share.id}`);
+  await browser.close();
+  console.log(JSON.stringify({ ok: failures.length === 0, failures }));
+  process.exit(failures.length ? 1 : 0);
+})().catch((e) => { console.error(e); process.exit(1); });
