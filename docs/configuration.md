@@ -55,6 +55,10 @@ After that the settings below are what counts.
 | `form_max_bytes` | `524288` | Body cap for form specs, drafts and submits |
 | `form_bulk_threshold` | `8` | Options from which a checklist gets filter/all/none tools |
 | `form_idle_timeout` | `86400` | Default idle timeout of form shares (s) |
+| `external_links_enabled` | `true` | Allow external links (`/x/<token>/`); `false` makes every `/x` path 404 |
+| `external_link_default_ttl` | `86400` | Lifetime of a new external link when none is given (s, `0` = until revoked) |
+| `external_link_max_ttl` | `0` | Longest external link allowed (s); `0` = no cap, otherwise links without an expiry are refused too |
+| `external_link_max_live` | `20` | Live external links per share |
 | `instance_name` | container hostname | Reported as `instance` in results and callbacks |
 
 Change a setting without a restart:

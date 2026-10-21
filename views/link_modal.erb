@@ -1,0 +1,32 @@
+  <dialog class="t-dialog" id="link-modal" data-size="md" aria-labelledby="link-modal-title" data-links-url="<%= base %>/links">
+    <div class="t-dialog-header"><h2 class="t-dialog-title" id="link-modal-title"><%== icon("link-45deg") %><span>Share link</span></h2><button class="t-dialog-close" type="button" aria-label="Close" data-dialog-close>×</button></div>
+    <div class="t-dialog-body">
+      <p class="t-muted t-small link-note">Anyone with an external link can view and download these files without signing in. Revoke it at any time; stopping the share ends every link.</p>
+      <div class="t-field">
+        <span class="t-label" id="link-ttl-label">Link works for</span>
+        <div class="t-segmented" role="group" aria-labelledby="link-ttl-label" id="link-ttl">
+          <% links[:options].each do |o| -%>
+          <label class="t-segmented-item"><input class="t-segmented-input" type="radio" name="link-ttl" value="<%= o[:ttl] %>"<%== ' checked' if o[:ttl] == links[:default] %>><span><%= o[:label] %></span></label>
+          <% end -%>
+        </div>
+      </div>
+      <div class="t-field" id="link-created" hidden>
+        <label class="t-label" for="link-url">New link</label>
+        <div class="t-input-group"><input class="t-input t-mono" id="link-url" readonly><button class="t-btn" type="button" id="link-copy" data-icon="only" data-tip="Copy link" aria-label="Copy link"><%== icon("clipboard") %></button></div>
+      </div>
+      <div class="section-label link-list-label">Live links</div>
+      <div class="t-table-wrap" id="link-table" hidden><table class="t-table link-table"><tbody id="link-rows"></tbody></table></div>
+      <div class="t-empty" id="link-empty"><%== icon("link-45deg", css: "t-empty-icon") %>No live links yet.</div>
+    </div>
+    <div class="t-dialog-footer"><button class="t-btn" type="button" data-dialog-close>Close</button><button class="t-btn" data-variant="primary" type="button" id="link-create"><%== icon("link-45deg") %>Create link</button></div>
+  </dialog>
+  <template id="link-row-template">
+    <tr>
+      <td class="link-cell"><span class="t-truncate t-mono link-url" data-role="url"></span><span class="t-muted t-small link-meta" data-role="meta"></span></td>
+      <td class="t-col-actions">
+        <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="copy" data-tip="Copy link" aria-label="Copy link"><%== icon("clipboard") %></button>
+        <button class="t-btn" data-size="sm" data-icon="only" data-tone="danger" type="button" data-role="revoke" data-tip="Revoke link" aria-label="Revoke link"><%== icon("trash") %></button>
+      </td>
+    </tr>
+  </template>
+  <script src="<%= asset("js/links.js") %>" defer></script>

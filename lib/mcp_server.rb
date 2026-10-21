@@ -233,6 +233,35 @@ module McpServer
     api_text(:delete, share_path(args[:id]))
   end
 
+  register "create_link",
+           "Create an external link to a live file or raw share: a second URL (`url`, /x/<token>/) that people " \
+           "other than the user can open without the login in front of the share page, read-only (no stop button). " \
+           "Only when the user asks to pass a share on. Form shares refuse. The share does not idle out while a " \
+           "link is live; stopping the share ends every link. Downloads through a link are marked in the log.",
+           { properties: {
+               id: { type: "string", description: "Share id" },
+               ttl: { type: "integer", description: "Seconds the link lives: 3600, 86400, 604800, 2592000, or 0 = until " \
+                                                    "revoked. Omitted = the external_link_default_ttl setting (24 h unless changed)" }
+             }, required: %w[id] } do |args|
+    api_text(:post, share_path(args[:id], "/links"), args.slice(:ttl))
+  end
+
+  register "list_links",
+           "Every external link of a share with its `url`, `state` (live, revoked, expired, share ended), expiry and " \
+           "download count.",
+           { properties: { id: { type: "string", description: "Share id" } }, required: %w[id] } do |args|
+    api_text(:get, share_path(args[:id], "/links"))
+  end
+
+  register "revoke_link",
+           "Revoke one external link now; its URL stops working at once. The share and its other links stay up.",
+           { properties: {
+               id: { type: "string", description: "Share id" },
+               link_id: { type: "integer", description: "Link id (from create_link or list_links)" }
+             }, required: %w[id link_id] } do |args|
+    api_text(:delete, share_path(args[:id], "/links/#{Integer(args[:link_id])}"))
+  end
+
   register "wait_share",
            "Block until the share ends, a form submission newer than `since` lands, or the timeout passes. Three " \
            "outcomes: {ended: true, result} (result carries `answers` for a form share); {ended: false, " \

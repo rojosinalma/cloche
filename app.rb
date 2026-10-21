@@ -12,8 +12,8 @@ require_relative "lib/idle_sweeper"
 
 # Stateful modules above load once; everything below reloads in development.
 %w[
-  models/setting models/share models/download
-  lib/path_guard lib/listing lib/text_view lib/form lib/model_view lib/share_manager lib/zipper lib/file_server lib/callback lib/mcp_server
+  models/setting models/share models/download models/link
+  lib/path_guard lib/listing lib/text_view lib/form lib/model_view lib/share_manager lib/link_manager lib/zipper lib/file_server lib/callback lib/mcp_server
 ].each do |file|
   defined?(Unreloader) ? Unreloader.require(File.expand_path("#{file}.rb", __dir__)) : require_relative(file)
 end
@@ -101,7 +101,8 @@ class App < Roda
   def page(template, title:, idle_label: nil, **locals)
     view(template, locals: locals.merge(idle_label: idle_label),
                    layout_opts: { locals: { title: title, idle_label: idle_label, permanent: locals[:permanent],
-                                            expires_at: locals[:expires_at], status_url: locals[:base] && "#{locals[:base]}/status" } })
+                                            expires_at: locals[:expires_at], external: locals[:external],
+                                            status_url: locals[:base] && "#{locals[:base]}/status" } })
   end
 
   def not_found_page!
@@ -110,12 +111,91 @@ class App < Roda
     request.halt
   end
 
+  # An external link that no longer opens: same page for revoked, expired and
+  # ended, and nothing on it points back at the share.
+  def link_gone_page!(link)
+    response.status = 410
+    reason = link.share.ended? ? "The share behind it has ended." : "It was #{link.state}."
+    response.write(page("not_found", title: "Link ended", heading: "This link no longer works",
+                                     message: "#{reason} Ask the person who sent it for a new one."))
+    request.halt
+  end
+
   def decode_path(path) = Rack::Utils.unescape_path(path.to_s).dup.force_encoding(Encoding::UTF_8)
 
+  # Through an external link the footer counts down the link, not the share's idle clock.
   def share_page(template, share, **locals)
+    if (link = share.via_link)
+      return page(template, title: share.title, expires_at: link.expires_at&.to_i, permanent: link.expires_at.nil?,
+                            external: true, links: nil, share: share, base: Listing.base(share), **locals)
+    end
+
     page(template, title: share.title, idle_label: ShareManager.idle_label(share),
-                   expires_at: ShareManager.expires_at(share)&.to_i, permanent: share.permanent?,
-                   share: share, base: Listing.base(share), **locals)
+                   expires_at: ShareManager.expires_at(share)&.to_i, permanent: share.permanent?, external: false,
+                   share: share, base: Listing.base(share), links: link_dialog(share), **locals)
+  end
+
+  # What the share page's link dialog needs; nil hides the button.
+  def link_dialog(share)
+    return unless LinkManager.enabled? && !share.form? && share.live?
+
+    LinkManager.presets
+  end
+
+  def link_error(error)
+    response.status = error.status
+    json_err(error.message)
+  end
+
+  # GET/POST /links and DELETE /links/<link_id>, under /api/shares/<id> (every
+  # link, any state) and under the share page /s/<id> (live links only; the
+  # id there is already the key to the share).
+  def share_links(share, all: false)
+    r = request
+    r.is do
+      r.get do
+        links = all ? LinkManager.all_docs(share) : LinkManager.live_docs(share)
+        json_ok("#{links.size} link(s)", links: links)
+      end
+
+      r.post do
+        link = LinkManager.create(share, ttl: r.POST["ttl"])
+        response.status = 201
+        json_ok("Link created, #{LinkManager.ttl_label(link.expires_at ? (link.expires_at - link.created_at).round : 0)}",
+                **LinkManager.doc(link, share))
+      end
+    end
+
+    r.is String do |link_id|
+      r.delete do
+        link, changed = LinkManager.revoke(share, link_id)
+        json_ok(changed ? "Link revoked" : "Already revoked", **LinkManager.doc(link, share))
+      end
+    end
+  rescue LinkManager::Error => e
+    link_error(e)
+  end
+
+  # The gallery routes shared by /s/<id>/ and /x/<token>/.
+  def share_content(share)
+    r = request
+    r.get do
+      next raw_served(share, decode_path(r.remaining_path)) if share.raw
+
+      r.root do
+        next form_page(share) if share.form?
+        next gallery_served(share, 0, "") if share.single_dir?
+
+        gallery(share, Listing.top_items(share), crumbs: [], zip_href: "#{Listing.base(share)}/all.zip")
+      end
+
+      r.is "all.zip" do
+        r.halt FileServer.zip(request: r, share: share, items: Listing.all_zip_items(share),
+                              filename: "#{share.title}.zip")
+      end
+
+      r.on("p", Integer) { |index| gallery_served(share, index, decode_path(r.remaining_path)) }
+    end
   end
 
   def gallery(share, items, crumbs:, zip_href:)
@@ -315,6 +395,8 @@ class App < Roda
             end
           end
 
+          r.on("links") { share_links(share, all: true) }
+
           r.post "wait" do
             outcome = ShareManager.wait(share, timeout: r.params["timeout"], since: r.params["since"])
             message = if outcome[:ended] then "Share ended"
@@ -350,6 +432,7 @@ class App < Roda
       r.is { r.redirect("/s/#{id}/", 301) }
 
       r.get("status") { ShareManager.status(share) }
+      r.on("links") { share_links(share) }
 
       if share.ended?
         r.post("stop") { json_ok("Already stopped") }
@@ -372,23 +455,22 @@ class App < Roda
         submit_answers(share)
       end
 
-      r.get do
-        next raw_served(share, decode_path(r.remaining_path)) if share.raw
+      share_content(share)
+    end
 
-        r.root do
-          next form_page(share) if share.form?
-          next gallery_served(share, 0, "") if share.single_dir?
+    # External links: read-only, no stop/draft/submit, never the share id.
+    r.on "x", String do |token|
+      link = LinkManager.find(token)
+      r.get("status") { LinkManager.status(link) }
+      not_found_page! unless link
 
-          gallery(share, Listing.top_items(share), crumbs: [], zip_href: "#{Listing.base(share)}/all.zip")
-        end
+      r.is { r.redirect("/x/#{token}/", 301) }
+      share = link.share
+      link_gone_page!(link) unless link.live? && share.live?
 
-        r.is "all.zip" do
-          r.halt FileServer.zip(request: r, share: share, items: Listing.all_zip_items(share),
-                                filename: "#{share.title}.zip")
-        end
-
-        r.on("p", Integer) { |index| gallery_served(share, index, decode_path(r.remaining_path)) }
-      end
+      share.via_link = link
+      share.touch!
+      share_content(share)
     end
   end
 end

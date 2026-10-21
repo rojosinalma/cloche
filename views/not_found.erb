@@ -5,7 +5,7 @@
   <main class="t-shell-main t-page">
     <div class="notice-panel">
       <%== icon("question-circle", css: "notice-icon") %>
-      <h1 class="notice-title">Not found</h1>
-      <p class="t-muted">Nothing is shared at this address. The link may be mistyped, or the share has expired.</p>
+      <h1 class="notice-title"><%= (defined?(heading) && heading) || "Not found" %></h1>
+      <p class="t-muted"><%= (defined?(message) && message) || "Nothing is shared at this address. The link may be mistyped, or the share has expired." %></p>
     </div>
   </main>

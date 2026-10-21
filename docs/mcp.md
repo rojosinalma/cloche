@@ -13,6 +13,9 @@ to it and the callback reaches that session without the agent passing anything.
 | `list_shares` | Live and recently ended shares |
 | `get_share` | One share with downloads, form, draft, answers, result |
 | `stop_share` | End a share now |
+| `create_link` | External link to a file or raw share (`id`, `ttl` seconds, `0` = until revoked); returns its `url` |
+| `list_links` | Every external link of a share with state, expiry and downloads |
+| `revoke_link` | End one external link now (`id`, `link_id`) |
 | `wait_share` | Block until ended / submitted (`since`) / timeout |
 | `get_settings` | All settings with value, default and source |
 | `set_setting` | Change one setting (`key`, `value`) |

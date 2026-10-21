@@ -3,6 +3,9 @@
 <% footer_expires = defined?(expires_at) && expires_at -%>
 <% footer_permanent = defined?(permanent) && permanent -%>
 <% footer_status = defined?(status_url) && status_url -%>
+<% footer_external = defined?(external) && external -%>
+<% tip_permanent = footer_external ? "This link works until it is revoked" : "This share stays up until it is stopped" -%>
+<% tip_expiring = footer_external ? "Time left before this link expires" : "Time left before this share ends if nobody touches it" -%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,7 +31,7 @@
   <footer class="t-footer t-shell-foot">
     <div class="t-footer-end">
       <div data-tailor-pickers></div>
-      <span class="t-footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" data-tip="This share stays up until it is stopped"><%== icon("infinity") %> <span id="expiry-left">until stopped</span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" data-tip="Time left before this share ends if nobody touches it"><%== icon("hourglass-split") %> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
+      <span class="t-footer-version">cloche<% if footer_permanent %> · <span id="expiry" data-permanent="1" data-status-url="<%= footer_status %>" data-tip="<%= tip_permanent %>" data-tip-permanent="<%= tip_permanent %>" data-tip-expiring="<%= tip_expiring %>"><%== icon("infinity") %> <span id="expiry-left"><%= footer_external ? "until revoked" : "until stopped" %></span></span><% else %><% if footer_idle %> · stops after <%= footer_idle %> idle<% end %><% if footer_expires %> · <span id="expiry" data-expires-at="<%= footer_expires %>" data-status-url="<%= footer_status %>" data-tip="<%= tip_expiring %>" data-tip-permanent="<%= tip_permanent %>" data-tip-expiring="<%= tip_expiring %>"><%== icon("hourglass-split") %> <span id="expiry-left">--:--</span></span><% end %><% end %></span>
     </div>
   </footer>
 </div>
@@ -55,14 +58,14 @@
         left.textContent = 'ended';
         document.querySelectorAll('.serve-action').forEach(b => b.remove());
         const content = document.getElementById('content');
-        if (content) content.innerHTML = `<div class="t-empty"><%== icon("hourglass-bottom", css: "t-empty-icon") %>This share has ended (${reason}). You can close this tab.</div>`;
-        toast('warning', `Share ended: ${reason}`);
+        if (content) content.innerHTML = `<div class="t-empty"><%== icon("hourglass-bottom", css: "t-empty-icon") %>This <%= footer_external ? "link" : "share" %> has ended (${reason}). You can close this tab.</div>`;
+        toast('warning', `<%= footer_external ? "Link" : "Share" %> ended: ${reason}`);
       };
       const setPermanent = (on) => {
         permanent = on;
         iconUse.setAttribute('href', `/tailor/icons.svg#bi-${on ? 'infinity' : 'hourglass-split'}`);
-        el.dataset.tip = on ? 'This share stays up until it is stopped' : 'Time left before this share ends if nobody touches it';
-        if (on) { left.textContent = 'until stopped'; delete el.dataset.soon; }
+        el.dataset.tip = on ? el.dataset.tipPermanent : el.dataset.tipExpiring;
+        if (on) { left.textContent = '<%= footer_external ? "until revoked" : "until stopped" %>'; delete el.dataset.soon; }
       };
       const sync = async () => {
         try {

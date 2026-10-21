@@ -100,7 +100,15 @@ module ShareManager
       duration: Listing.human_duration(seconds), duration_seconds: seconds,
       idle_timeout: share.effective_idle_timeout, instance: instance_name,
       downloads: files.size, files: files.tally, session: session_of(share)
-    }.merge(form_result(share))
+    }.merge(link_result(share)).merge(form_result(share))
+  end
+
+  # Only shares that ever had an external link report them.
+  def link_result(share)
+    links = LinkManager.all_docs(share)
+    return {} if links.empty?
+
+    { external_downloads: share.downloads_dataset.exclude(link_id: nil).count, links: links }
   end
 
   # Answers are what was submitted; the draft is only reported when it differs,
@@ -129,15 +137,18 @@ module ShareManager
       last_activity_at: iso(share.last_activity_at), idle_timeout: share.effective_idle_timeout,
       permanent: share.permanent?, expires_at: share.live? ? iso(expires_at(share)) : nil,
       downloads: share.downloads_dataset.count, instance: instance_name,
-      form: share.form?, submissions: share.submissions.to_i, submitted_at: iso(share.submitted_at)
+      form: share.form?, submissions: share.submissions.to_i, submitted_at: iso(share.submitted_at),
+      links: share.live? ? LinkManager.live_docs(share) : []
     }
     data.merge!(ended_at: iso(share.ended_at), reason: share.end_reason) if share.ended?
     data
   end
 
   def detail(share)
-    downloads = share.downloads_dataset.order(:id).map { |d| { name: d.name, ip: d.ip, at: iso(d.created_at) } }
-    data = { share: summary(share), downloads: downloads }
+    downloads = share.downloads_dataset.order(:id).map do |d|
+      { name: d.name, ip: d.ip, at: iso(d.created_at), via: d.link_id ? "link #{d.link_id}" : "share" }
+    end
+    data = { share: summary(share), downloads: downloads, links: LinkManager.all_docs(share) }
     if share.form?
       data.merge!(form: share.form_spec.to_h, draft: share.draft_hash,
                   answers: share.submitted? ? share.answers_hash : nil)
@@ -170,7 +181,8 @@ module ShareManager
   end
 
   def history_item(share)
-    keys = %i[id title paths url live reason ended_at duration files instance submissions submitted_at answers draft]
+    keys = %i[id title paths url live reason ended_at duration files external_downloads instance submissions submitted_at
+              answers draft]
     result(share).merge(live: share.live?).slice(*keys).compact
   end
 
@@ -180,6 +192,7 @@ module ShareManager
 
     DB.transaction do
       Download.where(share_id: ids).delete
+      Link.where(share_id: ids).delete
       Share.where(id: ids).delete
     end
     $log.info "[share] purged #{ids.size} expired share(s)"
@@ -226,7 +239,8 @@ module ShareManager
   def status(share)
     return { live: false, reason: share.end_reason } if share.ended?
 
-    data = { live: true, permanent: share.permanent?, in_flight: IdleSweeper.in_flight?(share.id) }
+    data = { live: true, permanent: share.permanent?, in_flight: IdleSweeper.in_flight?(share.id),
+             links: Link.live.where(share_id: share.id).count }
     if share.form?
       data.merge!(submissions: share.submissions.to_i, submitted_at: iso(share.submitted_at),
                   draft_saved_at: iso(share.draft_saved_at))
