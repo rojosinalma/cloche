@@ -251,6 +251,8 @@ body.preview-open { overflow: hidden; }
 }
 
 /* viewer: step */
+.step-pane { display: contents; }
+.step-download { flex: 1 0 100%; }
 
 /* viewer: geo */
 
