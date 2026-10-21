@@ -1,0 +1,47 @@
+diff --git a/lib/greeter.rb b/lib/greeter.rb
+index 3b18e51..a8c2f4d 100644
+--- a/lib/greeter.rb
++++ b/lib/greeter.rb
+@@ -1,10 +1,11 @@
+ # frozen_string_literal: true
+ 
+ class Greeter
+-  def initialize(name)
+-    @name = name
++  def initialize(name, punctuation: "!")
++    @name = name.strip
++    @punctuation = punctuation
+   end
+ 
+   def greet
+-    "Hello, #{@name}"
++    "Hello, #{@name}#{@punctuation}"
+   end
+@@ -20,4 +22,3 @@ class Greeter
+   def <script>alert(1)</script>
+     nil
+   end
+-# trailing comment
+diff --git a/docs/new.md b/docs/new.md
+new file mode 100644
+index 0000000..e69de29
+--- /dev/null
++++ b/docs/new.md
+@@ -0,0 +1,2 @@
++# New page
++Written today.
+\ No newline at end of file
+diff --git a/old.txt b/old.txt
+deleted file mode 100644
+index 1111111..0000000
+--- a/old.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-gone
+diff --git a/img/logo.png b/img/logo.png
+index 2222222..3333333 100644
+Binary files a/img/logo.png and b/img/logo.png differ
+diff --git a/a.txt b/b.txt
+similarity index 100%
+rename from a.txt
+rename to b.txt

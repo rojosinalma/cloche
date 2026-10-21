@@ -274,6 +274,16 @@ package in the image); both run without stdin, stop at the entry cap and are kil
 
 ### diff
 
+`.diff` and `.patch` files: `git diff`, `git format-patch` (the mail header and message show above the
+diff) and `diff -u`. Views Unified (first) and Side by side, next to the text viewer's Raw. The browser
+parses the text from `?data=diff` (counts once): file headers with added, deleted, renamed and binary
+states, hunk headers, line numbers and +/− counts. Each file folds on its own and the fold holds across both
+views. A file with no file header or hunk drops both tabs and says so in a toast.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `diff_view_max_bytes` | `2097152` | Larger diffs show Raw only |
+
 ### ansi
 
 ### gcode

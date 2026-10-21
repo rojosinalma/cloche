@@ -30,6 +30,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   values and click-to-copy paths.
 - Archive viewer for ZIP, tar (gz, bz2, xz) and 7z: a Contents tab that lists folders, sizes and dates
   without extracting anything.
+- Diff viewer for `.diff` and `.patch` files: Unified and Side by side tabs with file and hunk headers and
+  per-file folding.
 
 ### Changed
 
