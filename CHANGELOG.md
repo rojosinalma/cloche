@@ -42,6 +42,9 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   any text file with escapes.
 - glTF files (`.glb`, and `.gltf` with the buffers and textures next to it) open in the 3D view with
   their own materials.
+- glTF files with KTX2 (Basis Universal) textures, in a `.glb` or next to a `.gltf`. The transcoder and the
+  Draco and meshopt decoders load only when a file needs them; a transcoder that does not load, or a
+  required extension the viewer does not know, gives a notice over the model.
 - G-code and Bambu Studio / Orca `.gcode.3mf` files open on a Toolpath tab (moves coloured by feature or
   layer, travel moves, a layer range), with Info from the slicer's header and the Source next to it.
 - STEP files open in the 3D view when `step_view_cad_render_url` points at a cad-render service, which
