@@ -1,0 +1,13 @@
+<div data-slot="tools">
+  <input class="t-input tree-search" data-size="sm" type="search" data-role="search" placeholder="Filter keys and values" aria-label="Filter keys and values" autocomplete="off" spellcheck="false" hidden>
+  <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="expand" data-tip="Expand all" aria-label="Expand all" hidden><%== icon("arrows-expand") %></button>
+  <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="collapse" data-tip="Collapse all" aria-label="Collapse all" hidden><%== icon("arrows-collapse") %></button>
+</div>
+<div data-slot="body">
+  <div class="preview-panel preview-tree">
+    <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+    <div class="file-view-notice" data-role="notice" hidden><%== icon("info-circle") %><span data-role="notice-text"></span></div>
+    <div class="tree-hint" data-role="hint" hidden>Click a key or value to copy its path · <kbd>/</kbd> filters</div>
+    <div class="tree-view" data-role="tree" role="tree" aria-label="Tree"></div>
+  </div>
+</div>

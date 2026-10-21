@@ -307,11 +307,68 @@ notebook Markdown cells draw them. A block that does not draw keeps its code, wi
 
 ### tree
 
+JSON, JSONC, JSON5, YAML (`.yaml`, `.yml`), TOML and JSON Lines (`.jsonl`, `.ndjson`, one tree per line).
+Priority 15, so Tree is the first tab, before the text viewer's Pretty and Raw. The server parses the file
+and sends a capped node list (`?data=tree`, counts once; a file that does not parse answers
+`{ok: false, message}` and does not count): stdlib JSON (comments and trailing commas for JSONC), Psych's
+safe loader for YAML (plain data, dates and symbols only), `tomlrb` for TOML and a small reader in the module
+for JSON5. Parsing on the server keeps the node cap ahead of the browser and needs no client library.
+Keys keep the file order; numbers travel as text, so large integers keep every digit.
+
+The browser renders lazily (a folded branch has no DOM), filters keys and values (`/` focuses the filter),
+expands or collapses everything, and copies a node's path (`.servers[1].host`, `["key with space"]`) on
+click. A file that does not parse drops the Tree tab and names the reason in a toast; a JSON Lines line that
+does not parse is an error node.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `tree_view_max_bytes` | `2097152` | Larger files get no tree (Raw still works up to the text limit) |
+| `tree_view_max_nodes` | `20000` | Nodes sent; the tree is cut there with a notice |
+| `tree_view_max_depth` | `100` | Deeper nesting is refused |
+| `tree_view_expand_depth` | `2` | Levels open when the tree loads |
+| `tree_view_yaml_aliases` | `false` | Expand YAML aliases and merge keys; off, such a file gets no tree |
+
 ### archive
+
+ZIP, tar (`.tar`, `.tar.gz`, `.tgz`, `.tar.bz2`, `.tar.xz`) and 7z. One view, Contents: a read-only folder
+tree with sizes, dates, the entry count and the total uncompressed size. Nothing is extracted and no entry is
+served. ZIP is read from its central directory in Ruby (ZIP64 included), with no tool and no decompression,
+so a zip bomb lists like any other zip. Tar goes through GNU `tar --list`, 7z through `7z l` (the `7zip`
+package in the image); both run without stdin, stop at the entry cap and are killed at the time limit.
+`?data=archive` answers the listing as JSON and never counts: the listing is not the file.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `archive_view_max_bytes` | `4294967296` | Larger archives are download-only |
+| `archive_view_max_entries` | `10000` | Entries listed; the rest is cut with a notice (ZIP still reports the total) |
+| `archive_view_timeout` | `10` | Seconds a `tar` or `7z` listing may run |
 
 ### diff
 
+`.diff` and `.patch` files: `git diff`, `git format-patch` (the mail header and message show above the
+diff) and `diff -u`. Views Unified (first) and Side by side, next to the text viewer's Raw. The browser
+parses the text from `?data=diff` (counts once): file headers with added, deleted, renamed and binary
+states, hunk headers, line numbers and +/− counts. Each file folds on its own and the fold holds across both
+views. A file with no file header or hunk drops both tabs and says so in a toast.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `diff_view_max_bytes` | `2097152` | Larger diffs show Raw only |
+
 ### ansi
+
+Terminal output with ANSI escapes. `.ansi` files always match; any other text file (`.log`, `.out`, …)
+matches when its first `ansi_view_sniff_bytes` hold an escape sequence (`ESC [`), so a log without colours
+keeps Raw alone. View Coloured, first, next to the text viewer's Raw. The browser reads the text from
+`?data=ansi` (counts once) and applies SGR: the 16 colours map to palette tokens, 256-colour and truecolour
+values to the nearest palette hue or grey (so every palette and both modes stay readable); bold, dim,
+italic, underline, strike, inverse and hidden. Other escapes (cursor moves, titles, OSC links) are dropped;
+a lone carriage return starts the line again. Text goes into the page as text nodes only.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `ansi_view_max_bytes` | `2097152` | Larger files show Raw only |
+| `ansi_view_sniff_bytes` | `4096` | Bytes read to look for escapes in files that are not `.ansi` |
 
 ### gcode
 

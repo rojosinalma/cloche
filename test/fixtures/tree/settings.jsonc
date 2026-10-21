@@ -1,0 +1,9 @@
+// Editor settings, with comments and trailing commas
+{
+  "editor.fontSize": 14, /* inline comment */
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+  },
+  "languages": ["ruby", "javascript",],
+}
