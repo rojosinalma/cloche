@@ -229,8 +229,9 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 Other viewers reuse the 3D view: their template renders `viewers/model`, and their module calls
 `(await ctx.load('model')).mount(ctx, hooks)`. `hooks.object` is an `Object3D` the viewer parsed itself
 (Z up, millimetres; nothing is fetched then), `hooks.keepMaterials` keeps the file's own materials and
-textures behind the "colours from the file" swatch, and `hooks.setup({ scene, renderer, THREE })` runs once
-the renderer exists and may return a cleanup function.
+textures behind the "colours from the file" swatch, `hooks.setup({ scene, renderer, THREE })` runs once
+the renderer exists and may return a cleanup function, and `hooks.notice` is a line of text shown in the
+notice bar over the model once it is on screen (something the file holds that the view leaves out).
 
 ### html
 
@@ -379,14 +380,40 @@ a lone carriage return starts the line again. Text goes into the page as text no
 ### gltf
 
 glTF 2.0 in the 3D view of the model viewer (its template renders `viewers/model`; `gltf.js` parses with
-three.js's `GLTFLoader`, Draco and meshopt included, and calls `model.js` with `hooks.object` and
-`hooks.keepMaterials`). glTF is Y up in metres: the scene is turned Z up and scaled to millimetres, so the
-size in the bar is right. The file's own materials and textures are the "colours from the file" swatch;
-metallic ones get a room environment. Data: `?data=gltf`, the file, counts once;
-`?data=gltf&part=<uri>`, a buffer or texture a `.gltf` names, resolved against the file's folder through
-`PathGuard`, so it only serves files of the same share entry (a single shared `.gltf` has no
-neighbours: its external resources are 404 and the tab shows the notice); never counts. KTX2 textures
-are not supported (no transcoder).
+three.js's `GLTFLoader` and calls `model.js` with `hooks.object`, `hooks.keepMaterials` and `hooks.notice`).
+glTF is Y up in metres: the scene is turned Z up and scaled to millimetres, so the size in the bar is right.
+The file's own materials and textures are the "colours from the file" swatch; metallic ones get a room
+environment. Data: `?data=gltf`, the file, counts once; `?data=gltf&part=<uri>`, a buffer or texture
+(`.ktx2` too) a `.gltf` names, resolved against the file's folder through `PathGuard`, so it only serves
+files of the same share entry (a single shared `.gltf` has no neighbours: its external resources are 404
+and the tab shows the notice); never counts.
+
+Before the parse, `gltf.js` reads `extensionsUsed` from the JSON (a `.glb`'s JSON chunk) and loads a
+decoder only when the file declares it, all from the same pinned three.js on jsDelivr:
+
+- `KHR_draco_mesh_compression`: `DRACOLoader`, decoder from `libs/draco/gltf/`.
+- `EXT_meshopt_compression`, `KHR_meshopt_compression`: `libs/meshopt_decoder.module.js`.
+- `KHR_texture_basisu` (KTX2, Basis Universal ETC1S and UASTC): `KTX2Loader` with the transcoder from
+  `libs/basis/`. It picks the GPU texture format with `detectSupport` on a throwaway `WebGLRenderer`
+  (the 3D view's renderer exists only after the parse), disposed at once. When the transcoder does not
+  load, the KTX2 textures are left out (a texture's fallback image is used when it has one) and the model
+  shows with its plain materials and a notice.
+
+A required extension (`extensionsRequired`) that no part of the loader handles also gives a notice over the
+model; the scene still loads.
+
+Fixtures in `test/fixtures/gltf/`: `ktx2/` (`crate.gltf`, `crate.bin`, `checker.ktx2`) and
+`crate-ktx2.glb` hold `textured/` with its PNG as a UASTC KTX2; `cube-draco.glb` and `cube-meshopt.glb`
+are `cube.glb` compressed; `unsupported.gltf` is `cube.glb` with its buffer inline and
+`EXT_lights_image_based` required. They come from glTF Transform 4.5.1 with KTX-Software 4.4.2 (`ktx`) on
+the `PATH`:
+
+```sh
+gltf-transform uastc test/fixtures/gltf/textured/crate.gltf test/fixtures/gltf/ktx2/crate.gltf
+gltf-transform copy test/fixtures/gltf/ktx2/crate.gltf test/fixtures/gltf/crate-ktx2.glb
+gltf-transform draco test/fixtures/gltf/cube.glb test/fixtures/gltf/cube-draco.glb
+gltf-transform meshopt test/fixtures/gltf/cube.glb test/fixtures/gltf/cube-meshopt.glb
+```
 
 | Key | Default | Meaning |
 |---|---|---|

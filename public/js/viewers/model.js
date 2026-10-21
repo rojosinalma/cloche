@@ -8,7 +8,8 @@
 // themselves (Z up, millimetres; no fetch then), hooks.keepMaterials keeps
 // the file's own materials (textures) as the "colours from the file"
 // swatch, hooks.setup({ scene, renderer, THREE }) runs once the renderer
-// exists and may return a cleanup function.
+// exists and may return a cleanup function, and hooks.notice is a line shown
+// in the notice bar over the model once it is on screen.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
@@ -229,6 +230,7 @@ export function mount(ctx, hooks = {}) {
     applyTheme();
     Object.values(buttons).forEach((b) => { b.disabled = false; });
     loading.hidden = true;
+    if (hooks.notice) setNotice(hooks.notice);
   };
 
   const load = async () => {

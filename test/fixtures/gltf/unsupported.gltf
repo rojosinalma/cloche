@@ -1,0 +1,124 @@
+{
+ "asset": {
+  "version": "2.0",
+  "generator": "cloche fixture"
+ },
+ "scene": 0,
+ "scenes": [
+  {
+   "nodes": [
+    0
+   ]
+  }
+ ],
+ "nodes": [
+  {
+   "mesh": 0,
+   "name": "cube"
+  }
+ ],
+ "meshes": [
+  {
+   "primitives": [
+    {
+     "attributes": {
+      "POSITION": 0,
+      "NORMAL": 1,
+      "TEXCOORD_0": 2
+     },
+     "indices": 3,
+     "material": 0
+    }
+   ]
+  }
+ ],
+ "materials": [
+  {
+   "name": "orange",
+   "pbrMetallicRoughness": {
+    "baseColorFactor": [
+     0.95,
+     0.45,
+     0.1,
+     1
+    ],
+    "metallicFactor": 0,
+    "roughnessFactor": 0.6
+   }
+  }
+ ],
+ "accessors": [
+  {
+   "bufferView": 0,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3",
+   "min": [
+    -0.01,
+    -0.01,
+    -0.01
+   ],
+   "max": [
+    0.01,
+    0.01,
+    0.01
+   ]
+  },
+  {
+   "bufferView": 1,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC3"
+  },
+  {
+   "bufferView": 2,
+   "componentType": 5126,
+   "count": 24,
+   "type": "VEC2"
+  },
+  {
+   "bufferView": 3,
+   "componentType": 5123,
+   "count": 36,
+   "type": "SCALAR"
+  }
+ ],
+ "bufferViews": [
+  {
+   "buffer": 0,
+   "byteOffset": 0,
+   "byteLength": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 288,
+   "byteLength": 288,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 576,
+   "byteLength": 192,
+   "target": 34962
+  },
+  {
+   "buffer": 0,
+   "byteOffset": 768,
+   "byteLength": 72,
+   "target": 34963
+  }
+ ],
+ "buffers": [
+  {
+   "byteLength": 840,
+   "uri": "data:application/octet-stream;base64,CtcjPArXI7wK1yO8CtcjPArXIzwK1yO8CtcjPArXIzwK1yM8CtcjPArXI7wK1yM8CtcjvArXI7wK1yO8CtcjvArXI7wK1yM8CtcjvArXIzwK1yM8CtcjvArXIzwK1yO8CtcjvArXIzwK1yO8CtcjvArXIzwK1yM8CtcjPArXIzwK1yM8CtcjPArXIzwK1yO8CtcjvArXI7wK1yO8CtcjPArXI7wK1yO8CtcjPArXI7wK1yM8CtcjvArXI7wK1yM8CtcjvArXI7wK1yM8CtcjPArXI7wK1yM8CtcjPArXIzwK1yM8CtcjvArXIzwK1yM8CtcjvArXI7wK1yO8CtcjvArXIzwK1yO8CtcjPArXIzwK1yO8CtcjPArXI7wK1yO8AACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAACAvwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIC/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAIA/AACAPwAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAgD8AAIA/AAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAACAPwAAAAAAAAAAAACAPwAAAAAAAIA/AACAPwAAAAAAAIA/AAABAAIAAAACAAMABAAFAAYABAAGAAcACAAJAAoACAAKAAsADAANAA4ADAAOAA8AEAARABIAEAASABMAFAAVABYAFAAWABcA"
+  }
+ ],
+ "extensionsUsed": [
+  "EXT_lights_image_based"
+ ],
+ "extensionsRequired": [
+  "EXT_lights_image_based"
+ ]
+}
