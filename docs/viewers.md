@@ -228,11 +228,82 @@ STL, 3MF and OBJ in three.js. Data: `?data=model`, the file's bytes; counts once
 
 ### html
 
+HTML pages (`.html`, `.htm`, `.xhtml`), priority 20. Views: Rendered; the text viewer adds Raw (the
+source). Data: `?data=html`, the page; counts once.
+
+The page loads in an `<iframe sandbox="allow-scripts">` and the response carries
+`Content-Security-Policy: sandbox allow-scripts`, so its scripts run in an opaque origin: no cookies, no
+storage, no access to the gallery, no top navigation, also when the URL is opened on its own. Relative
+references in the page and in its stylesheets (`src`, `href`, `srcset`, `poster`, `url()`, `@import`) are
+rewritten to `?data=html&part=<path in the share entry>`: each part goes through `PathGuard`, is served with
+the same CSP and `Access-Control-Allow-Origin: *` (module scripts and fonts are CORS requests from the
+opaque origin) and never counts. Linked pages and stylesheets are rewritten in turn. A URL a script builds
+at run time is not rewritten and reaches the plain file route. A page without a background shows on the
+browser's white canvas in both modes.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `html_view_max_bytes` | `5242880` | Larger pages are not rendered (Raw keeps its own cap); linked pages and stylesheets above it are sent without rewriting |
+
 ### pdf
+
+PDFs, priority 20, binary. Views: Document and Info. Data: `?data=pdf`, the file (counts once);
+`?data=pdf&part=info`, the details as JSON (never counts).
+
+Document is the browser's built-in viewer (Chromium's, Firefox's pdf.js) in a plain `<iframe>`: a
+`sandbox` attribute on the frame blocks the built-in viewer in Chromium, while the response header
+`Content-Security-Policy: sandbox` does not, in Chromium or Firefox. The response is `application/pdf` with
+`nosniff`, so the bytes never run as a page on this origin. Headless Chromium needs the full build
+(`channel: 'chromium'` in Playwright); the headless shell downloads PDFs instead.
+
+Info reads the header, the trailer's `/Info` and the page tree with the standard library: object streams
+(PDF 1.5+) are inflated with Zlib within the scan limit. Encrypted files show no title or author (their
+strings are encrypted).
+The viewer has no modal-level cap so Info stays available for any size; above `pdf_view_max_bytes` the
+Document tab shows the limit notice and never fetches the file.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `pdf_view_max_bytes` | `104857600` | Larger PDFs show Info only |
+| `pdf_view_info_max_bytes` | `16777216` | Larger files show the version only in Info; also the most bytes inflated per file |
 
 ### notebook
 
+Jupyter notebooks (`.ipynb`, nbformat 4), priority 20. Views: Notebook; the text viewer adds Raw (the
+JSON). Data: `?data=notebook`, the rendered cells; counts once. Nothing in the notebook runs.
+
+Markdown cells use the text viewer's renderer (raw HTML escaped, links through the share, diagrams handed
+to the diagram module). Code cells are highlighted with Rouge in the kernel's language. Saved outputs:
+streams (stderr in the warning colour), errors with the ANSI codes stripped, and per rich output the
+first of `text/html`, `text/markdown`, `image/svg+xml`, `image/png`/`jpeg`/`gif`, `application/json`,
+`text/plain`. Images are `data:` URLs in `<img>`, so an SVG runs nothing. HTML outputs sit in an
+`<iframe sandbox="allow-scripts">` built from `srcdoc`, with a CSP that allows only a per-render nonce
+script reporting the height and `data:` images: the notebook's scripts and remote resources stay
+blocked. The frame takes the page's colour scheme.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `notebook_view_max_bytes` | `20971520` | Larger notebooks show Raw only (within the text viewer's cap) |
+
 ### diagram
+
+Mermaid (`.mmd`, `.mermaid`) and Graphviz (`.dot`, `.gv`) sources, priority 20. Views: Diagram; the text
+viewer adds Raw (the source). Data: `?data=diagram`, the source as plain text; counts once.
+
+Mermaid (`mermaid@12.2.0`) runs with `securityLevel: "strict"` and the `base` theme, its colours taken
+from the `--t-*` tokens; it redraws when tailor switches mode, palette or skin. Graphviz
+(`@viz-js/viz@3.31.0`, WebAssembly) output loses scripts, `foreignObject`, images, event handlers and
+any link that is not http(s); kept links open in a new tab. Graphviz's default black and white follow
+the theme in CSS, colours set in the file stay. A source that does not parse shows a notice with the
+parser's reason; Raw still shows the source.
+
+The module also exports `enhance(nodes, ctx)`: TextView wraps fenced ` ```mermaid `, ` ```dot ` and
+` ```graphviz ` blocks in `<div data-enhance="diagram" data-diagram="mermaid|dot">`, so Markdown files and
+notebook Markdown cells draw them. A block that does not draw keeps its code, with a notice above it.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `diagram_view_max_bytes` | `1048576` | Larger diagram sources show Raw only |
 
 ### tree
 

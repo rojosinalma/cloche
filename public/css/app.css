@@ -209,12 +209,53 @@ body.preview-open { overflow: hidden; }
 /* Viewer sections still to come, one per viewer id (docs/viewers.md): each viewer's rules go under its own
    marker so viewers added in parallel never edit the same lines. */
 /* viewer: html */
+.preview-html .html-frame { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
 
 /* viewer: pdf */
+.preview-pdf .pdf-pane { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.preview-pdf .pdf-pane[hidden] { display: none; }
+.preview-pdf .pdf-frame { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
+.preview-pdf .pdf-info { overflow: auto; }
+.preview-pdf .pdf-info-wrap { margin: 1.25rem 1.5rem; max-width: 48rem; }
+.preview-pdf .pdf-info-table th { width: 12rem; color: var(--t-muted); font-weight: 500; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.preview-pdf .pdf-info-table td { color: var(--t-text); overflow-wrap: anywhere; }
 
 /* viewer: notebook */
+.notebook-content { flex: 1; min-height: 0; overflow: auto; padding: 1.25rem 1.5rem; }
+.nb-notebook { display: flex; flex-direction: column; gap: 1rem; max-width: 72rem; }
+.nb-row { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: .75rem; align-items: start; }
+.nb-prompt { font-family: var(--t-font-mono); font-size: .75rem; color: var(--t-disabled); text-align: right; padding-top: .55rem; white-space: nowrap; }
+.nb-output .nb-prompt { color: var(--t-hue-orange); }
+.nb-markdown { padding-left: 6.25rem; }
+.nb-markdown .md-body { max-width: none; }
+.nb-source, .nb-pre { margin: 0; font-family: var(--t-font-mono); font-size: .82rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--t-text); }
+.nb-source { padding: .5rem .8rem; border-radius: var(--t-radius-md); border: var(--t-border-w) solid var(--t-border); background: var(--t-overlay-bg); }
+.nb-outputs { display: flex; flex-direction: column; gap: .35rem; margin-top: .35rem; }
+.nb-out-body { min-width: 0; padding-top: .3rem; overflow-x: auto; }
+.nb-stderr { color: var(--t-warning); }
+.nb-error { color: var(--t-danger); padding: .5rem .8rem; border-radius: var(--t-radius-md); background: color-mix(in srgb, var(--t-danger) 8%, transparent); }
+.nb-raw .nb-pre { color: var(--t-muted); padding-left: 6.25rem; }
+.nb-image { max-width: 100%; height: auto; border-radius: var(--t-radius-sm); }
+.nb-html { display: block; width: 100%; height: 3rem; border: 0; color-scheme: inherit; }
+@media (max-width: 767.98px) {
+  .nb-row { grid-template-columns: minmax(0, 1fr); gap: .2rem; }
+  .nb-prompt { text-align: left; padding-top: 0; }
+  .nb-markdown, .nb-raw .nb-pre { padding-left: 0; }
+}
 
 /* viewer: diagram */
+.preview-diagram .diagram-stage { flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: safe center; padding: 1.5rem;
+                                  background: var(--t-canvas); color: var(--t-text); }
+.diagram-stage svg, .md-diagram-svg svg { max-width: 100%; height: auto; }
+.md-diagram { margin-bottom: 1rem; }
+.md-diagram-svg { display: flex; justify-content: center; padding: 1rem; border-radius: var(--t-radius-md); border: var(--t-border-w) solid var(--t-border); background: var(--t-canvas); color: var(--t-text); }
+.md-diagram-svg:empty { display: none; }
+.md-diagram-error { border: 0; border-radius: var(--t-radius-sm); margin-bottom: .35rem; }
+/* Graphviz draws black on white unless told otherwise: those defaults follow the theme, colours set in the file stay */
+[data-diagram="dot"] svg > g > polygon[fill="white"] { fill: transparent; }
+[data-diagram="dot"] [stroke="black"] { stroke: var(--t-text); }
+[data-diagram="dot"] [fill="black"], [data-diagram="dot"] text:not([fill]) { fill: var(--t-text); }
+[data-diagram="dot"] a text { fill: var(--t-link); }
 
 /* viewer: tree */
 

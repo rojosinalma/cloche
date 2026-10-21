@@ -1,0 +1,10 @@
+digraph viewers {
+  rankdir=LR;
+  node [shape=box];
+  gallery -> modal -> viewer;
+  viewer -> "data route" [label="?data=<id>"];
+  danger [label="link", URL="javascript:alert(1)"];
+  safe [label="docs", URL="https://example.com/"];
+  viewer -> danger;
+  viewer -> safe;
+}
