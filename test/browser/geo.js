@@ -110,7 +110,9 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(placeTabs[0] === 'Map' && placeTabs.includes('Raw'), `sniffed .json gets Map first (${placeTabs})`);
   check(await shapes('point') === 2, 'places.json: two points');
   await open('plain.json');
-  await page.locator('.text-card').waitFor();
+  // plain.json opens on the data viewers' Tree tab, not on a text card.
+  await page.locator('.preview-view:not([hidden])').first().waitFor();
+  await page.waitForFunction(() => !document.querySelector('#preview-tabs [data-tab="geo:map"]'), null, { timeout: 10000 }).catch(() => {});
   check(!(await tabs()).includes('Map'), 'plain .json with a nested Feature gets no Map tab');
 
   // GPX: track as a line, waypoints as markers.
