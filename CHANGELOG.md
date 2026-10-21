@@ -6,6 +6,8 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-21
+
 ### Added
 
 - External links: a share of files or a raw site can be passed on read-only under `/x/<token>/`, with
@@ -134,7 +136,8 @@ First public release.
 - Download log per share (name, time, IP); previews and resumed range requests are not counted.
 - Docker image published to GHCR (`ghcr.io/rojosinalma/cloche`) by GitHub Actions.
 
-[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/rojosinalma/cloche/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/rojosinalma/cloche/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/rojosinalma/cloche/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/rojosinalma/cloche/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/rojosinalma/cloche/releases/tag/v0.1.0
