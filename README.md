@@ -12,7 +12,7 @@
 | ![Image grid](docs/screenshots/gallery-images.png) **Images** — a folder of renders as a thumbnail grid | ![Image preview](docs/screenshots/image-viewer.png) **Image preview** — fit or actual size, ←/→ through the folder |
 | ![Media grid](docs/screenshots/gallery-media.png) **Video and audio** — frame previews and inline players | ![Video preview](docs/screenshots/video-viewer.png) **Video preview** — plays in the modal, Download beside it |
 | ![Audio preview](docs/screenshots/audio-viewer.png) **Audio preview** — same modal, native player | ![3D model](docs/screenshots/model-viewer.png) **3D models** — STL/3MF/OBJ with grid, wireframe, colour rail and dimensions |
-| ![Markdown](docs/screenshots/text-viewer.png) **Text: Markdown** — rendered, with a Raw toggle and Copy | ![CSV](docs/screenshots/csv-viewer.png) **Text: CSV** — tables; JSON pretty-printed, source highlighted |
+| ![Markdown](docs/screenshots/text-viewer.png) **Text: Markdown** — rendered, with a Source tab and Copy | ![CSV](docs/screenshots/csv-viewer.png) **Text: CSV** — tables; JSON pretty-printed, source highlighted |
 | ![Form](docs/screenshots/form.png) **Forms** — radio, checklist, task list, select and free text; answers reach the agent on Submit | |
 
 Hand files from an AI coding agent's machine to your browser, and get told when you looked at them.

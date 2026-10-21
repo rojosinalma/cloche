@@ -38,29 +38,29 @@ const api = async (method, path, body) => {
   await page.reload();
   await page.screenshot({ path: `${SHOTS}/gallery-dark.png` });
 
-  // Markdown: Pretty / Raw tabs, Pretty first, Raw remembered across files and reloads.
+  // Markdown: Pretty / Source tabs, Pretty first, Source remembered across files and reloads.
   await open('readme.md');
   await page.locator('.md-body').waitFor();
-  check(JSON.stringify(await tabs()) === '["Pretty","Raw"]', 'markdown tabs are Pretty, Raw');
+  check(JSON.stringify(await tabs()) === '["Pretty","Source"]', 'markdown tabs are Pretty, Source');
   check(await pressed() === 'Pretty', 'markdown opens on Pretty');
   check(await page.locator('#preview-badge').textContent() === 'Markdown', 'markdown badge');
   check(await visible('[data-role="copy"]') || await page.locator('.viewer-tools:not([hidden]) [data-role="copy"]').isVisible(), 'copy button shown');
   await page.screenshot({ path: `${SHOTS}/markdown-pretty-dark.png` });
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
-  check(await visible('.view-pane[data-pane="source"]') && !(await visible('.view-pane[data-pane="pretty"]')), 'Raw tab shows the source pane only');
+  check(await visible('.view-pane[data-pane="source"]') && !(await visible('.view-pane[data-pane="pretty"]')), 'Source tab shows the source pane only');
   await page.keyboard.press('Escape');
   await open('rows.csv');
   await page.locator('.text-card').waitFor();
-  check(await pressed() === 'Raw', 'Raw remembered for the next text file');
+  check(await pressed() === 'Source', 'Source remembered for the next text file');
   await page.reload();
   await open('readme.md');
   await page.locator('.text-card').waitFor();
-  check(await pressed() === 'Raw', 'Raw remembered after a reload');
+  check(await pressed() === 'Source', 'Source remembered after a reload');
   await page.keyboard.press('1');
   check(await pressed() === 'Pretty', 'key 1 picks the first tab');
   await page.locator('#preview-tabs [data-tab="text:pretty"]').focus();
   await page.keyboard.press('ArrowRight');
-  check(await pressed() === 'Raw', 'ArrowRight inside the tab bar moves to the next tab');
+  check(await pressed() === 'Source', 'ArrowRight inside the tab bar moves to the next tab');
   check(await page.locator('#preview-name').textContent() === 'readme.md', 'ArrowRight inside the tab bar stays on the file');
   await page.keyboard.press('1');
 
@@ -80,7 +80,7 @@ const api = async (method, path, body) => {
   check((await tabs()).length === 0 && await page.locator('#preview-badge').textContent() === 'Ruby', 'code: no tabs, Ruby badge');
   check(/2 lines|5 lines/.test(await page.locator('#preview-stats').textContent()), 'code: line count');
 
-  // Image, and SVG with Image / Raw.
+  // Image, and SVG with Image / Source.
   await open('pixel.png');
   await page.waitForFunction(() => document.querySelector('.preview-view:not([hidden]) .preview-image')?.naturalWidth > 0);
   check(true, 'PNG loads');
@@ -88,10 +88,10 @@ const api = async (method, path, body) => {
   check(await page.locator('#preview.zoomed').count() === 1, 'z zooms the image');
   await page.keyboard.press('z');
   await open('logo.svg');
-  check(JSON.stringify(await tabs()) === '["Image","Raw"]', 'SVG tabs are Image, Raw');
+  check(JSON.stringify(await tabs()) === '["Image","Source"]', 'SVG tabs are Image, Source');
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .code-lines').waitFor();
-  check(await visible('.code-lines'), 'SVG Raw shows the source');
+  check(await visible('.code-lines'), 'SVG Source shows the source');
   await page.screenshot({ path: `${SHOTS}/svg-raw-dark.png` });
   await page.locator('#preview-tabs [data-tab="image:image"]').click();
   check(await visible('.preview-image'), 'SVG back to Image');

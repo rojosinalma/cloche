@@ -7,7 +7,7 @@ module Viewers
   # fetches the file's bytes from ?data=geo (the one download) and converts
   # GPX/KML itself, so no XML is parsed on the server. A .json file is a map
   # only when its top-level "type" is a GeoJSON type, read from a bounded
-  # prefix. The text viewer adds Raw (and Pretty for .json) to the same file.
+  # prefix. The text viewer adds Source (and Pretty for .json) to the same file.
   module Geo
     extend Preview::Viewer
 

@@ -1,5 +1,5 @@
 // Browser check of the diff viewer (git diff, format-patch, diff -u): Unified
-// and Side by side tabs next to Raw, per-file folding, caps, files that are no
+// and Side by side tabs next to Source, per-file folding, caps, files that are no
 // diff, /x links, both modes and two skins.
 // Run with: bin/test-instance browser <name> diff.js
 // Env (set by bin/test-instance): BASE_URL, TOKEN, FIXTURES, SHOTS.
@@ -42,7 +42,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
 
   await open('change.diff');
   await pane('unified').waitFor();
-  check(JSON.stringify(await tabs()) === '["Unified","Side by side","Raw"]', 'diff tabs are Unified, Side by side, Raw');
+  check(JSON.stringify(await tabs()) === '["Unified","Side by side","Source"]', 'diff tabs are Unified, Side by side, Source');
   check(await pressed() === 'Unified', 'diff opens on Unified');
   check(await page.locator('#preview-badge').textContent() === 'Diff', 'Diff badge');
   check(/5 files · \+6 −5/.test(await page.locator('#preview-stats').textContent()), `file and line counts (${await page.locator('#preview-stats').textContent()})`);
@@ -74,7 +74,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.locator('.viewer-tools:not([hidden]) [data-role="expand"]').click();
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(await pressed() === 'Raw', 'Raw tab from the text viewer');
+  check(await pressed() === 'Source', 'Source tab from the text viewer');
   await page.keyboard.press('1');
   check(await pressed() === 'Unified' && await pane('unified').isVisible(), 'key 1 back to Unified');
 
@@ -88,10 +88,10 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await pane('unified').waitFor();
   check((await pane('unified', '.diff-path').textContent()) === 'notes.txt', 'diff -u: path without timestamps');
 
-  // Not a diff: both tabs dropped, toast, Raw shown.
+  // Not a diff: both tabs dropped, toast, Source shown.
   await open('notes.patch');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
-  check((await tabs()).length === 0 && await pressed() === 'Raw', 'no diff: only Raw left');
+  check((await tabs()).length === 0 && await pressed() === 'Source', 'no diff: only Source left');
   check(/No diff in notes\.patch/.test(await lastToast()), 'no diff: toast says why');
 
   await setting('diff_view_max_bytes', '100');
@@ -100,7 +100,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/above the 100 B viewer limit/.test(await page.locator('.preview-view:not([hidden]) .preview-notice').textContent()), 'byte cap notice');
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(true, 'byte cap: Raw still works');
+  check(true, 'byte cap: Source still works');
   await setting('diff_view_max_bytes');
 
   for (const [q, name] of [['mode=light', 'light'], ['skin=bootstrap&mode=light', 'bootstrap-light'], ['skin=bootstrap&mode=dark', 'bootstrap-dark']]) {

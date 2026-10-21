@@ -12,7 +12,7 @@ module Viewers
   # scripts never run, and the frame is an opaque origin either way. The
   # browser module sets srcdoc from data-srcdoc with the page's colour scheme. Images
   # are data: URLs in <img>, so an SVG runs nothing. The text viewer adds the
-  # JSON as Raw.
+  # JSON as Source.
   module Notebook
     extend Preview::Viewer
 

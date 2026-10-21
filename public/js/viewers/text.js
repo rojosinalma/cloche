@@ -1,5 +1,5 @@
 // Text viewer: fetches the rendered card (?data=text, the one download) and
-// switches between its Pretty and Raw panes. Copy takes the Raw pane's text.
+// switches between its Pretty and Source panes. Copy takes the Source pane's text.
 export function mount(ctx) {
   const content = ctx.$('[data-role="content"]');
   const loading = ctx.$('[data-role="loading"]');

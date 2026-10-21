@@ -37,7 +37,7 @@ module Viewers
 
     def self.exts = %w[gcode gco]
 
-    # Keeps the text viewer's Raw tab off: Source here reads any size.
+    # Keeps the text viewer's Source tab off: this viewer's own Source reads any size.
     def self.binary? = true
 
     def self.match?(target) = exts.include?(target.ext) || bundle?(target.basename)

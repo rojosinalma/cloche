@@ -7,7 +7,7 @@ module Viewers
   # HTML pages, rendered in an <iframe sandbox="allow-scripts"> from
   # ?data=html, served with "Content-Security-Policy: sandbox allow-scripts":
   # scripts run in an opaque origin that never reaches cloche (no cookies, no
-  # storage, no top navigation). The text viewer adds the source as Raw.
+  # storage, no top navigation). The text viewer adds the source as Source.
   #
   # Relative assets (stylesheets, scripts, images, fonts, linked pages) are
   # rewritten to ?data=html&part=<path in the share entry>, resolved through

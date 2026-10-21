@@ -43,10 +43,10 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
-  // JSON: Tree first, then text's Pretty and Raw.
+  // JSON: Tree first, then text's Pretty and Source.
   await open('config.json');
   await waitTree();
-  check(JSON.stringify(await tabs()) === '["Tree","Pretty","Raw"]', 'JSON tabs are Tree, Pretty, Raw');
+  check(JSON.stringify(await tabs()) === '["Tree","Pretty","Source"]', 'JSON tabs are Tree, Pretty, Source');
   check(await pressed() === 'Tree', 'JSON opens on Tree');
   check(await page.locator('#preview-badge').textContent() === 'JSON', 'JSON badge');
   check(/36 nodes/.test(await page.locator('#preview-stats').textContent()), 'node count in the stats');
@@ -88,10 +88,10 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.waitForTimeout(400);
   check(await keyLine('limits').isVisible(), 'empty filter shows the whole tree again');
 
-  // Tab switching: Raw and back, the tree stays mounted.
+  // Tab switching: Source and back, the tree stays mounted.
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(await pressed() === 'Raw' && !(await tree().isVisible()), 'Raw tab hides the tree');
+  check(await pressed() === 'Source' && !(await tree().isVisible()), 'Source tab hides the tree');
   await page.keyboard.press('1');
   check(await pressed() === 'Tree' && await tree().isVisible(), 'key 1 back to Tree');
 
@@ -117,14 +117,14 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(await tree('.tree-val[data-type="x"]').count() === 1, 'JSON Lines: a bad line is an error node');
   check(await tree('> .tree-item').count() === 4, 'JSON Lines: one tree per line');
 
-  // Malformed: Tree tab dropped, toast, Raw shown.
+  // Malformed: Tree tab dropped, toast, Source shown.
   await open('broken.yaml');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
-  check((await tabs()).length === 0 && await pressed() === 'Raw', 'broken YAML: Tree tab dropped, Raw shown');
+  check((await tabs()).length === 0 && await pressed() === 'Source', 'broken YAML: Tree tab dropped, Source shown');
   check(/No tree for broken\.yaml/.test(await lastToast()), 'broken YAML: toast says why');
   await open('broken.json');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
-  check((await tabs()).length === 0, 'broken JSON: only Raw left');
+  check((await tabs()).length === 0, 'broken JSON: only Source left');
   await open('anchors.yaml');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
   check(/aliases/.test(await lastToast()), 'YAML aliases off by default');
@@ -135,7 +135,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(await tree('.tree-key:text-is("<<")').count() + await tree('.tree-key:text-is("image")').count() >= 2, 'YAML aliases on: merged keys show');
   await setting('tree_view_yaml_aliases');
 
-  // Caps: node limit (notice), byte limit (Tree tab shows the standard notice, Raw still works).
+  // Caps: node limit (notice), byte limit (Tree tab shows the standard notice, Source still works).
   await setting('tree_view_max_nodes', '100');
   await page.reload();
   await open('many.json');
@@ -150,7 +150,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/above the 100 B viewer limit/.test(await page.locator('.preview-view:not([hidden]) .preview-notice').textContent()), 'byte cap notice on the Tree tab');
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(true, 'byte cap: Raw still works');
+  check(true, 'byte cap: Source still works');
   await setting('tree_view_max_bytes');
   await page.keyboard.press('Escape');
 

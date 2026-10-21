@@ -1,5 +1,5 @@
 // Browser check of the geo viewer (GeoJSON, sniffed .json, GPX, KML): Map tab
-// first with Raw beside it, shapes drawn with palette colours, popups escaped,
+// first with Source beside it, shapes drawn with palette colours, popups escaped,
 // tiles and their dark-mode filter, caps, malformed files, an empty tile URL,
 // /x links, both modes in two skins. Run with: bin/test-instance browser <name> geo.js
 // Env (set by bin/test-instance): BASE_URL, TOKEN, FIXTURES, SHOTS.
@@ -61,12 +61,12 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.evaluate(() => localStorage.clear());
   await page.reload();
 
-  // GeoJSON: Map first, Raw beside it; shapes by geometry type.
+  // GeoJSON: Map first, Source beside it; shapes by geometry type.
   check(await page.locator('.file-name[data-name="route.geojson"]').first().getAttribute('data-kind').catch(() => null) !== 'file', 'route.geojson is previewable');
   await open('route.geojson');
   await drawn();
   const routeTabs = await tabs();
-  check(routeTabs[0] === 'Map' && routeTabs.includes('Raw'), `geojson tabs start with Map and include Raw (${routeTabs})`);
+  check(routeTabs[0] === 'Map' && routeTabs.includes('Source'), `geojson tabs start with Map and include Source (${routeTabs})`);
   check(await pressed() === 'Map', 'geojson opens on Map');
   check(await page.locator('#preview-badge').textContent() === 'GeoJSON', 'GeoJSON badge');
   check(/5 features · 13 points/.test(await page.locator('#preview-stats').textContent()), 'stats: 5 features, 13 points (collection split, null geometry skipped)');
@@ -95,10 +95,10 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(await page.locator('#preview-name').textContent() === 'route.geojson', 'arrow keys pan a focused map instead of changing the file');
   await page.locator('.viewer-tools:not([hidden]) [data-role="fit"]').click();
 
-  // Tabs: Raw shows the source, back to Map redraws at full size.
+  // Tabs: Source shows the source, back to Map redraws at full size.
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view[data-viewer="text"]:not([hidden]) .code-lines').waitFor();
-  check(!(await page.locator('.preview-view[data-viewer="geo"]').isVisible()), 'Raw hides the map');
+  check(!(await page.locator('.preview-view[data-viewer="geo"]').isVisible()), 'Source hides the map');
   await page.locator('#preview-tabs [data-tab="geo:map"]').click();
   check(await page.locator(`${view} .geo-map`).evaluate((m) => m.clientWidth > 300 && m.clientHeight > 300), 'back on Map, the map fills the panel');
   check(await shapes('line') === 2, 'shapes still drawn after switching tabs');
@@ -107,7 +107,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await open('places.json');
   await drawn();
   const placeTabs = await tabs();
-  check(placeTabs[0] === 'Map' && placeTabs.includes('Raw'), `sniffed .json gets Map first (${placeTabs})`);
+  check(placeTabs[0] === 'Map' && placeTabs.includes('Source'), `sniffed .json gets Map first (${placeTabs})`);
   check(await shapes('point') === 2, 'places.json: two points');
   await open('plain.json');
   // plain.json opens on the data viewers' Tree tab, not on a text card.
@@ -138,22 +138,22 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/not well-formed XML/.test(await (open('entity.kml').then(notice))), 'KML with an external entity: notice');
   check(!requests.some((u) => u.startsWith('file:')), 'external entity not fetched');
 
-  // Malformed input: a notice with a download, Raw still there.
+  // Malformed input: a notice with a download, Source still there.
   check(/not valid JSON/.test(await (open('broken.geojson').then(notice))), 'broken GeoJSON: notice');
   check(await page.locator(`${view} .preview-download-link`).isVisible(), 'broken GeoJSON: download offered');
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view[data-viewer="text"]:not([hidden]) .code-lines').waitFor();
-  check(true, 'broken GeoJSON: Raw shows the source');
+  check(true, 'broken GeoJSON: Source shows the source');
   await page.locator('#preview-tabs [data-tab="geo:map"]').click();
   check(/not GeoJSON/.test(await (open('other.geojson').then(notice))), 'non-GeoJSON .geojson: notice');
   check(/not well-formed XML/.test(await (open('broken.gpx').then(notice))), 'broken GPX: notice');
   await page.keyboard.press('Escape');
 
-  // Caps: size, features and points; Raw stays.
+  // Caps: size, features and points; Source stays.
   await setting('geo_view_max_bytes', '100');
   await page.reload();
   check(/above the 100 B viewer limit/.test(await (open('route.geojson').then(notice))), 'size cap notice');
-  check((await tabs()).includes('Raw'), 'size cap keeps Raw');
+  check((await tabs()).includes('Source'), 'size cap keeps Source');
   await setting('geo_view_max_bytes');
   await setting('geo_view_max_features', '2');
   await page.reload();

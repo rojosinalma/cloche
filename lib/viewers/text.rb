@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module Viewers
-  # Any text file: Raw (line-numbered, highlighted source) for all of them,
+  # Any text file: Source (line-numbered, highlighted source) for all of them,
   # plus Pretty for Markdown, JSON, JSON Lines and CSV/TSV. The rendering is
   # TextView's; this module only plugs it into the preview modal.
   module Text
     extend Preview::Viewer
 
     PRETTY = Preview::View.new(id: "pretty", label: "Pretty", tip: "Rendered view")
-    SOURCE = Preview::View.new(id: "source", label: "Raw", tip: "Exact file content")
+    SOURCE = Preview::View.new(id: "source", label: "Source", tip: "Exact file content")
 
     def self.icon = "file-earmark-text"
 

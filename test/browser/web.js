@@ -62,7 +62,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await open('page.html');
-  check(JSON.stringify(await tabs()) === '["Rendered","Raw"]', 'html tabs are Rendered, Raw');
+  check(JSON.stringify(await tabs()) === '["Rendered","Source"]', 'html tabs are Rendered, Source');
   check(await pressed() === 'Rendered', 'html opens on Rendered');
   check(await view('iframe.html-frame').getAttribute('sandbox') === 'allow-scripts', 'html frame sandbox is allow-scripts only');
   let hf = await frameOf(/page\.html\?data=html$/);
@@ -87,7 +87,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(esc.status === 404, 'html: a part outside the share entry is 404');
   await tab('text:source');
   await view('.code-lines').waitFor();
-  check(await visible('.code-lines'), 'html Raw shows the source');
+  check(await visible('.code-lines'), 'html Source shows the source');
   await tab('html:rendered');
   await open('broken.html');
   check(!!(await frameOf(/broken\.html\?data=html$/)), 'malformed html still renders in the frame');
@@ -95,7 +95,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.screenshot({ path: `${SHOTS}/html-unstyled-dark.png` });
   await tab('text:source');
   await view('.text-card').waitFor();
-  check(/Invalid UTF-8/.test(await view('.text-card').textContent()), 'malformed html Raw shows the UTF-8 notice');
+  check(/Invalid UTF-8/.test(await view('.text-card').textContent()), 'malformed html Source shows the UTF-8 notice');
   await tab('html:rendered');
   await setting('html_view_max_bytes', '100');
   await page.reload();
@@ -103,7 +103,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/above the 100 B viewer limit/.test(await noticeText()), 'html cap: notice instead of the page');
   await tab('text:source');
   await view('.code-lines').waitFor();
-  check(await visible('.code-lines'), 'html cap: Raw still works');
+  check(await visible('.code-lines'), 'html cap: Source still works');
   await setting('html_view_max_bytes');
   await page.goto(`${hs.url}?mode=light&skin=bootstrap&palette=gruvbox`);
   await open('page.html');
@@ -171,7 +171,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   const ns = shares.notebook;
   await page.goto(`${ns.url}?mode=dark`);
   await open('analysis.ipynb');
-  check(JSON.stringify(await tabs()) === '["Notebook","Raw"]', 'notebook tabs are Notebook, Raw');
+  check(JSON.stringify(await tabs()) === '["Notebook","Source"]', 'notebook tabs are Notebook, Source');
   await view('.nb-notebook').waitFor();
   check(await page.locator('#preview-badge').textContent() === 'Jupyter · Python', 'notebook badge');
   check(/7 cells/.test(await page.locator('#preview-stats').textContent()), 'notebook: 7 cells in the stats');
@@ -202,7 +202,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/not valid JSON/.test(await noticeText()), 'malformed notebook: notice');
   await tab('text:source');
   await view('.code-lines').waitFor();
-  check(await visible('.code-lines'), 'malformed notebook: Raw works');
+  check(await visible('.code-lines'), 'malformed notebook: Source works');
   await tab('notebook:notebook');
   await setting('notebook_view_max_bytes', '100');
   await page.reload();
@@ -220,7 +220,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   const ds = shares.diagram;
   await page.goto(`${ds.url}?mode=dark`);
   await open('flow.mmd');
-  check(JSON.stringify(await tabs()) === '["Diagram","Raw"]', 'diagram tabs are Diagram, Raw');
+  check(JSON.stringify(await tabs()) === '["Diagram","Source"]', 'diagram tabs are Diagram, Source');
   await view('.diagram-stage svg').waitFor({ timeout: 20000 });
   check(/Preview modal/.test(await view('.diagram-stage svg').textContent()), 'mermaid file drawn');
   check(await page.locator('#preview-badge').textContent() === 'Mermaid', 'mermaid badge');
@@ -249,7 +249,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/could not be drawn/.test(await noticeText()), 'malformed mermaid: notice');
   await tab('text:source');
   await view('.code-lines').waitFor();
-  check(await visible('.code-lines'), 'malformed mermaid: Raw works');
+  check(await visible('.code-lines'), 'malformed mermaid: Source works');
   await tab('diagram:diagram');
   await open('broken.dot');
   await view('.preview-notice').waitFor({ timeout: 20000 });

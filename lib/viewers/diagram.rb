@@ -4,7 +4,7 @@ module Viewers
   # Mermaid (.mmd, .mermaid) and Graphviz (.dot, .gv) sources, drawn in the
   # browser: Mermaid with securityLevel "strict", Graphviz with the viz.js
   # WebAssembly build, both loaded from jsDelivr at pinned versions. The
-  # text viewer adds the source as Raw. The same module draws ```mermaid and
+  # text viewer adds the source as Source. The same module draws ```mermaid and
   # ```dot blocks in rendered Markdown (TextView marks them data-enhance).
   module Diagram
     extend Preview::Viewer

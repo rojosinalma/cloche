@@ -3,7 +3,7 @@
 module Viewers
   # Unified diffs and patches (git diff, git format-patch, diff -u): Unified
   # and Side by side tabs, parsed in the browser from the file's text at
-  # ?data=diff (the one download). The text viewer adds Raw next to them.
+  # ?data=diff (the one download). The text viewer adds Source next to them.
   module Diff
     extend Preview::Viewer
 

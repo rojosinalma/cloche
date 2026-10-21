@@ -22,13 +22,13 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `external_downloads` and `links` in the result).
 
 - The preview modal shows tabs when a file has more than one view, and remembers the last tab picked
-  for each kind of file. Keys `1`–`9` pick a tab. SVG files open on Image with a Raw tab for the source.
+  for each kind of file. Keys `1`–`9` pick a tab. SVG files open on Image with a Source tab for the source.
 - Viewers are modules: one in `lib/viewers/` and one in `public/js/viewers/` per viewer, found by name,
   with a single data route `?data=<viewer>`. How to add one: `docs/viewers.md`.
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
 - Map viewer for GeoJSON, GPX and KML (and `.json` files that hold GeoJSON): the shapes on OpenStreetMap
   tiles, with their properties on a click; settings `geo_view_*` set the tile server, the caps and more.
-- HTML viewer: pages render in a sandboxed frame with their stylesheets, scripts and images, next to Raw.
+- HTML viewer: pages render in a sandboxed frame with their stylesheets, scripts and images, next to Source.
 - PDF viewer: Document in the browser's own PDF viewer, and Info with pages, title, author and producer.
 - Notebook viewer: Jupyter notebooks with Markdown, highlighted code and saved outputs, never executed.
 - Diagram viewer: Mermaid and Graphviz files drawn in the theme's colours, also inside Markdown code blocks.
@@ -50,8 +50,10 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - The default theme is the luz skin with the Ayu palette (a choice saved in the browser still wins).
-- Text Pretty/Raw is a tab bar like every other viewer; `?text=1` and `?model=1` still work as older
+- Text Pretty/Source is a tab bar like every other viewer; `?text=1` and `?model=1` still work as older
   spellings of `?data=text` and `?data=model`.
+- The tab that shows a file's text is called Source everywhere (it was Raw), the same word the G-code
+  viewer uses.
 
 ## [0.2.1] - 2026-10-16
 

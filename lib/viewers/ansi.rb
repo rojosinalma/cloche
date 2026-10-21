@@ -3,9 +3,9 @@
 module Viewers
   # Terminal output with ANSI escapes (build logs, test runs, ANSI art): a
   # Coloured tab, drawn in the browser from the file's text at ?data=ansi (the
-  # one download), next to the text viewer's Raw. .ansi files always match;
+  # one download), next to the text viewer's Source. .ansi files always match;
   # any other text file matches when its first ansi_view_sniff_bytes hold an
-  # escape sequence (ESC [), so a log without colours keeps Raw alone.
+  # escape sequence (ESC [), so a log without colours keeps Source alone.
   module Ansi
     extend Preview::Viewer
 

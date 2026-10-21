@@ -1,4 +1,4 @@
-// Browser check of the ANSI viewer: Coloured tab next to Raw for files with
+// Browser check of the ANSI viewer: Coloured tab next to Source for files with
 // escapes, colours from palette tokens, escaped text, stripped controls, caps,
 // sniffing, /x links, both modes and two skins.
 // Run with: bin/test-instance browser <name> ansi.js
@@ -42,7 +42,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
 
   await open('build.log');
   await waitLines();
-  check(JSON.stringify(await tabs()) === '["Coloured","Raw"]', 'log with escapes: Coloured, Raw');
+  check(JSON.stringify(await tabs()) === '["Coloured","Source"]', 'log with escapes: Coloured, Source');
   check(await pressed() === 'Coloured', 'opens on Coloured');
   check(await page.locator('#preview-badge').textContent() === 'ANSI', 'ANSI badge');
   check(/13 lines/.test(await page.locator('#preview-stats').textContent()), 'line count');
@@ -69,13 +69,13 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
 
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(await pressed() === 'Raw' && await lines().isHidden(), 'Raw tab');
+  check(await pressed() === 'Source' && await lines().isHidden(), 'Source tab');
   await page.keyboard.press('1');
   check(await pressed() === 'Coloured' && await lines().isVisible(), 'key 1 back to Coloured');
 
   await open('plain.log');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
-  check((await tabs()).length === 0 && await pressed() === 'Raw', 'log without escapes: Raw only');
+  check((await tabs()).length === 0 && await pressed() === 'Source', 'log without escapes: Source only');
   for (const file of ['job.out', 'art.ansi', 'notes.txt']) {
     await open(file);
     await waitLines();
@@ -87,7 +87,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   await page.reload();
   await open('notes.txt');
   await page.locator('.preview-view:not([hidden]) .text-card').waitFor();
-  check((await tabs()).length === 0, 'escape past the sniff window: Raw only');
+  check((await tabs()).length === 0, 'escape past the sniff window: Source only');
   await setting('ansi_view_sniff_bytes');
 
   await setting('ansi_view_max_bytes', '100');
@@ -96,7 +96,7 @@ const setting = (key, value) => (value === undefined ? api('DELETE', `/api/setti
   check(/above the 100 B viewer limit/.test(await page.locator('.preview-view:not([hidden]) .preview-notice').textContent()), 'byte cap notice');
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   await page.locator('.preview-view:not([hidden]) .view-pane[data-pane="source"]').waitFor();
-  check(true, 'byte cap: Raw still works');
+  check(true, 'byte cap: Source still works');
   await setting('ansi_view_max_bytes');
 
   for (const [q, name] of [['mode=light', 'light'], ['skin=bootstrap&mode=light', 'bootstrap-light'], ['skin=bootstrap&mode=dark', 'bootstrap-dark'], ['palette=gruvbox&mode=dark', 'gruvbox-dark']]) {

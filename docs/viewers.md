@@ -3,7 +3,7 @@
 Every file in a share opens in the preview modal over the gallery. What the modal can show comes from
 viewers: one server module and one browser module per viewer, found by file name, with no list to edit.
 A file can match several viewers; each one adds its views, and every view is a tab in the modal bar
-(an SVG gets Image and Raw, Markdown gets Pretty and Raw).
+(an SVG gets Image and Source, Markdown gets Pretty and Source).
 
 ## How a file opens
 
@@ -204,7 +204,7 @@ Each viewer's settings and notes live in its own section here.
 ### text
 
 Matches every file `TextView.text?` accepts: known text extensions and names, else a sniff of the
-first bytes (no NUL byte, valid UTF-8). Views: Pretty (Markdown, JSON, JSON Lines, CSV, TSV) and Raw.
+first bytes (no NUL byte, valid UTF-8). Views: Pretty (Markdown, JSON, JSON Lines, CSV, TSV) and Source.
 Data: `?data=text`, the rendered card; counts once.
 
 | Key | Default | Meaning |
@@ -234,7 +234,7 @@ the renderer exists and may return a cleanup function.
 
 ### html
 
-HTML pages (`.html`, `.htm`, `.xhtml`), priority 20. Views: Rendered; the text viewer adds Raw (the
+HTML pages (`.html`, `.htm`, `.xhtml`), priority 20. Views: Rendered; the text viewer adds Source (the
 source). Data: `?data=html`, the page; counts once.
 
 The page loads in an `<iframe sandbox="allow-scripts">` and the response carries
@@ -249,7 +249,7 @@ browser's white canvas in both modes.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `html_view_max_bytes` | `5242880` | Larger pages are not rendered (Raw keeps its own cap); linked pages and stylesheets above it are sent without rewriting |
+| `html_view_max_bytes` | `5242880` | Larger pages are not rendered (Source keeps its own cap); linked pages and stylesheets above it are sent without rewriting |
 
 ### pdf
 
@@ -275,7 +275,7 @@ Document tab shows the limit notice and never fetches the file.
 
 ### notebook
 
-Jupyter notebooks (`.ipynb`, nbformat 4), priority 20. Views: Notebook; the text viewer adds Raw (the
+Jupyter notebooks (`.ipynb`, nbformat 4), priority 20. Views: Notebook; the text viewer adds Source (the
 JSON). Data: `?data=notebook`, the rendered cells; counts once. Nothing in the notebook runs.
 
 Markdown cells use the text viewer's renderer (raw HTML escaped, links through the share, diagrams handed
@@ -289,19 +289,19 @@ blocked. The frame takes the page's colour scheme.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `notebook_view_max_bytes` | `20971520` | Larger notebooks show Raw only (within the text viewer's cap) |
+| `notebook_view_max_bytes` | `20971520` | Larger notebooks show Source only (within the text viewer's cap) |
 
 ### diagram
 
 Mermaid (`.mmd`, `.mermaid`) and Graphviz (`.dot`, `.gv`) sources, priority 20. Views: Diagram; the text
-viewer adds Raw (the source). Data: `?data=diagram`, the source as plain text; counts once.
+viewer adds Source (the source). Data: `?data=diagram`, the source as plain text; counts once.
 
 Mermaid (`mermaid@12.2.0`) runs with `securityLevel: "strict"` and the `base` theme, its colours taken
 from the `--t-*` tokens; it redraws when tailor switches mode, palette or skin. Graphviz
 (`@viz-js/viz@3.31.0`, WebAssembly) output loses scripts, `foreignObject`, images, event handlers and
 any link that is not http(s); kept links open in a new tab. Graphviz's default black and white follow
 the theme in CSS, colours set in the file stay. A source that does not parse shows a notice with the
-parser's reason; Raw still shows the source.
+parser's reason; Source still shows the source.
 
 The module also exports `enhance(nodes, ctx)`: TextView wraps fenced ` ```mermaid `, ` ```dot ` and
 ` ```graphviz ` blocks in `<div data-enhance="diagram" data-diagram="mermaid|dot">`, so Markdown files and
@@ -309,12 +309,12 @@ notebook Markdown cells draw them. A block that does not draw keeps its code, wi
 
 | Key | Default | Meaning |
 |---|---|---|
-| `diagram_view_max_bytes` | `1048576` | Larger diagram sources show Raw only |
+| `diagram_view_max_bytes` | `1048576` | Larger diagram sources show Source only |
 
 ### tree
 
 JSON, JSONC, JSON5, YAML (`.yaml`, `.yml`), TOML and JSON Lines (`.jsonl`, `.ndjson`, one tree per line).
-Priority 15, so Tree is the first tab, before the text viewer's Pretty and Raw. The server parses the file
+Priority 15, so Tree is the first tab, before the text viewer's Pretty and Source. The server parses the file
 and sends a capped node list (`?data=tree`, counts once; a file that does not parse answers
 `{ok: false, message}` and does not count): stdlib JSON (comments and trailing commas for JSONC), Psych's
 safe loader for YAML (plain data, dates and symbols only), `tomlrb` for TOML and a small reader in the module
@@ -328,7 +328,7 @@ does not parse is an error node.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `tree_view_max_bytes` | `2097152` | Larger files get no tree (Raw still works up to the text limit) |
+| `tree_view_max_bytes` | `2097152` | Larger files get no tree (Source still works up to the text limit) |
 | `tree_view_max_nodes` | `20000` | Nodes sent; the tree is cut there with a notice |
 | `tree_view_max_depth` | `100` | Deeper nesting is refused |
 | `tree_view_expand_depth` | `2` | Levels open when the tree loads |
@@ -352,20 +352,20 @@ package in the image); both run without stdin, stop at the entry cap and are kil
 ### diff
 
 `.diff` and `.patch` files: `git diff`, `git format-patch` (the mail header and message show above the
-diff) and `diff -u`. Views Unified (first) and Side by side, next to the text viewer's Raw. The browser
+diff) and `diff -u`. Views Unified (first) and Side by side, next to the text viewer's Source. The browser
 parses the text from `?data=diff` (counts once): file headers with added, deleted, renamed and binary
 states, hunk headers, line numbers and +/− counts. Each file folds on its own and the fold holds across both
 views. A file with no file header or hunk drops both tabs and says so in a toast.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `diff_view_max_bytes` | `2097152` | Larger diffs show Raw only |
+| `diff_view_max_bytes` | `2097152` | Larger diffs show Source only |
 
 ### ansi
 
 Terminal output with ANSI escapes. `.ansi` files always match; any other text file (`.log`, `.out`, …)
 matches when its first `ansi_view_sniff_bytes` hold an escape sequence (`ESC [`), so a log without colours
-keeps Raw alone. View Coloured, first, next to the text viewer's Raw. The browser reads the text from
+keeps Source alone. View Coloured, first, next to the text viewer's Source. The browser reads the text from
 `?data=ansi` (counts once) and applies SGR: the 16 colours map to palette tokens, 256-colour and truecolour
 values to the nearest palette hue or grey (so every palette and both modes stay readable); bold, dim,
 italic, underline, strike, inverse and hidden. Other escapes (cursor moves, titles, OSC links) are dropped;
@@ -373,7 +373,7 @@ a lone carriage return starts the line again. Text goes into the page as text no
 
 | Key | Default | Meaning |
 |---|---|---|
-| `ansi_view_max_bytes` | `2097152` | Larger files show Raw only |
+| `ansi_view_max_bytes` | `2097152` | Larger files show Source only |
 | `ansi_view_sniff_bytes` | `4096` | Bytes read to look for escapes in files that are not `.ansi` |
 
 ### gltf
@@ -396,7 +396,7 @@ are not supported (no transcoder).
 
 Sliced G-code (`.gcode`, `.gco`) and Bambu Studio / Orca Slicer `.gcode.3mf` bundles (a zip with
 `Metadata/plate_<n>.gcode`). Priority 60, above the model viewer, so a `.gcode.3mf` opens on Toolpath and
-keeps the model viewer's 3D tab as the last one. `binary?` keeps the text viewer's Raw tab off; Source
+keeps the model viewer's 3D tab as the last one. `binary?` keeps the text viewer's Source tab off; Source
 replaces it at any size.
 
 - Toolpath: the file is parsed in a Web Worker (from a Blob URL; a bundle is unzipped there with fflate).
@@ -457,12 +457,12 @@ with gcode.
 GeoJSON (`.geojson`), GPX, KML, and `.json` files whose root object has a GeoJSON `type`
 (`FeatureCollection`, `Feature` or a geometry). The `.json` check reads only the first
 `geo_view_sniff_bytes` and walks the tokens far enough to find the root's `type` key; it never parses
-the whole file. View: Map, before the text viewer's Raw (and Pretty for `.json`). Priority 30, kind
+the whole file. View: Map, before the text viewer's Source (and Pretty for `.json`). Priority 30, kind
 `geo`, icon `map`. Data: `?data=geo`, the file's bytes; counts once.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `geo_view_max_bytes` | `20971520` | Larger files get no map (Raw follows the text viewer's own cap) |
+| `geo_view_max_bytes` | `20971520` | Larger files get no map (Source follows the text viewer's own cap) |
 | `geo_view_max_features` | `10000` | Files with more features show a notice instead of the map |
 | `geo_view_max_points` | `200000` | Files with more coordinates (every vertex and every point) show a notice instead of the map |
 | `geo_view_sniff_bytes` | `8192` | Bytes of a `.json` file read to look for the root `type` |
@@ -487,4 +487,4 @@ Notes:
 5. The tiles load in the viewer's browser, on `/s` and `/x` pages alike, with only the page's origin as
    the referrer. The settings reach the browser as data attributes in `views/viewers/geo.erb`.
 6. A file that does not parse, or is not GeoJSON, shows a notice with the download button on the Map
-   tab; Raw still shows the source.
+   tab; Source still shows the source.
