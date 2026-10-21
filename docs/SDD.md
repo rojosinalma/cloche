@@ -20,7 +20,7 @@ One container, one Ruby process:
 | Link manager | `lib/link_manager.rb`, `models/link.rb` | External links: create/revoke with TTL validation and caps, token lookup for `/x`, link documents and footer status |
 | Path guard | `lib/path_guard.rb` | `realpath` + containment against `allowed_roots` on create and on every request |
 | File server | `lib/file_server.rb`, `lib/zipper.rb` | Rack::Files-based delivery with range support, download counting, CSP sandbox; streamed zip from a symlink mirror (`zip -r -`) |
-| Viewers | `lib/preview.rb`, `lib/viewers/*.rb`, `lib/listing.rb`, `lib/text_view.rb`, `views/viewers/`, `public/js/preview.js`, `public/js/viewers/*.js` | Viewer registry (match rules, tabs, settings, data endpoints), directory listings and kinds, text rendering (Rouge, Redcarpet, CSV); the preview modal shell and one browser module per viewer (text, image, video, audio, three.js model). Contract: [`viewers.md`](viewers.md) |
+| Viewers | `lib/preview.rb`, `lib/viewers/*.rb`, `lib/listing.rb`, `lib/text_view.rb`, `views/viewers/`, `public/js/preview.js`, `public/js/viewers/*.js` | Viewer registry (match rules, tabs, settings, data endpoints), directory listings and kinds, text rendering (Rouge, Redcarpet, CSV); the preview modal shell and one browser module per viewer (text, image, video, audio, model, html, pdf, notebook, diagram, tree, archive, diff, ansi, geo, gltf, gcode, step). Contract: [`viewers.md`](viewers.md) |
 | Forms | `lib/form.rb` | Form spec normalisation, draft (lenient) and submit (strict) validation |
 | MCP server | `lib/mcp_server.rb` | Stateless Streamable HTTP server built on the `mcp` gem; tools wrap the same ShareManager calls as the REST API |
 | Callback | `lib/callback.rb`, `lib/worker_pool.rb` | Bounded thread pool delivering end-of-share / submit events to the opencode server |
@@ -140,6 +140,16 @@ request without a restart. Four env vars act as first-boot seeds for settings.
 - **Viewer libraries from a pinned CDN** (2026-10-21). three.js, and the libraries later viewers need,
   load from jsDelivr with the exact version in the URL, only when the viewer opens. The image stays
   small and no JavaScript build step exists.
+- **HTML runs its scripts, in an opaque origin** (2026-10-21). Most HTML an agent hands over is a
+  generated report that needs its JavaScript. `sandbox allow-scripts` without `allow-same-origin` lets it
+  run while it cannot touch cloche, on `/s` and `/x` alike.
+- **Heavy parsing on the server, drawing in the browser** (2026-10-21). Trees, archive listings, notebook
+  rendering, diffs and PDF info are built server-side, where the caps apply before anything is sent;
+  toolpaths, maps and diagrams draw in the browser, G-code in a Web Worker.
+- **STEP through cad-render, not a CAD kernel in the image** (2026-10-21). STEP needs OpenCascade; the
+  cad-render service already has it. cloche posts the file to `/convert`, caches the STL in container tmp
+  (bounded by count and size) and shows it in the model viewer. Without the setting, STEP is Info and
+  download only.
 - **Instruction entry as the default callback mode.** It adds context to the agent's next step
   without producing a visible message or forcing a turn; `synthetic` and `prompt` exist for clients
   that want either.
