@@ -40,6 +40,12 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   per-file folding.
 - ANSI viewer for terminal output: a Coloured tab with SGR colours from the palette, for `.ansi` files and
   any text file with escapes.
+- glTF files (`.glb`, and `.gltf` with the buffers and textures next to it) open in the 3D view with
+  their own materials.
+- G-code and Bambu Studio / Orca `.gcode.3mf` files open on a Toolpath tab (moves coloured by feature or
+  layer, travel moves, a layer range), with Info from the slicer's header and the Source next to it.
+- STEP files open in the 3D view when `step_view_cad_render_url` points at a cad-render service, which
+  converts them to STL (cached, with the conversion time on the Info tab); without it they show their header.
 
 ### Changed
 

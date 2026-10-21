@@ -1,0 +1,49 @@
+<div data-slot="tools">
+  <select class="t-select" data-size="sm" data-role="plate" aria-label="Plate" hidden></select>
+  <div class="t-cluster gcode-tools" data-role="toolpath-tools" hidden>
+    <div class="t-segmented" data-size="sm" role="group" aria-label="Colour by">
+      <label class="t-segmented-item" data-tip="Colour by feature (walls, infill, support…)"><input class="t-segmented-input" type="radio" name="gcode-colour" value="feature" checked><span>Feature</span></label>
+      <label class="t-segmented-item" data-tip="Colour by layer, bottom to top"><input class="t-segmented-input" type="radio" name="gcode-colour" value="layer"><span>Layer</span></label>
+    </div>
+    <div class="t-btn-group" role="group" aria-label="Toolpath view options">
+      <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="fit" data-tip="Fit view (F)" aria-label="Fit view" disabled><%== icon("arrows-fullscreen") %></button>
+      <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="travel" data-tip="Show travel moves (T)" aria-label="Show travel moves" aria-pressed="false" disabled><%== icon("bezier2") %></button>
+      <button class="t-btn" data-size="sm" data-icon="only" type="button" data-role="grid" data-tip="Toggle bed grid" aria-label="Toggle bed grid" aria-pressed="true" disabled><%== icon("grid-3x3") %></button>
+    </div>
+  </div>
+</div>
+<div data-slot="body">
+  <div class="preview-panel preview-gcode">
+    <div class="file-view-notice" data-role="notice" hidden><%== icon("info-circle") %><span></span></div>
+
+    <div class="gcode-pane gcode-toolpath" data-pane="toolpath" hidden>
+      <div class="gcode-stage" data-role="stage">
+        <div class="preview-overlay" data-role="loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span data-role="loading-text">Loading…</span></div>
+        <div class="preview-overlay" data-role="error" hidden>
+          <%== icon("exclamation-triangle") %>
+          <span data-role="error-text"></span>
+          <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
+        </div>
+        <ul class="gcode-legend" data-role="legend" aria-label="Colours" hidden></ul>
+      </div>
+      <div class="gcode-layers" data-role="layers" hidden>
+        <label class="gcode-range"><span>From</span><input class="t-input" type="range" data-role="from" min="0" max="0" value="0" aria-label="Lowest layer shown"></label>
+        <label class="gcode-range"><span>To</span><input class="t-input" type="range" data-role="to" min="0" max="0" value="0" aria-label="Highest layer shown (↑ / ↓)"></label>
+        <span class="gcode-layer-label" data-role="layer-label"></span>
+      </div>
+    </div>
+
+    <div class="gcode-pane gcode-info" data-pane="info" hidden>
+      <div class="preview-overlay" data-role="info-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Reading the header…</span></div>
+      <div class="viewer-info">
+        <img class="viewer-info-thumb" data-role="thumb" alt="Slicer thumbnail" hidden>
+        <table class="t-table viewer-info-table"><tbody data-role="info-rows"></tbody></table>
+      </div>
+    </div>
+
+    <div class="gcode-pane gcode-source" data-pane="source" hidden>
+      <div class="preview-overlay" data-role="source-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Loading…</span></div>
+      <div class="code-lines hl" data-role="source"></div>
+    </div>
+  </div>
+</div>
