@@ -85,9 +85,17 @@ module TextView
       @links = links
     end
 
+    # Fenced Mermaid and Graphviz blocks stay code, wrapped for the diagram
+    # viewer's enhance() (docs/viewers.md), which draws them in the modal.
+    DIAGRAM_LANGS = { "mermaid" => "mermaid", "dot" => "dot", "graphviz" => "dot" }.freeze
+
     def block_code(code, language)
       lexer = (language && Rouge::Lexer.find_fancy(language.strip, code)) || Rouge::Lexers::PlainText.new
-      %(<pre class="md-code hl"><code>#{Rouge::Formatters::HTML.new.format(lexer.lex(code))}</code></pre>\n)
+      html = %(<pre class="md-code hl"><code>#{Rouge::Formatters::HTML.new.format(lexer.lex(code))}</code></pre>)
+      diagram = DIAGRAM_LANGS[language.to_s.strip.downcase]
+      return %(<div class="md-diagram" data-enhance="diagram" data-diagram="#{diagram}">#{html}</div>\n) if diagram
+
+      "#{html}\n"
     end
 
     def list_item(text, _list_type)
