@@ -1,0 +1,27 @@
+<div data-slot="tools">
+  <div class="t-cluster step-model-tools" data-role="model-tools" hidden></div>
+</div>
+<div data-slot="body">
+  <div class="step-pane" data-role="model-pane" hidden>
+    <div class="preview-panel step-converting" data-role="converting">
+      <div class="preview-overlay" data-role="convert-loading"><span class="t-spinner" role="status" aria-label="Converting"></span><span>Converting with cad-render…</span></div>
+      <div class="preview-overlay" data-role="convert-error" hidden>
+        <%== icon("exclamation-triangle") %>
+        <span data-role="convert-error-text"></span>
+        <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download it instead</a>
+      </div>
+    </div>
+  </div>
+  <div class="preview-panel step-info" data-role="info-pane" hidden>
+    <div class="file-view-notice" data-role="notice" hidden><%== icon("info-circle") %><span></span></div>
+    <div class="preview-overlay" data-role="info-loading"><span class="t-spinner" role="status" aria-label="Loading"></span><span>Reading the header…</span></div>
+    <div class="viewer-info">
+      <table class="t-table viewer-info-table"><tbody data-role="info-rows"></tbody></table>
+      <div class="step-download" data-role="download" hidden>
+        <a class="t-btn preview-download-link" data-variant="primary" href="#"><%== icon("download") %>Download the STEP file</a>
+      </div>
+    </div>
+  </div>
+  <%# The 3D view markup, cloned into the model pane once the STL is there. %>
+  <template data-role="model-tpl"><%== render("viewers/model") %></template>
+</div>
