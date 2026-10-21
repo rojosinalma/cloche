@@ -248,6 +248,22 @@ the renderer exists and may return a cleanup function.
 
 ### ansi
 
+### gltf
+
+glTF 2.0 in the 3D view of the model viewer (its template renders `viewers/model`; `gltf.js` parses with
+three.js's `GLTFLoader`, Draco and meshopt included, and calls `model.js` with `hooks.object` and
+`hooks.keepMaterials`). glTF is Y up in metres: the scene is turned Z up and scaled to millimetres, so the
+size in the bar is right. The file's own materials and textures are the "colours from the file" swatch;
+metallic ones get a room environment. Data: `?data=gltf`, the file, counts once;
+`?data=gltf&part=<uri>`, a buffer or texture a `.gltf` names, resolved against the file's folder through
+`PathGuard`, so it only serves files of the same share entry (a single shared `.gltf` has no
+neighbours: its external resources are 404 and the tab shows the notice); never counts. KTX2 textures
+are not supported (no transcoder).
+
+| Key | Default | Meaning |
+|---|---|---|
+| `gltf_view_max_bytes` | `104857600` | Larger glTF files are download-only |
+
 ### gcode
 
 ### step
