@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Pins</name>
+    <Placemark><name>Lighthouse</name><description><![CDATA[<script>alert(1)</script>Old light]]></description>
+      <Point><coordinates>-71.6420,-33.0170,0</coordinates></Point></Placemark>
+    <Placemark><name>Coast road</name>
+      <LineString><coordinates>-71.6420,-33.0170,0 -71.6300,-33.0200,0 -71.6150,-33.0300,0</coordinates></LineString></Placemark>
+  </Document>
+</kml>
