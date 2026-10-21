@@ -3,7 +3,8 @@
 // toggle, a From/To layer range whose top layer stands out), Info (the
 // slicer's header, read by the server: ?data=gcode&part=info) and Source
 // (the first part of the text: &part=source). A .gcode.3mf is unzipped in
-// the worker; a bundle with several plates gets a plate picker. Nothing
+// the worker; a bundle with several plates gets a plate picker. A Prusa
+// binary G-code (.bgcode) is decoded in the worker by gcode-binary.js. Nothing
 // loads before its tab is shown; the toolpath fetch is the one download.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -66,13 +67,22 @@ function worker() {
   self.onmessage = async (msg) => {
     try {
       let bytes = new Uint8Array(msg.data.buffer);
-      if (msg.data.entry) {
+      let decodeCut = false;
+      if (msg.data.binary) {
+        const binary = await import(msg.data.binary);
+        const decoded = await binary.decode(bytes, {
+          maxBytes: msg.data.maxBytes, progress: (f) => self.postMessage({ progress: f, step: 'Decoding' })
+        });
+        bytes = decoded.gcode;
+        decodeCut = decoded.truncated;
+      } else if (msg.data.entry) {
         const fflate = await import(msg.data.fflate);
         const files = fflate.unzipSync(bytes, { filter: (f) => f.name === msg.data.entry });
         bytes = files[msg.data.entry];
         if (!bytes) throw new Error(`${msg.data.entry} is not in the archive`);
       }
       const r = parse(bytes, msg.data.maxMoves);
+      r.decodeCut = decodeCut;
       self.postMessage({ result: r }, [r.ext.buffer, r.feat.buffer, r.travel.buffer, r.starts.buffer, r.tstarts.buffer, r.zs.buffer]);
     } catch (e) {
       self.postMessage({ error: String((e && e.message) || e) });
@@ -230,7 +240,7 @@ function worker() {
       if (i < n && buf[i] !== 10) continue;
       line(start, i);
       start = i + 1;
-      if (i > nextProgress) { self.postMessage({ progress: i / n }); nextProgress += n / 20; }
+      if (i > nextProgress) { self.postMessage({ progress: i / n, step: 'Parsing' }); nextProgress += n / 20; }
     }
     starts.push(segN);
     tstarts.push(trvN);
@@ -258,7 +268,8 @@ export function mount(ctx) {
   const { signal } = ctx;
   const on = (el, ev, fn) => el.addEventListener(ev, fn, { signal });
   const bundle = /\.gcode\.3mf$/i.test(ctx.item.name);
-  ctx.setBadge(bundle ? 'G-code 3MF' : 'G-code');
+  const binary = /\.bgcode$/i.test(ctx.item.name);
+  ctx.setBadge(bundle ? 'G-code 3MF' : binary ? 'Binary G-code' : 'G-code');
 
   let plate = null;
   let info = null;        // promise of the info JSON for the current plate
@@ -284,6 +295,7 @@ export function mount(ctx) {
     if (signal.aborted || view !== 'info') return;
     els.infoLoading.hidden = true;
     if (!data.ok) { setNotice(data.message); infoTable.fill(els.infoRows, []); return; }
+    if (data.notice) setNotice(data.notice);
     const rows = [...data.fields];
     if (data.entry) rows.unshift({ label: 'Plate', value: `${data.plate} of ${data.plates.length} (${data.entry})` });
     if (tp?.result) rows.push({ label: 'Toolpath', value: tpSummary(tp.result) });
@@ -315,20 +327,20 @@ export function mount(ctx) {
     els.errorText.textContent = message;
   };
 
-  const parseInWorker = (buffer, entry, maxMoves) => new Promise((resolve, reject) => {
+  const parseInWorker = (buffer, entry, maxMoves, decoder) => new Promise((resolve, reject) => {
     const url = URL.createObjectURL(new Blob([`(${worker.toString()})();`], { type: 'text/javascript' }));
     const w = new Worker(url, { type: 'module' });
     URL.revokeObjectURL(url);
     const stop = () => w.terminate();
     signal.addEventListener('abort', stop);
     w.onmessage = ({ data }) => {
-      if (data.progress !== undefined) { els.loadingText.textContent = `Parsing… ${Math.round(data.progress * 100)} %`; return; }
+      if (data.progress !== undefined) { els.loadingText.textContent = `${data.step}… ${Math.round(data.progress * 100)} %`; return; }
       stop();
       signal.removeEventListener('abort', stop);
       if (data.error) reject(new Error(data.error)); else resolve(data.result);
     };
     w.onerror = (e) => { stop(); e.preventDefault(); reject(new Error(e.message || 'the parser stopped')); };
-    w.postMessage({ buffer, entry, maxMoves, fflate: FFLATE_URL }, [buffer]);
+    w.postMessage({ buffer, entry, maxMoves, fflate: FFLATE_URL, ...decoder }, [buffer]);
   });
 
   const buildToolpath = async () => {
@@ -347,19 +359,23 @@ export function mount(ctx) {
       if (bundle && data.plates.length > 1) zipBuffer = buffer.slice(0);
     }
     if (signal.aborted) return;
-    els.loadingText.textContent = 'Parsing…';
+    els.loadingText.textContent = binary ? 'Decoding…' : 'Parsing…';
+    // The worker imports the decoder by URL: it has no import map and no ctx.load.
+    const decoder = binary ? { binary: (await ctx.load('gcode-binary')).url, maxBytes: data.bgcode_max_bytes } : {};
     let result;
     try {
-      result = await parseInWorker(buffer, bundle ? data.entry : null, data.max_moves);
+      result = await parseInWorker(buffer, bundle ? data.entry : null, data.max_moves, decoder);
     } catch (e) {
       if (signal.aborted) return;
-      failToolpath(bundle ? `This 3MF cannot be read: ${e.message}` : `This G-code cannot be read: ${e.message}`);
+      const what = bundle ? 'This 3MF' : binary ? 'This binary G-code' : 'This G-code';
+      failToolpath(`${what} cannot be read: ${e.message}`);
       return;
     }
     if (signal.aborted) return;
     if (!result.segments) { failToolpath('No extrusion moves found in this file.'); return; }
     tp = scene(result, data);
     if (result.truncated) setNotice(`Showing the first ${result.segments.toLocaleString()} extrusions: the file has more moves than the ${data.max_moves.toLocaleString()} move limit.`);
+    else if (result.decodeCut) setNotice(`Showing the first ${ctx.humanSize(data.bgcode_max_bytes)} of the decoded G-code: the rest is above the decode limit.`);
     if (view === 'info') showInfo();
   };
 
@@ -604,6 +620,7 @@ export function mount(ctx) {
     if (next === 'toolpath') {
       startToolpath();
       if (tp?.result?.truncated) setNotice(`Showing the first ${tp.result.segments.toLocaleString()} extrusions: the file has more moves than the move limit.`);
+      else if (tp?.result?.decodeCut) setNotice('Showing the first part of the decoded G-code: the rest is above the decode limit.');
     } else if (next === 'info') showInfo();
     else if (next === 'source') showSource();
   }

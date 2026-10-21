@@ -421,7 +421,7 @@ gltf-transform meshopt test/fixtures/gltf/cube.glb test/fixtures/gltf/cube-mesho
 
 ### gcode
 
-Sliced G-code (`.gcode`, `.gco`) and Bambu Studio / Orca Slicer `.gcode.3mf` bundles (a zip with
+Sliced G-code (`.gcode`, `.gco`, Prusa's binary `.bgcode`) and Bambu Studio / Orca Slicer `.gcode.3mf` bundles (a zip with
 `Metadata/plate_<n>.gcode`). Priority 60, above the model viewer, so a `.gcode.3mf` opens on Toolpath and
 keeps the model viewer's 3D tab as the last one. `binary?` keeps the text viewer's Source tab off; Source
 replaces it at any size.
@@ -440,17 +440,52 @@ replaces it at any size.
   a plate picker that every tab follows.
 - Source: the first `gcode_view_source_bytes` with light highlighting.
 
+Prusa binary G-code (`.bgcode`, [libbgcode](https://github.com/prusa3d/libbgcode/blob/main/doc/specifications.md)
+format version 1) gets the same three tabs and the badge "Binary G-code":
+
+- Toolpath: the worker imports `public/js/viewers/gcode-binary.js` by its URL and decodes the G-code
+  blocks before it parses them: Deflate (`DecompressionStream`), Heatshrink with window 11 or 12 and
+  lookahead 4, and MeatPack with or without comments (as libbgcode's `MeatPack::unbinarize`, spaces put
+  back before parameters). Without comments, layers come from Z and every move is "Unlabelled". Decoding
+  stops at a line end once `gcode_view_bgcode_max_bytes` of G-code is out, with a notice; the move cap
+  still applies after it.
+- Info: the file, printer, print and slicer metadata blocks (INI `key=value`) go through the same header
+  reader as plain G-code, plus a "Binary G-code" row (version, G-code compression and encoding,
+  checksum). The thumbnail is the largest PNG or JPG block, else the largest QOI block turned into a PNG.
+  Info reads the blocks before the first G-code block only, each at most `gcode_view_info_bytes`.
+- Source: the server decodes G-code blocks (Ruby `zlib`, its own Heatshrink and MeatPack) until it has
+  `gcode_view_source_bytes`.
+- Every block's CRC32 is checked when the file header asks for it. A failed check, an unknown block
+  type, compression or encoding, or a block that runs past the end gives a notice that names the block
+  and its byte offset; Info keeps the blocks before it.
+
+Fixtures (`test/fixtures/gcode/*.bgcode`) are synthetic: made from `prusa-cube.gcode` with the `bgcode`
+CLI of libbgcode (commit `d4da907`), built in a throwaway container (Debian trixie, `cmake`,
+`libboost-dev`, `libboost-nowide-dev`, `zlib1g-dev`; heatshrink from libbgcode's `deps/`):
+
+| File | Made with | Covers |
+|---|---|---|
+| `prusa-cube.bgcode` | `bgcode prusa-cube.gcode --slicer_metadata_compression=1 --gcode_compression=3 --gcode_encoding=2` | PrusaSlicer's defaults: Heatshrink 12/4, MeatPack with comments, CRC32, PNG thumbnail |
+| `prusa-cube-hs11.bgcode` | the same G-code with its thumbnail swapped for a 32×32 QOI one, then every `*_compression=2` and `--gcode_encoding=1` | Heatshrink 11/4 on every block, MeatPack without comments, QOI |
+| `prusa-cube-deflate.bgcode` | `--checksum=0`, every `*_compression=1`, `--gcode_encoding=0` | Deflate, no encoding, no checksum |
+| `prusa-tower.bgcode` | `prusa-cube.gcode` with its second layer repeated to 90 layers (Z + 0.2 each), then `--slicer_metadata_compression=1 --gcode_compression=2 --gcode_encoding=2` | Two G-code blocks, Heatshrink 11/4 with MeatPack comments |
+| `broken-crc.bgcode` | `prusa-cube.bgcode` with one byte of its G-code block flipped | CRC32 failure |
+| `broken-block.bgcode` | `prusa-cube-deflate.bgcode` with the slicer metadata block's type set to 9 | Unknown block type |
+
+The decoded G-code of each fixture, from `gcode-binary.js` and from the Ruby reader, is byte for byte a
+part of what `bgcode <file>.bgcode` writes back.
+
 Data: `?data=gcode`, the file, counts once (the Toolpath fetch); `&part=info` and `&part=source` (JSON,
 `&plate=<n>` for a bundle) never count. Above `gcode_view_max_bytes` the file has Info and Source only, with
-a notice; Info still reads the header. Prusa binary G-code (`.bgcode`) is not matched: it needs heatshrink
-and MeatPack decoders.
+a notice; Info still reads the header.
 
 | Key | Default | Meaning |
 |---|---|---|
 | `gcode_view_max_bytes` | `104857600` | Larger files get no Toolpath (Info and Source only) |
 | `gcode_view_max_moves` | `2000000` | Moves (extrusion and travel segments) the Toolpath draws at most; a notice says when it cuts |
-| `gcode_view_source_bytes` | `524288` | Bytes of the file the Source tab shows |
-| `gcode_view_info_bytes` | `262144` | Bytes read from each end of the file for Info, and the largest thumbnail kept |
+| `gcode_view_source_bytes` | `524288` | Bytes of the file the Source tab shows (of the decoded G-code for a `.bgcode`) |
+| `gcode_view_info_bytes` | `262144` | Bytes read from each end of the file for Info, and the largest thumbnail kept; for a `.bgcode`, the largest metadata or thumbnail block read |
+| `gcode_view_bgcode_max_bytes` | `209715200` | Decoded G-code of a `.bgcode` the Toolpath reads at most; larger G-code is cut with a notice, a single block above it is an error |
 
 ### step
 

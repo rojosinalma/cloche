@@ -10,8 +10,11 @@ module Viewers
   # from a bounded head and tail of the file. Source: its first
   # gcode_view_source_bytes. A .gcode.3mf (Bambu Studio, Orca Slicer) is a zip
   # with Metadata/plate_<n>.gcode inside: the browser unzips it for the
-  # toolpath, Info and Source read the plate entry here. A file over
-  # gcode_view_max_bytes keeps Info and Source and loses only the Toolpath.
+  # toolpath, Info and Source read the plate entry here. A Prusa binary
+  # G-code (.bgcode) is decoded in the browser for the toolpath; Info reads its
+  # metadata and thumbnail blocks here, Source decodes the first G-code blocks.
+  # A file over gcode_view_max_bytes keeps Info and Source and loses only the
+  # Toolpath.
   module Gcode
     extend Preview::Viewer
 
@@ -35,7 +38,7 @@ module Viewers
     # Above the 3D model viewer, so a .gcode.3mf opens on the toolpath.
     def self.priority = 60
 
-    def self.exts = %w[gcode gco]
+    def self.exts = %w[gcode gco bgcode]
 
     # Keeps the text viewer's Source tab off: this viewer's own Source reads any size.
     def self.binary? = true
@@ -44,11 +47,14 @@ module Viewers
 
     def self.bundle?(name) = name.downcase.end_with?(BUNDLE)
 
+    def self.binary_gcode?(name) = name.downcase.end_with?(".bgcode")
+
     def self.views(target) = too_large?(target.size) ? [INFO, SOURCE] : [TOOLPATH, INFO, SOURCE]
 
     def self.settings
       { "gcode_view_max_bytes" => 100 * 1024 * 1024, "gcode_view_max_moves" => 2_000_000,
-        "gcode_view_source_bytes" => 512 * 1024, "gcode_view_info_bytes" => 256 * 1024 }
+        "gcode_view_source_bytes" => 512 * 1024, "gcode_view_info_bytes" => 256 * 1024,
+        "gcode_view_bgcode_max_bytes" => 200 * 1024 * 1024 }
     end
 
     def self.too_large?(size) = size > Setting.get("gcode_view_max_bytes")
@@ -66,6 +72,8 @@ module Viewers
       end
     rescue Zip::Error => e
       ctx.json({ ok: false, message: "This 3MF cannot be read: #{e.message}" })
+    rescue Bgcode::Error => e
+      ctx.json({ ok: false, message: "This binary G-code cannot be read: #{e.message}." })
     end
 
     def self.info(ctx)
@@ -84,6 +92,9 @@ module Viewers
         thumbnail = thumb && data_uri("image/png", Zip.read(ctx.real, thumb, limit))
         base.merge(plates: plates.map(&:first), plate: number, entry: entry.name, gcode_size: entry.size)
             .merge(Header.read(text, limit)).tap { |h| h[:thumbnail] = thumbnail if thumbnail }
+      elsif binary_gcode?(ctx.real)
+        base.merge(plates: [], plate: nil, binary: true, bgcode_max_bytes: Setting.get("gcode_view_bgcode_max_bytes"))
+            .merge(Bgcode.info(ctx.real, limit))
       else
         base.merge(plates: [], plate: nil).merge(Header.read(head_tail(ctx.real, limit), limit))
       end
@@ -98,14 +109,19 @@ module Viewers
         _, entry = pick(plates, ctx.params["plate"])
         total = entry.size
         bytes = Zip.read(ctx.real, entry, limit)
+      elsif binary_gcode?(ctx.real)
+        bytes, more = Bgcode.gcode_head(ctx.real, limit, Setting.get("gcode_view_bgcode_max_bytes"))
+        total = more ? bytes.bytesize + 1 : bytes.bytesize
       else
         total = ctx.size
         bytes = File.binread(ctx.real, limit) || +""
       end
       truncated = total > bytes.bytesize
       bytes = bytes.byteslice(0, (bytes.rindex("\n") || bytes.bytesize) + 1) if truncated
+      # A .bgcode has no decoded size until all of it is decoded.
+      total_label = binary_gcode?(ctx.real) ? "the decoded G-code" : Listing.human_size(total)
       { ok: true, text: utf8(bytes), truncated: truncated, shown_label: Listing.human_size(bytes.bytesize),
-        total_label: Listing.human_size(total) }
+        total_label: total_label }
     end
 
     def self.no_plate = { ok: false, message: "This 3MF holds no sliced plate (no Metadata/plate_<n>.gcode inside)." }
@@ -212,7 +228,7 @@ module Viewers
           ["Estimated time", time(kv)], ["Filament length", length(kv)], ["Filament weight", weight(kv)],
           ["Layer height", with_first(mm(first(kv, "layer_height", "layer height")),
                                       mm(first(kv, "initial_layer_print_height", "first_layer_height")))],
-          ["Layers", first(kv, "total layer number", "layer_count")], ["Height", mm(first(kv, "max_z_height", "maxz"))],
+          ["Layers", first(kv, "total layer number", "layer_count")], ["Height", mm(first(kv, "max_z_height", "maxz", "max_layer_z"))],
           ["Nozzle", mm(first(kv, "nozzle_diameter"))],
           ["Nozzle temperature", with_first(celsius(first(kv, "nozzle_temperature", "temperature") || temps[:nozzle]),
                                             celsius(first(kv, "nozzle_temperature_initial_layer", "first_layer_temperature")))],
@@ -347,6 +363,386 @@ module Viewers
         raise Error, "#{e.class.name.split('::').last}: #{e.message}"
       ensure
         zstream&.close
+      end
+    end
+
+    # Prusa binary G-code (libbgcode format v1): a 10-byte file header (GCDE,
+    # version, checksum type), then blocks of header + parameters + data +
+    # CRC32. Info reads the metadata and thumbnail blocks before the first
+    # G-code block; Source decodes G-code blocks until it has enough text. The
+    # browser carries its own decoder for the toolpath (gcode-binary.js).
+    module Bgcode
+      class Error < StandardError; end
+
+      Block = Struct.new(:type, :method, :size, :offset, :data, :end_at, :crc)
+      TYPES = ["file metadata", "G-code", "slicer metadata", "printer metadata", "print metadata", "thumbnail"].freeze
+      PARAMS = [2, 2, 2, 2, 2, 6].freeze # bytes of block parameters per type
+      COMPRESSION = ["no compression", "Deflate", "Heatshrink 11/4", "Heatshrink 12/4"].freeze
+      ENCODING = ["no encoding", "MeatPack", "MeatPack with comments"].freeze
+      GCODE = 1
+      THUMBNAIL = 5
+      IMAGE = { 0 => "image/png", 1 => "image/jpeg" }.freeze
+      QOI = 2
+      MAX_QOI_PIXELS = 1024 * 1024 # far above any slicer thumbnail; bounds a hostile header
+
+      module_function
+
+      # Info: the metadata as Header fields, the bed, the largest thumbnail
+      # (QOI turned into PNG) and a notice for any block that fails.
+      def info(path, limit)
+        meta = []
+        thumbs = []
+        notices = []
+        format = nil
+        File.open(path, "rb") do |f|
+          format = header(f)
+          each_block(f, format[:crc]) do |b|
+            if b.type == GCODE
+              f.seek(b.data - PARAMS[GCODE])
+              format[:gcode] = [b.method, f.read(2).unpack1("v")]
+              break
+            end
+            next notices << "The #{TYPES[b.type]} block is above the #{Listing.human_size(limit)} info limit; it is skipped." if b.size > limit
+
+            begin
+              params, data = payload(f, b, limit)
+              if b.type == THUMBNAIL
+                thumbs << [*params.unpack("vvv"), data]
+              elsif params.unpack1("v").zero? # INI; newer files add a JSON copy of the slicer settings
+                meta.concat(ini(data))
+              end
+            rescue Error => e
+              notices << "#{sentence(e.message)}."
+            end
+          end
+        rescue Error => e
+          raise if format.nil? # not a .bgcode at all
+
+          notices << "#{sentence(e.message)}; Info shows what comes before it."
+        end
+        text = meta.map { |k, v| "; #{k} = #{v}\n" }.join
+        result = Header.read(text, limit)
+        result[:fields] << { label: "Binary G-code", value: describe(format) }
+        result[:thumbnail] = thumbnail(thumbs, limit)
+        result[:notice] = notices.join(" ") unless notices.empty?
+        result
+      rescue Error => e
+        { ok: false, message: "This binary G-code cannot be read: #{e.message}." }
+      rescue SystemCallError => e
+        raise Error, e.message
+      end
+
+      # Up to limit bytes of decoded G-code, and whether there is more.
+      def gcode_head(path, limit, max_block)
+        out = String.new(encoding: Encoding::BINARY)
+        more = false
+        File.open(path, "rb") do |f|
+          crc = header(f)[:crc]
+          each_block(f, crc) do |b|
+            next unless b.type == GCODE
+            if out.bytesize >= limit
+              more = true
+              break
+            end
+
+            params, data = payload(f, b, max_block)
+            encoding = params.unpack1("v")
+            raise Error, "the G-code block at byte #{b.offset} uses unknown encoding #{encoding}" if encoding > 2
+
+            out << (encoding.zero? ? data : meatpack(data))
+          end
+        end
+        [out.byteslice(0, limit), more || out.bytesize > limit]
+      rescue SystemCallError => e
+        raise Error, e.message
+      end
+
+      def header(f)
+        head = f.read(10)
+        raise Error, "this is not a binary G-code file (no GCDE header)" unless head&.bytesize == 10 && head.start_with?("GCDE")
+
+        version, checksum = head.unpack("@4Vv")
+        raise Error, "binary G-code version #{version} is not supported" unless version == 1
+        raise Error, "unknown checksum type #{checksum}" if checksum > 1
+
+        { version: version, crc: checksum == 1 }
+      end
+
+      # Each block's header, in file order; the data stays on disk.
+      def each_block(f, crc)
+        size = f.size
+        pos = 10
+        while pos < size
+          f.seek(pos)
+          head = f.read(12) || ""
+          raise Error, "the file ends inside a block header at byte #{pos}" if head.bytesize < 8
+
+          type, method, usize, csize = head.unpack("vvVV")
+          raise Error, "unknown block type #{type} at byte #{pos}" if type >= TYPES.size
+          raise Error, "the #{TYPES[type]} block at byte #{pos} uses unknown compression #{method}" if method > 3
+          raise Error, "the file ends inside a block header at byte #{pos}" if method.positive? && head.bytesize < 12
+
+          data = pos + (method.zero? ? 8 : 12) + PARAMS[type]
+          end_at = data + (method.zero? ? usize : csize)
+          after = end_at + (crc ? 4 : 0)
+          raise Error, "the #{TYPES[type]} block at byte #{pos} runs past the end of the file" if after > size
+
+          yield Block.new(type, method, usize, pos, data, end_at, crc)
+          pos = after
+        end
+      end
+
+      # The block's parameters and its data, uncompressed, CRC32 checked.
+      def payload(f, block, max)
+        raise Error, "the #{TYPES[block.type]} block at byte #{block.offset} is above the #{Listing.human_size(max)} limit" if block.size > max
+
+        f.seek(block.offset)
+        bytes = f.read(block.end_at - block.offset)
+        if block.crc && Zlib.crc32(bytes) != f.read(4).unpack1("V")
+          raise Error, "the #{TYPES[block.type]} block at byte #{block.offset} fails its CRC32 check: the file is damaged"
+        end
+
+        start = block.data - block.offset
+        params = bytes.byteslice(start - PARAMS[block.type], PARAMS[block.type])
+        [params, uncompress(block, bytes.byteslice(start..))]
+      end
+
+      def uncompress(block, data)
+        out = case block.method
+              when 0 then data
+              when 1 then inflate(data, block.size)
+              else heatshrink(data, block.size, block.method == 2 ? 11 : 12, 4)
+              end
+        return out if out.bytesize == block.size
+
+        raise Error, "the #{TYPES[block.type]} block at byte #{block.offset} gives #{out.bytesize} bytes, its header says #{block.size}"
+      end
+
+      def inflate(data, size)
+        out = String.new(encoding: Encoding::BINARY)
+        zstream = Zlib::Inflate.new
+        take = lambda do |chunk|
+          out << chunk
+          raise Error, "Deflate data is larger than its block says" if out.bytesize > size
+        end
+        zstream.inflate(data, &take)
+        zstream.finish(&take)
+        out
+      rescue Zlib::Error => e
+        raise Error, "Deflate data is broken: #{e.message}"
+      ensure
+        zstream&.close
+      end
+
+      # A bit stream, MSB first: tag 1 = an 8-bit literal, tag 0 = a
+      # back-reference (window bits: distance - 1, lookahead bits: length - 1).
+      def heatshrink(src, size, window, lookahead)
+        out = String.new(capacity: [size, 1 << 20].min, encoding: Encoding::BINARY)
+        p = acc = have = 0
+        n = src.bytesize
+        bits = lambda do |count|
+          while have < count
+            return nil if p >= n
+
+            acc = ((acc << 8) | src.getbyte(p)) & 0xFFFFFF
+            p += 1
+            have += 8
+          end
+          have -= count
+          (acc >> have) & ((1 << count) - 1)
+        end
+        while out.bytesize < size
+          tag = bits.(1) or break
+          if tag == 1
+            byte = bits.(8) or break
+            out << byte
+          else
+            index = bits.(window) or break
+            count = bits.(lookahead) or break
+            from = out.bytesize - index - 1
+            (count + 1).times do
+              break if out.bytesize >= size
+
+              out << (from >= 0 ? out.getbyte(from) : 0)
+              from += 1
+            end
+          end
+        end
+        out
+      end
+
+      PACKED = "0123456789. \nGX".bytes.freeze
+      PARAM = "XYZEFIJRSGPWHCA".bytes.freeze
+      NL = 10
+      SPACE = 32
+
+      # MeatPack, as libbgcode's MeatPack::unbinarize (see gcode-binary.js).
+      def meatpack(src)
+        out = String.new(capacity: src.bytesize * 2, encoding: Encoding::BINARY)
+        packing = no_spaces = command = add_space = false
+        signals = full = 0
+        held = nil
+        put = lambda do |c|
+          last = out.empty? ? nil : out.getbyte(-1)
+          line_start = false
+          if c == 71 && (last.nil? || last == NL) # G at a line start
+            add_space = true
+            line_start = true
+          elsif c == NL
+            add_space = false
+          end
+          out << SPACE if !line_start && add_space && last != SPACE && PARAM.include?(c)
+          out << c unless c == NL && out.getbyte(-1) == NL
+        end
+        code = ->(v) { v == 0b1011 && no_spaces ? 69 : PACKED[v] } # 69 = E
+        receive = lambda do |c|
+          next put.(c) unless packing
+
+          if full.positive?
+            put.(c)
+            put.(held) if held
+            held = nil
+            full -= 1
+          elsif (c & 0x0F) == 0x0F
+            full += 1
+            if (c & 0xF0) == 0xF0
+              full += 1
+            else
+              held = code.(c >> 4)
+            end
+          else
+            first = code.(c & 0x0F)
+            put.(first)
+            next if first == NL
+
+            if (c & 0xF0) == 0xF0
+              full += 1
+            else
+              put.(code.(c >> 4))
+            end
+          end
+        end
+        src.each_byte do |c|
+          if c == 0xFF && signals.positive?
+            command = true
+            signals = 0
+          elsif c == 0xFF
+            signals += 1
+          elsif command
+            case c
+            when 251 then packing = true
+            when 250, 249 then packing = false
+            when 247 then no_spaces = true
+            when 246 then no_spaces = false
+            end
+            command = false
+          else
+            if signals.positive?
+              receive.(0xFF)
+              signals = 0
+            end
+            receive.(c)
+          end
+        end
+        out
+      end
+
+      def sentence(text) = text.sub(/\A./, &:upcase)
+
+      # INI metadata: one key=value per line.
+      def ini(data)
+        Gcode.utf8(data).each_line.filter_map do |line|
+          key, value = line.chomp.split("=", 2)
+          [key.strip, value.to_s.strip] if value && !key.strip.empty?
+        end
+      end
+
+      def describe(format)
+        parts = ["version #{format[:version]}"]
+        if (gcode = format[:gcode])
+          parts << "G-code #{COMPRESSION[gcode[0]]}, #{ENCODING[gcode[1]] || "encoding #{gcode[1]}"}"
+        end
+        parts << (format[:crc] ? "CRC32" : "no checksum")
+        parts.join(" · ")
+      end
+
+      # The largest PNG or JPG within limit, else the largest QOI as a PNG.
+      def thumbnail(thumbs, limit)
+        image = thumbs.select { |fmt, _, _, data| IMAGE.key?(fmt) && data.bytesize <= limit }.max_by { |_, w, h, _| w * h }
+        return Gcode.data_uri(IMAGE[image[0]], image[3]) if image
+
+        qoi = thumbs.select { |fmt, w, h, _| fmt == QOI && (w * h).between?(1, MAX_QOI_PIXELS) }.max_by { |_, w, h, _| w * h }
+        png = qoi && Qoi.png(qoi[3])
+        png && png.bytesize <= limit ? Gcode.data_uri("image/png", png) : nil
+      rescue Error
+        nil
+      end
+    end
+
+    # QOI (the Quite OK Image format) → PNG, for a .bgcode thumbnail an <img> can show.
+    module Qoi
+      module_function
+
+      def png(data)
+        raise Bgcode::Error, "not a QOI image" unless data.bytesize >= 22 && data.start_with?("qoif")
+
+        width, height = data.unpack("@4NN")
+        raise Bgcode::Error, "QOI image too large" unless (width * height).between?(1, Bgcode::MAX_QOI_PIXELS)
+
+        encode(width, height, pixels(data, width * height))
+      end
+
+      def pixels(data, count)
+        index = Array.new(64, [0, 0, 0, 0])
+        r = g = b = 0
+        a = 255
+        run = 0
+        pos = 14
+        out = String.new(capacity: count * 4, encoding: Encoding::BINARY)
+        count.times do
+          if run.positive?
+            run -= 1
+          elsif (op = data.getbyte(pos))
+            pos += 1
+            if op == 0xFE
+              r, g, b = data.byteslice(pos, 3).bytes
+              pos += 3
+            elsif op == 0xFF
+              r, g, b, a = data.byteslice(pos, 4).bytes
+              pos += 4
+            else
+              case op >> 6
+              when 0 then r, g, b, a = index[op]
+              when 1
+                r = (r + ((op >> 4) & 3) - 2) & 0xFF
+                g = (g + ((op >> 2) & 3) - 2) & 0xFF
+                b = (b + (op & 3) - 2) & 0xFF
+              when 2
+                low = data.getbyte(pos).to_i
+                pos += 1
+                dg = (op & 0x3F) - 32
+                r = (r + dg - 8 + (low >> 4)) & 0xFF
+                g = (g + dg) & 0xFF
+                b = (b + dg - 8 + (low & 0x0F)) & 0xFF
+              else run = op & 0x3F
+              end
+            end
+            raise Bgcode::Error, "broken QOI image" unless r && g && b && a
+
+            index[((r * 3) + (g * 5) + (b * 7) + (a * 11)) % 64] = [r, g, b, a]
+          end
+          out << r << g << b << a
+        end
+        out
+      end
+
+      def encode(width, height, rgba)
+        stride = width * 4
+        rows = String.new(capacity: (stride + 1) * height, encoding: Encoding::BINARY)
+        height.times { |y| rows << 0 << rgba.byteslice(y * stride, stride) }
+        chunk = ->(type, body) { [body.bytesize].pack("N") + type + body + [Zlib.crc32(type + body)].pack("N") }
+        "\x89PNG\r\n\x1A\n".b + chunk.("IHDR", [width, height, 8, 6, 0, 0, 0].pack("NNCCCCC")) +
+          chunk.("IDAT", Zlib::Deflate.deflate(rows)) + chunk.("IEND", "")
       end
     end
   end
