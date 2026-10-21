@@ -49,7 +49,7 @@ const api = async (method, path, body) => {
   await page.locator('#preview-tabs [data-tab="text:source"]').click();
   check(await visible('.view-pane[data-pane="source"]') && !(await visible('.view-pane[data-pane="pretty"]')), 'Raw tab shows the source pane only');
   await page.keyboard.press('Escape');
-  await open('data.json');
+  await open('rows.csv');
   await page.locator('.text-card').waitFor();
   check(await pressed() === 'Raw', 'Raw remembered for the next text file');
   await page.reload();
