@@ -26,6 +26,7 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Viewers are modules: one in `lib/viewers/` and one in `public/js/viewers/` per viewer, found by name,
   with a single data route `?data=<viewer>`. How to add one: `docs/viewers.md`.
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
+- HTML viewer: pages render in a sandboxed frame with their stylesheets, scripts and images, next to Raw.
 
 ### Changed
 
