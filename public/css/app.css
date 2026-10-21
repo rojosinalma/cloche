@@ -212,6 +212,13 @@ body.preview-open { overflow: hidden; }
 .preview-html .html-frame { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
 
 /* viewer: pdf */
+.preview-pdf .pdf-pane { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.preview-pdf .pdf-pane[hidden] { display: none; }
+.preview-pdf .pdf-frame { flex: 1; min-height: 0; width: 100%; border: 0; display: block; }
+.preview-pdf .pdf-info { overflow: auto; }
+.preview-pdf .pdf-info-wrap { margin: 1.25rem 1.5rem; max-width: 48rem; }
+.preview-pdf .pdf-info-table th { width: 12rem; color: var(--t-muted); font-weight: 500; text-transform: none; letter-spacing: 0; white-space: nowrap; }
+.preview-pdf .pdf-info-table td { color: var(--t-text); overflow-wrap: anywhere; }
 
 /* viewer: notebook */
 

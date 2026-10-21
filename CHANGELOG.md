@@ -27,6 +27,7 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with a single data route `?data=<viewer>`. How to add one: `docs/viewers.md`.
 - `bin/test-instance` runs a throwaway instance of a checkout for development and browser checks.
 - HTML viewer: pages render in a sandboxed frame with their stylesheets, scripts and images, next to Raw.
+- PDF viewer: Document in the browser's own PDF viewer, and Info with pages, title, author and producer.
 
 ### Changed
 
