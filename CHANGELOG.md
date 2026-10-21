@@ -44,6 +44,9 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   their own materials.
 - G-code and Bambu Studio / Orca `.gcode.3mf` files open on a Toolpath tab (moves coloured by feature or
   layer, travel moves, a layer range), with Info from the slicer's header and the Source next to it.
+- Prusa binary G-code (`.bgcode`) opens in the G-code viewer too: Toolpath, Info from its metadata and
+  thumbnail blocks, and the decoded Source (Deflate and Heatshrink, MeatPack, CRC32 checked); setting
+  `gcode_view_bgcode_max_bytes` caps the decoded size.
 - STEP files open in the 3D view when `step_view_cad_render_url` points at a cad-render service, which
   converts them to STL (cached, with the conversion time on the Info tab); without it they show their header.
 
