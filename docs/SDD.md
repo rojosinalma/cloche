@@ -20,7 +20,7 @@ One container, one Ruby process:
 | Link manager | `lib/link_manager.rb`, `models/link.rb` | External links: create/revoke with TTL validation and caps, token lookup for `/x`, link documents and footer status |
 | Path guard | `lib/path_guard.rb` | `realpath` + containment against `allowed_roots` on create and on every request |
 | File server | `lib/file_server.rb`, `lib/zipper.rb` | Rack::Files-based delivery with range support, download counting, CSP sandbox; streamed zip from a symlink mirror (`zip -r -`) |
-| Viewers | `lib/listing.rb`, `lib/text_view.rb`, `lib/model_view.rb`, `public/js/*.js` | Directory listings and MIME kinds; text rendering (Rouge, Redcarpet, CSV); 3D model gating; browser-side preview modal, form UI, three.js viewer |
+| Viewers | `lib/preview.rb`, `lib/viewers/*.rb`, `lib/listing.rb`, `lib/text_view.rb`, `views/viewers/`, `public/js/preview.js`, `public/js/viewers/*.js` | Viewer registry (match rules, tabs, settings, data endpoints), directory listings and kinds, text rendering (Rouge, Redcarpet, CSV); the preview modal shell and one browser module per viewer (text, image, video, audio, three.js model). Contract: [`viewers.md`](viewers.md) |
 | Forms | `lib/form.rb` | Form spec normalisation, draft (lenient) and submit (strict) validation |
 | MCP server | `lib/mcp_server.rb` | Stateless Streamable HTTP server built on the `mcp` gem; tools wrap the same ShareManager calls as the REST API |
 | Callback | `lib/callback.rb`, `lib/worker_pool.rb` | Bounded thread pool delivering end-of-share / submit events to the opencode server |
@@ -122,6 +122,24 @@ request without a restart. Four env vars act as first-boot seeds for settings.
   Forms never get links: their answers belong to the agent session.
 - **A cap on live links per share** (`external_link_max_live`, 2026-10-21), so the set a share can carry
   stays bounded; revoked and expired links go with the share at retention.
+- **Viewers as a registry found by file name** (2026-10-21). Each viewer is one server module in
+  `lib/viewers/` and one browser module in `public/js/viewers/`; the server discovers the modules under
+  `Viewers::`, the browser imports a module only when one of its tabs opens. Adding a viewer touches no
+  shared list, so several can be built in parallel without editing the same lines.
+- **Every matching viewer adds tabs** (2026-10-21). A file is not one kind with one view: an SVG is an
+  image and a text file, an HTML page renders and has a source. The tab bar is the union of the views of
+  every viewer that matches, in priority order; the highest one sets the file's kind and icon. The last
+  tab picked is remembered per primary viewer in the browser.
+- **One data route for every viewer** (2026-10-21). `?data=<viewer>[&part=<part>]` runs only when that
+  viewer matches the file, after the usual `PathGuard` resolution, under `/s` and `/x` alike. The main
+  part counts once as a download; parts and media previews do not. Bytes go out with a CSP (`sandbox`
+  unless the viewer needs `allow-scripts`) and `nosniff`.
+- **Viewer settings declared by the viewer** (2026-10-21). A viewer lists its keys with typed defaults
+  and `Setting` merges them in, so a viewer's cap ships with the viewer and changes like any other
+  setting. Key names: `<viewer>_view_<what>`.
+- **Viewer libraries from a pinned CDN** (2026-10-21). three.js, and the libraries later viewers need,
+  load from jsDelivr with the exact version in the URL, only when the viewer opens. The image stays
+  small and no JavaScript build step exists.
 - **Instruction entry as the default callback mode.** It adds context to the agent's next step
   without producing a visible message or forcing a turn; `synthetic` and `prompt` exist for clients
   that want either.

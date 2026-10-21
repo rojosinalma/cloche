@@ -1,0 +1,111 @@
+#!/bin/sh
+# Throwaway cloche instance running this checkout, for development and browser tests.
+# It never touches the instance you run for real: own container, own scratch database,
+# own port, an empty .env, and only test/fixtures (plus any folders you name) shared.
+#
+#   bin/test-instance up <name> <port> [<dir>...]   start (code from this checkout, live reload)
+#   bin/test-instance share <name> [<path>...]      create a share (default: test/fixtures), print its URL
+#   bin/test-instance link <name> <share-id>        create an external link, print its /x URL
+#   bin/test-instance browser <name> <script.js> [<arg>...]
+#                                                    run a Playwright script from test/browser/
+#   bin/test-instance logs <name>                   follow the container log
+#   bin/test-instance down <name>                   stop and delete the instance and its scratch state
+#
+# Environment: CLOCHE_IMAGE (default ghcr.io/rojosinalma/cloche:latest), PLAYWRIGHT_IMAGE
+# (default mcr.microsoft.com/playwright:v1.56.1-noble), CLOCHE_TEST_DIR (scratch root, default
+# ${TMPDIR:-/tmp}/cloche-test). Browser scripts get BASE_URL and TOKEN in their environment.
+set -eu
+
+root=$(cd "$(dirname "$0")/.." && pwd)
+image=${CLOCHE_IMAGE:-ghcr.io/rojosinalma/cloche:latest}
+pw_image=${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.56.1-noble}
+scratch=${CLOCHE_TEST_DIR:-${TMPDIR:-/tmp}/cloche-test}
+
+usage() { sed -n '4,11p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+need() { [ -n "${1:-}" ] || usage; }
+state() { echo "$scratch/$1"; }
+container() { echo "cloche-test-$1"; }
+port_of() { cat "$(state "$1")/port"; }
+token_of() { cat "$(state "$1")/token"; }
+base_of() { echo "http://127.0.0.1:$(port_of "$1")"; }
+
+api() { # api <name> <method> <path> [<json>]
+  curl -fsS -X "$2" -H "Authorization: Bearer $(token_of "$1")" -H 'Content-Type: application/json' \
+    ${4:+--data "$4"} "$(base_of "$1")$3"
+}
+
+# json_field <name> <key>: one field of the JSON on stdin, read with the instance's own Ruby.
+json_field() { docker exec -i "$(container "$1")" ruby -rjson -e 'puts JSON.parse($stdin.read).fetch(ARGV[0])' "$2"; }
+
+cmd=${1:-}; [ $# -gt 0 ] && shift
+case "$cmd" in
+  up)
+    need "${1:-}"; need "${2:-}"
+    name=$1 port=$2; shift 2
+    dir=$(state "$name")
+    if docker inspect "$(container "$name")" >/dev/null 2>&1; then
+      echo "instance $name already exists; run: $0 down $name" >&2; exit 1
+    fi
+    mkdir -p "$dir/data"
+    : > "$dir/env"
+    echo "$port" > "$dir/port"
+    head -c 24 /dev/urandom | base64 | tr '+/' '-_' | tr -d '=\n' > "$dir/token"
+    roots="$root/test/fixtures"
+    mounts="-v $root/test/fixtures:$root/test/fixtures:ro"
+    # A checkout with a real .env (secrets, seeds) gets an empty one over it.
+    [ -e "$root/.env" ] && mounts="$mounts -v $dir/env:/app/.env:ro"
+    for d in "$@"; do
+      d=$(cd "$d" && pwd)
+      roots="$roots,$d"
+      mounts="$mounts -v $d:$d:ro"
+    done
+    # shellcheck disable=SC2086
+    docker run -d --name "$(container "$name")" --user "$(id -u):$(id -g)" \
+      -p "127.0.0.1:$port:9292" \
+      -v "$root:/app:ro" -v "$dir/data:/data" $mounts \
+      -e RACK_ENV=development -e PORT=9292 -e DATABASE_PATH=/data/cloche.db -e HOST_HOME="$HOME" \
+      -e CLOCHE_ROOTS="$roots" -e PUBLIC_BASE_URL="http://127.0.0.1:$port" \
+      -e OPENCODE_URL=http://127.0.0.1:9 -e CLOCHE_MCP_TOKEN="$(token_of "$name")" \
+      "$image" >/dev/null
+    for _ in $(seq 1 30); do
+      if curl -fsS "$(base_of "$name")/health" >/dev/null 2>&1; then
+        echo "instance $name up at $(base_of "$name") (token in $dir/token)"
+        exit 0
+      fi
+      sleep 1
+    done
+    echo "instance $name did not answer /health within 30 s:" >&2
+    docker logs --tail 40 "$(container "$name")" >&2
+    exit 1
+    ;;
+  share)
+    need "${1:-}"; name=$1; shift
+    [ $# -gt 0 ] || set -- "$root/test/fixtures"
+    paths=$(for p in "$@"; do printf '"%s",' "$(cd "$(dirname "$p")" && pwd)/$(basename "$p")"; done)
+    api "$name" POST /api/shares "{\"paths\":[${paths%,}],\"title\":\"test $name\",\"idle_timeout\":0}" | json_field "$name" url
+    ;;
+  link)
+    need "${1:-}"; need "${2:-}"
+    api "$1" POST "/api/shares/$2/links" '{"ttl":3600}' | json_field "$1" url
+    ;;
+  browser)
+    need "${1:-}"; need "${2:-}"
+    name=$1 script=$2; shift 2
+    docker run --rm --network host --ipc host --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$root/test/browser:/work:ro" -w /work \
+      -e BASE_URL="$(base_of "$name")" -e TOKEN="$(token_of "$name")" -e FIXTURES="$root/test/fixtures" \
+      -e SHOTS=/shots -v "$(state "$name"):/shots" "$pw_image" \
+      sh -c 'node -e "require.resolve(\"playwright\")" 2>/dev/null ||
+             { npm i --silent --no-save --prefix /tmp/pw playwright@1.56.1 >/dev/null && export NODE_PATH=/tmp/pw/node_modules; }
+             exec node "$@"' sh "$(basename "$script")" "$@"
+    ;;
+  logs)
+    need "${1:-}"; docker logs -f "$(container "$1")"
+    ;;
+  down)
+    need "${1:-}"
+    docker rm -f "$(container "$1")" >/dev/null 2>&1 || true
+    rm -rf "$(state "$1")"
+    echo "instance $1 removed"
+    ;;
+  *) usage ;;
+esac

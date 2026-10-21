@@ -45,10 +45,6 @@ After that the settings below are what counts.
 | `callback_history` | `3` | Shares listed in the instruction entry |
 | `wait_max_timeout` | `300` | Cap for `wait` (s) |
 | `mcp_debug` | `false` | Log raw MCP request bodies |
-| `text_view_max_bytes` | `2097152` | Larger text files are download-only |
-| `text_view_max_rows` | `500` | Rows shown of a CSV/TSV table |
-| `text_view_sniff_bytes` | `8192` | Bytes read to detect text in unknown file types |
-| `model_view_max_bytes` | `104857600` | Larger 3D models are download-only |
 | `form_max_fields` | `50` | Fields per form |
 | `form_max_options` | `1000` | Options per choice field / task items per task list |
 | `form_text_max_chars` | `4000` | Cap for text answers |
@@ -78,3 +74,7 @@ The container sees host paths at the same absolute path. `CLOCHE_SHARE_ROOT` (de
 is the one tree `compose.yaml` mounts read-only; `allowed_roots` narrows what may be shared out of it.
 Every extra root outside that tree needs its own `:ro` bind at the same path in a compose override
 and an entry in `allowed_roots`.
+
+Viewer settings (`<viewer>_view_*`: size caps and viewer options such as `text_view_max_bytes` or
+`model_view_max_bytes`) are declared by each viewer and listed per viewer in [viewers.md](viewers.md#viewers).
+They behave like the keys above: same API, same `get_settings` listing, applied on the next request.

@@ -1,7 +1,7 @@
-// 3D model preview inside the preview modal. mount() builds a renderer on the
-// given stage, loads the file and returns a handle whose dispose() tears
-// everything down (WebGL context, listeners, observers) when the modal moves
-// on or closes.
+// 3D model viewer (STL/3MF/OBJ) for the preview modal. mount(ctx) builds a
+// renderer on the viewer's stage, loads the file from ctx.src and returns a
+// handle whose dispose() tears everything down (WebGL context, listeners,
+// observers) when the modal moves on or closes.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { STLLoader } from 'three/addons/loaders/STLLoader.js';
@@ -39,13 +39,22 @@ function plateThumbnail(buffer) {
   }
 }
 
-// els: { stage, loading, errorBox, errorText, fallback, fallbackImg, notice, stats, buttons: {reset, grid, wire}, swatches[], fileSwatch }
-// opts: { src, format, name }
-export function mount(els, opts) {
-  const { stage, loading, errorBox, fallback, notice, stats, buttons, swatches, fileSwatch } = els;
+// The markup comes from views/viewers/model.erb (stage, overlays, colour rail, tool buttons).
+export function mount(ctx) {
+  const pick = (role) => ctx.$(`[data-role="${role}"]`);
+  const els = {
+    stage: pick('stage'), loading: pick('loading'), errorBox: pick('error'), errorText: pick('error-text'),
+    fallback: pick('fallback'), fallbackImg: pick('fallback-img'), notice: pick('notice'),
+    buttons: { reset: pick('reset'), grid: pick('grid'), wire: pick('wire') },
+    swatches: [...ctx.root.querySelectorAll('.model-swatch')], fileSwatch: ctx.root.querySelector('.model-swatch-file')
+  };
+  const opts = { src: ctx.src, format: (ctx.item.format || '').toLowerCase(), name: ctx.item.name };
+  const { stage, loading, errorBox, fallback, notice, buttons, swatches, fileSwatch } = els;
   const ac = new AbortController();
   const { signal } = ac;
+  ctx.signal.addEventListener('abort', () => ac.abort());
   const on = (el, ev, fn) => el.addEventListener(ev, fn, { signal });
+  ctx.setBadge(opts.format.toUpperCase());
 
   const stored = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; } })();
   const choice = (() => { try { return { ...defaults, ...JSON.parse(stored || '{}') }; } catch (e) { return { ...defaults }; } })();
@@ -59,7 +68,7 @@ export function mount(els, opts) {
   fallback.hidden = true;
   fileSwatch.hidden = true;
   setNotice('');
-  stats.textContent = '';
+  ctx.setStats('');
   Object.values(buttons).forEach((b) => { b.disabled = true; });
   buttons.wire.setAttribute('aria-pressed', 'false');
 
@@ -187,7 +196,7 @@ export function mount(els, opts) {
     if (box.isEmpty()) throw new Error('The file contains no triangles');
     adopt(object);
     const size = box.getSize(new THREE.Vector3());
-    stats.textContent = ` · ${triangles().toLocaleString()} triangles · ${fmt(size.x)} × ${fmt(size.y)} × ${fmt(size.z)} mm`;
+    ctx.setStats(` · ${triangles().toLocaleString()} triangles · ${fmt(size.x)} × ${fmt(size.y)} × ${fmt(size.z)} mm`);
     buildGrid(box);
     fit = () => frame(box);
     fit();

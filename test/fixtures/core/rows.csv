@@ -1,0 +1,4 @@
+name,size,kind
+readme.md,1,text
+pixel.png,2,image
+cube.stl,3,model
